@@ -1,7 +1,7 @@
 # Troski-App
 A scalable mobility platform designed to modernize tro-tro transport through digital booking, payments, and trip verification.
 
-# Project Vision
+*Project Vision*
 
 Troski-App is not just a campus transport app. It is a scalable transport coordination and verification platform designed to digitize high-frequency informal transport systems in Ghana and other emerging markets.
 
