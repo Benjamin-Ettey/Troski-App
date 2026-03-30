@@ -83,3 +83,31 @@ This project is currently under active development. Contributions, suggestions, 
 ### 📄 License
 
 This project will be licensed in the future.
+
+## 🤝 Collaboration Guidelines
+
+To ensure smooth teamwork and avoid conflicts when multiple developers are contributing:
+
+### 1. Branching Strategy
+- **`main`** branch: Always stable; only merge tested and approved code here.
+- **`dev`** branch: Active development happens here; branches should merge into `dev` first.
+- **Feature branches**: Every new feature or bugfix should have its own branch:
+  - Format: `feature/<feature-name>` or `bugfix/<issue-name>`
+  - Example: `feature/passenger-login`, `feature/driver-qr-verification`
+
+### 2. Pull Requests (PR)
+- Create a **Pull Request** to merge feature branches into `dev`.
+- PR must be reviewed by at least one teammate before merging.
+- Resolve any conflicts **locally** before merging.
+
+### 3. Commit Guidelines
+- Write **clear, meaningful commit messages**:
+  - Correct: `Add QR code verification for driver app`
+  - Incorrect: `fix stuff` or `update`
+- Use present tense for commit messages.
+
+### 4. Regular Pulls
+- Always **pull the latest `dev` branch** before starting new work:
+```bash
+git checkout dev
+git pull origin dev
