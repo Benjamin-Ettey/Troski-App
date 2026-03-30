@@ -28,7 +28,6 @@ Automated commission calculation
 
 Student → Book Ride → Pay Digitally → Receive Booking Code → Driver Verifies → Trip Completed
 
-
 ### 🛠️ Tech Stack
 
 Frontend: React Native 
@@ -46,27 +45,30 @@ Lower operational complexity
 
 ### 📈 Scalability Roadmap
 
-Phase 1 – Campus Pilot
+#### Phase 1 – Campus Pilot
 
 Launch at KNUST with 5–20 drivers and validate booking + verification + payment systems.
 
-Phase 2 – Multi-Campus Expansion
+#### Phase 2 – Multi-Campus Expansion
 
 Expand to additional universities and standardize driver onboarding.
 
-Phase 3 – City-Level Integration
+#### Phase 3 – City-Level Integration
 
 Expand to metropolitan transport routes and introduce corporate transport modules.
 
-Phase 4 – National Transport Platform
+#### Phase 4 – National Transport Platform
 
 Build a nationwide transport coordination infrastructure.
 
 ### 📂 Project Structure
 Troski-App/
 │
+
 ├── frontend/
+
 ├── backend/
+
 └── README.md
 
 ### 🧪 Current Status
