@@ -4,6 +4,7 @@ import {useFonts} from "expo-font";
 import "../global.css"
 
 const _Layout = () => {
+    // eslint-disable-next-line react-hooks/rules-of-hooks
     const [loaded] = useFonts({
         "Manrope-Bold": require("../assets/fonts/Manrope-Bold.ttf"),
         "Manrope-ExtraBold": require("../assets/fonts/Manrope-ExtraBold.ttf"),
@@ -13,6 +14,7 @@ const _Layout = () => {
         "Manrope-Regular": require("../assets/fonts/Manrope-Regular.ttf"),
         "Manrope-SemiBold": require("../assets/fonts/Manrope-SemiBold.ttf"),
     });
+    if (!loaded) return null;
 
     return (
         <Stack/>
