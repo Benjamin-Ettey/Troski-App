@@ -1,44 +1,43 @@
-const mongoose = require('mongoose');
-const { create } = require('./users');
+const mongoose = require("mongoose");
+const { create } = require("./passengers");
 
 const paymentSchema = new mongoose.Schema({
-    ride:{
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'Ride',
-        required: true
-    },
- 
-    amount:{
-        type: Number,
-        required: true
-    },
+  ride: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Ride",
+    required: true,
+  },
 
-    paymentMethod:{
-        type: String,
-        enum: ['card', 'cash', 'mobile_money'],
-        default: 'mobile_money'
-    },
- 
-    status:{
-        type: String,
-        enum: ['pending', 'completed', 'failed'],
-        default: 'pending'
-    },
+  amount: {
+    type: Number,
+    required: true,
+  },
 
-    authorizationURL:{
-        type: String
-    },
+  paymentMethod: {
+    type: String,
+    enum: ["card", "mobile_money"],
+    default: "mobile_money",
+  },
 
-    createdAt:{
-        type: Date,
-        default: Date.now
-    },
+  status: {
+    type: String,
+    enum: ["pending", "completed", "failed"],
+    default: "pending",
+  },
 
-    paidAt:{
-        type: Date
-    }
+  authorizationURL: {
+    type: String,
+  },
 
+  createdAt: {
+    type: Date,
+    default: Date.now,
+  },
+
+  paidAt: {
+    type: Date,
+  },
 });
 
-const Payment = mongoose.model('Payment', paymentSchema);
+const Payment = mongoose.model("Payment", paymentSchema);
 module.exports = Payment;
