@@ -1,4 +1,4 @@
-import {View, Text, Pressable, TextInput} from 'react-native'
+import {View, Text, Pressable, TextInput, TouchableOpacity} from 'react-native'
 import React from 'react'
 import {SafeAreaView} from "react-native-safe-area-context";
 import {StatusBar} from "expo-status-bar";
@@ -7,7 +7,7 @@ import {router} from "expo-router";
 import {KeyboardAwareScrollView, KeyboardToolbar} from "react-native-keyboard-controller";
 import PrimaryButton from "@/components/PrimaryButton";
 
-const EmailScreen = () => {
+const FullnameScreen = () => {
     return (
 
         <View className="flex-1 bg-general">
@@ -32,21 +32,36 @@ const EmailScreen = () => {
 
                     <View className="w-full flex-1 flex items-center px-6">
                         <View className="w-full">
-                            <Text className="text-xl font-medium">What&apos;s your email?</Text>
+                            <Text className="text-xl font-medium">What&apos;s your full name?</Text>
                         </View>
 
                         <TextInput
-                            keyboardType="email-address"
+                            keyboardType="default"
                             autoFocus={true}
                             style={{paddingLeft: 16}}
-                            className="bg-tertiaryWhite mb-1 text-secondaryBlack w-full border-2 border-black/10  py-4  rounded-xl focus:bg-general focus:border-2 focus:border-secondaryBlack"
+                            className="bg-general mb-1 text-secondaryBlack w-full py-4 border border-tertiaryGray  rounded-xl focus:border focus:border-green-600/40"
 
                         />
-                        <View className="mb-6 w-full items-start">
-                            <Text className="text-sm ">You&apos;ll need to verify this email later.</Text>
+                        <View className="mb-8 w-full items-start">
+                            <Text className="text-sm ">This shows on your Troski profile.</Text>
+
                         </View>
 
-                        <PrimaryButton name="Next" onPress={()=>router.push("/")}/>
+                        <View style={{height: 1}} className="w-full bg-tertiaryGray mb-4"/>
+
+                        <View className="w-full mb-8">
+                            <View className="flex flex-col mb-4">
+                                <Text className="text-sm text-nowrap mb-1">By tapping on &quot;Create account&quot;, you agree to Troski&apos;s Terms of Use.</Text>
+                                <TouchableOpacity><Text className="font-bold text-red-600 text-sm tracking-tighter">Terms of Use.</Text></TouchableOpacity>
+                            </View>
+
+                            <View className="flex flex-col">
+                                <Text className="text-sm text-nowrap mb-1">By tapping on &quot;Create account&quot;, you agree to Troski&apos;s Privacy policy</Text>
+                                <TouchableOpacity><Text className="font-bold text-sm text-red-600 tracking-tighter">Privacy policy.</Text></TouchableOpacity>
+                            </View>
+                        </View>
+
+                        <PrimaryButton name="Next" onPress={()=>router.push("../signup/otpScreen")}/>
                     </View>
 
                 </SafeAreaView>
@@ -56,4 +71,4 @@ const EmailScreen = () => {
 
     )
 }
-export default EmailScreen
+export default FullnameScreen
