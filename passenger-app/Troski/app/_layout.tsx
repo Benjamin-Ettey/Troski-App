@@ -17,7 +17,14 @@ const _Layout = () => {
     if (!loaded) return null;
 
     return (
-        <Stack/>
+        <Stack>
+            <Stack.Screen
+                name="onboarding"
+                options={{
+                    headerShown: false
+                }}
+            />
+        </Stack>
 
     )
 }

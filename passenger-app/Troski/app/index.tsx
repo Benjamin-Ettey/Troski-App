@@ -1,19 +1,18 @@
-import {View, Text} from 'react-native'
+import {View, Text, TouchableOpacity} from 'react-native'
 import React from 'react'
 import "../global.css"
 import {router} from "expo-router";
-import MenuButton from "@/components/MenuButton";
 
 const Index = () => {
 
     return (
-        <View className="bg-white ">
-            <Text className="font-ManropeBold text-xl tracking-tighter">Edit this index.js based on the UI!</Text>
-
-            <View className="w-[48px] h-[48px]">
-
-                <MenuButton onPress={()=>router.push("/")}  />
-            </View>
+        <View className="w-full flex items-center ">
+            <Text className="font-DMSansBlack text-2xl tracking-tighter text-center mb-2">Click on the Go to see what shows next. </Text>
+            <TouchableOpacity
+                className="px-4 bg-blue-500 rounded-full w-[30%] h-12 flex justify-center items-center"
+                onPress={()=> router.push("../onboarding/landingPage")}>
+                <Text className="text-xl font-bold text-white">Go</Text>
+            </TouchableOpacity>
         </View>
     )
 }
