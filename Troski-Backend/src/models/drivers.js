@@ -1,54 +1,105 @@
-const mongoose = require('mongoose');
+const mongoose = require("mongoose");
+const bcrypt = require("bcryptjs");
 
 const driverSchema = new mongoose.Schema({
-    user:{
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'User',
-        required: true
-    },
+  name: {
+    type: String,
+  },
 
-    ride:{
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'Ride'
-    },
-    
-   licenseNumber:{
-        type: String,
-        required: true,
-        unique: true
-   },
+  phoneNumber: {
+    type: String,
+    unique: true,
+  },
 
-   totalEarnings:{
-        type: Number,
-        default: 0
-   },
+  email: {
+    type: String,
+  },
 
-   appliedAt:{
-        type: Date,
-        default: Date.now
-   },
+  city: {
+    type: String,
+  },
 
-   approvedAt:{
-        type: Date
-   },
+  pinCode: {
+    type: String,
+  },
 
-   currentLatitude:{
-        type: Number
-   },   
+  role: {
+    type: String,
+    default: "driver",
+  },
 
-   currentLongitude:{
-        type: Number
-   }, 
+  ride: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Ride",
+  },
 
-   lastLocationUpdate:{
-        type: Date
-   },
+  licenseID: {
+    type: String,
+    unique: true,
+  },
 
-   vehicle:{
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'Vehicle'
-   }
+  ghanaCardNumber: {
+    type: String,
+    unique: true,
+  },
+
+  licenseImage: {
+    type: String,
+    // required: true,
+  },
+
+  licenseImagePublicId: {
+    type: String,
+  },
+
+  totalEarnings: {
+    type: Number,
+    default: 0,
+  },
+
+  currentLatitude: {
+    type: Number,
+  },
+
+  currentLongitude: {
+    type: Number,
+  },
+
+  lastLocationUpdate: {
+    type: Date,
+  },
+
+  vehicle: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Vehicle",
+    required: true,
+  },
+
+  otpCode: {
+    type: String,
+  },
+
+  otpExpiresAt: {
+    type: Date,
+  },
 });
 
-const Driver = mongoose.model('Driver', driverSchema);
+driverSchema.pre("save", async function () {
+  if (!this.isModified("pinCode")) return;
+  const salt = await bcrypt.genSalt(10);
+  this.pinCode = await bcrypt.hash(this.pinCode, salt);
+});
+
+driverSchema.methods.comparePinCode = async function (candidatePinCode) {
+  const isMatch = await bcrypt.compare(candidatePinCode, this.pinCode);
+  return isMatch;
+};
+
+driverSchema.methods.toJSON = function () {
+  let obj = this.toObject();
+  delete obj.pinCode;
+  return obj;
+};
+
+const Driver = mongoose.model("Driver", driverSchema);
 module.exports = Driver;
