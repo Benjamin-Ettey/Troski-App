@@ -1,6 +1,5 @@
-import {View, Text} from 'react-native'
+import {Stack} from 'expo-router'
 import React from 'react'
-import {Stack} from "expo-router";
 import {KeyboardProvider} from "react-native-keyboard-controller";
 
 const _Layout = () => {
@@ -8,18 +7,17 @@ const _Layout = () => {
         <KeyboardProvider>
             <Stack>
                 <Stack.Screen
-                    name="signup"
+                    name="phoneNumberScreen"
                     options={{
                         headerShown: false
                     }}
-
                 />
+
                 <Stack.Screen
-                    name="emailScreen"
+                    name="otpScreen"
                     options={{
                         headerShown: false
                     }}
-
                 />
             </Stack>
         </KeyboardProvider>

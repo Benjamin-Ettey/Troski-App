@@ -1,9 +1,10 @@
-import {View, Text, Image, TouchableOpacity} from 'react-native'
+import {View, Text, Image} from 'react-native'
 import React from 'react'
 import {StatusBar} from "expo-status-bar";
 import PrimaryButton from "@/components/PrimaryButton";
 import {router} from "expo-router";
 import SecondaryButton from "@/components/SecondaryButton";
+
 
 
 const LandingPage = () => {
@@ -12,14 +13,14 @@ const LandingPage = () => {
             <StatusBar style="light"/>
 
             <Image
-                style={{width: "100%", height: "70%", marginTop: -30}}
+                style={{width: "100%", height: "70%", }}
                 source={require("../../assets/images/landingImage.png")}
                 resizeMode="cover"
             />
 
             <View
-                style={{borderTopLeftRadius: 48, borderTopRightRadius: 48}}
-                className="w-full h-[50%] absolute bottom-0 flex items-center bg-general py-4 ">
+                style={{borderTopLeftRadius: 36, borderTopRightRadius: 36}}
+                className="w-full h-[40%] absolute bottom-0 flex items-center bg-general py-4 ">
 
                 <View className=" w-full flex flex-col items-center mb-6">
 
@@ -32,17 +33,12 @@ const LandingPage = () => {
 
                 <View className="w-full flex items-center gap-2 mb-4">
 
-                    <PrimaryButton  name="Sign up for free" onPress={()=>router.push("../onboarding/signup/emailScreen")}/>
-                    <SecondaryButton name="Continue with Google" onPress={()=>router.push("/")}/>
-                    <SecondaryButton name="Continue Apple" onPress={()=>router.push("/")}/>
+                    <PrimaryButton disabled={false}  name="Sign up for free" onPress={()=>router.push("../signup/emailScreen")}/>
+                    <SecondaryButton title="Login" onPress={()=>router.push("../login/phoneNumberScreen")}/>
 
                 </View>
 
-                <View className= "w-full flex items-center">
-                    <TouchableOpacity onPress={()=>router.push("../../onboarding")} className="p-4 rounded-2xl flex justify-center items-center">
-                        <Text className="text-xl font-medium text-secondaryGray">Login</Text>
-                    </TouchableOpacity>
-                </View>
+
             </View>
 
         </View>

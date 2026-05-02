@@ -1,18 +1,15 @@
 import React from 'react'
-import { Stack } from 'expo-router'
+import {Stack} from "expo-router";
 
 const _Layout = () => {
     return (
         <Stack>
             <Stack.Screen
-                name="landingPage"
+                name="home"
                 options={{
                     headerShown: false
                 }}
-
             />
-
-
         </Stack>
     )
 }
