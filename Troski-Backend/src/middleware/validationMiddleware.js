@@ -126,10 +126,15 @@ const validateVehicleRegistrationInput = withValidationErrors([
     .isInt({ min: 4 })
     .withMessage("vehicle capacity must have at least 4 seats")
     .withMessage("vehicle capactiy is required"),
-  body("routePreferences")
+  body("routePreferences").trim(),
+  body("routePreferences.*.from")
     .trim()
-    .isArray({ min: 1 })
-    .withMessage("At least one route preference is required"),
+    .notEmpty()
+    .withMessage("From location is required"),
+  body("routePreferences.*.to")
+    .trim()
+    .notEmpty()
+    .withMessage("To location is required"),
 ]);
 
 const validateUpdateDriverInput = withValidationErrors([
@@ -216,11 +221,17 @@ const validateUpdateVehicleInput = withValidationErrors([
     .isInt({ min: 4 })
     .withMessage("vehicle capacity must have at least 4 seats")
     .withMessage("vehicle capactiy is required"),
-  body("routePreferences")
+  body("routePreferences").optional().trim(),
+  body("routePreferences.*.from")
     .optional()
     .trim()
-    .isArray({ min: 1 })
-    .withMessage("At least one route preference is required"),
+    .notEmpty()
+    .withMessage("From location is required"),
+  body("routePreferences.*.to")
+    .optional()
+    .trim()
+    .notEmpty()
+    .withMessage("To location is required"),
 ]);
 
 module.exports = {

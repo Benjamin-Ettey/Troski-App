@@ -43,9 +43,16 @@ const driverSchema = new mongoose.Schema({
     unique: true,
   },
 
+  ghanaCardImage: {
+    type: String,
+  },
+
+  ghanaCardImagePublicId: {
+    type: String,
+  },
+
   licenseImage: {
     type: String,
-    // required: true,
   },
 
   licenseImagePublicId: {
@@ -72,7 +79,6 @@ const driverSchema = new mongoose.Schema({
   vehicle: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "Vehicle",
-    required: true,
   },
 
   otpCode: {

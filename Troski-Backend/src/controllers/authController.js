@@ -18,6 +18,8 @@ const createHash = require("../utils/createHash");
 const createTokenPassenger = require("../utils/createTokenPassenger");
 const createTokenDriver = require("../utils/createTokenDriver");
 const createTokenAdmin = require("../utils/createTokenAdmin");
+const cloudinary = require("cloudinary");
+const { formatImage } = require("../middleware/multerMiddleware");
 
 const passengerSignUp = async (req, res) => {
   const { phoneNumber } = req.body;
@@ -212,14 +214,86 @@ const driverSignUp = async (req, res) => {
   });
 
   if (driverAlreadyExists) {
-    return res
-      .status(StatusCodes.BAD_REQUEST)
-      .json({ msg: "Driver already exists" });
+    return res.status(StatusCodes.BAD_REQUEST).json({
+      msg: "Driver already exists",
+    });
   }
 
-  const driver = await Driver.create(req.body);
+  const uploadFields = {
+    ghanaCardImage: "Ghana card",
+    licenseImage: "license",
+  };
 
-  res.status(StatusCodes.CREATED).json({ msg: "driver created" });
+  const missingFields = Object.keys(uploadFields).filter((field) => {
+    return !(req.files && req.files[field] && req.files[field][0]);
+  });
+
+  if (missingFields.length > 0) {
+    return res.status(StatusCodes.BAD_REQUEST).json({
+      msg: `Please upload photo of ${missingFields
+        .map((field) => uploadFields[field])
+        .join(", ")}`,
+    });
+  }
+
+  // Track uploaded images for rollback cleanup
+  const uploadedPublicIds = [];
+
+  try {
+    // Upload all images concurrently
+    await Promise.all(
+      Object.keys(uploadFields).map(async (field) => {
+        if (req.files && req.files[field]) {
+          const file = formatImage(req.files[field][0]);
+
+          const response = await cloudinary.v2.uploader.upload(file, {
+            use_filename: true,
+            folder: `/Troski/Troski-Driver-${field}s`,
+          });
+
+          // Save image URL
+          req.body[field] = response.secure_url;
+
+          // Save public ID
+          req.body[`${field}PublicId`] = response.public_id;
+
+          // Track uploaded images
+          uploadedPublicIds.push(response.public_id);
+        }
+      }),
+    );
+
+    // Create driver
+    const driver = await Driver.create(req.body);
+
+    res.status(StatusCodes.CREATED).json({
+      msg: "Driver created successfully",
+      driver,
+    });
+  } catch (error) {
+    // Rollback cleanup:
+    // delete already uploaded images if anything fails
+    if (uploadedPublicIds.length > 0) {
+      await Promise.all(
+        uploadedPublicIds.map(async (publicId) => {
+          try {
+            await cloudinary.v2.uploader.destroy(publicId);
+          } catch (cleanupError) {
+            console.error(
+              `Failed to delete Cloudinary image: ${publicId}`,
+              cleanupError,
+            );
+          }
+        }),
+      );
+    }
+
+    console.error(error);
+
+    return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
+      msg: "Driver signup failed. Please try again.",
+    });
+  }
 };
 
 const createDriverPinCode = async (req, res) => {
@@ -390,24 +464,112 @@ const verifyDriverOTP = async (req, res) => {
 const vehicleRegistration = async (req, res) => {
   const driverId = req.user.driverId;
 
-  const { plateNumber } = req.body;
+  let { plateNumber, routePreferences } = req.body;
 
   const vehicleAlreadyExists = await Vehicle.findOne({
     plateNumber,
   });
 
   if (vehicleAlreadyExists) {
-    return res
-      .status(StatusCodes.BAD_REQUEST)
-      .json({ msg: "Vehicle already exists" });
+    return res.status(StatusCodes.BAD_REQUEST).json({
+      msg: "Vehicle already exists",
+    });
   }
 
-  const vehicle = await Vehicle.create({ ...req.body, driver: driverId });
+  if (routePreferences) {
+    routePreferences = JSON.parse(routePreferences);
+    req.body.routePreferences = routePreferences;
+  }
 
-  res.status(StatusCodes.CREATED).json({
-    msg: "Vehicle registered successfully. Please wait for approval",
-    vehicle,
+  if (routePreferences.length < 1) {
+    return res.status(StatusCodes.BAD_REQUEST).json({
+      msg: "At least one route preference is required",
+    });
+  }
+
+  // console.log(routePreferences);
+
+  const uploadFields = {
+    vehicleImage: "vehicle",
+    insuranceCertImage: "insurance certificate",
+    vehicleRegDocImage: "vehicle registration document",
+    DVLARoadworthyImage: "DVLA roadworthy document",
+  };
+
+  const missingFields = Object.keys(uploadFields).filter((field) => {
+    return !(req.files && req.files[field] && req.files[field][0]);
   });
+
+  if (missingFields.length > 0) {
+    return res.status(StatusCodes.BAD_REQUEST).json({
+      msg: `Please upload photo of ${missingFields
+        .map((field) => uploadFields[field])
+        .join(", ")}`,
+    });
+  }
+
+  // Track uploaded Cloudinary public IDs
+  // for rollback cleanup if something fails
+  const uploadedPublicIds = [];
+
+  try {
+    // Upload all images concurrently
+    await Promise.all(
+      Object.keys(uploadFields).map(async (field) => {
+        if (req.files && req.files[field]) {
+          const file = formatImage(req.files[field][0]);
+
+          const response = await cloudinary.v2.uploader.upload(file, {
+            use_filename: true,
+            folder: `/Troski/Troski-${field}s`,
+          });
+
+          // Save image URL
+          req.body[field] = response.secure_url;
+
+          // Save public ID
+          req.body[`${field}PublicId`] = response.public_id;
+
+          // Track uploaded images for rollback cleanup
+          uploadedPublicIds.push(response.public_id);
+        }
+      }),
+    );
+
+    // Create vehicle record
+    const vehicle = await Vehicle.create({
+      ...req.body,
+      driver: driverId,
+    });
+
+    res.status(StatusCodes.CREATED).json({
+      msg: "Vehicle registered successfully. Please wait for approval",
+      vehicle,
+    });
+  } catch (error) {
+    // Rollback cleanup:
+    // delete already uploaded images if later upload fails
+    if (uploadedPublicIds.length > 0) {
+      await Promise.all(
+        uploadedPublicIds.map(async (publicId) => {
+          try {
+            await cloudinary.v2.uploader.destroy(publicId);
+          } catch (cleanupError) {
+            console.error(
+              `Failed to delete Cloudinary image: ${publicId}`,
+              cleanupError,
+            );
+          }
+        }),
+      );
+    }
+
+    console.error(error);
+
+    return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
+      msg: "Vehicle registration failed. Please try again.",
+    });
+  }
 };
 
 const checkPlateNumber = async (req, res) => {

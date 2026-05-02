@@ -10,33 +10,27 @@ const vehicleSchema = new mongoose.Schema(
 
     vehicleType: {
       type: String,
-      required: true,
     },
 
     vehicleColor: {
       type: String,
-      required: true,
     },
 
     plateNumber: {
       type: String,
-      required: true,
       unique: true,
     },
 
     vehicleImage: {
       type: String,
-      // required: true,
     },
 
     vehicleImagePublicId: {
       type: String,
-      // required: true,
     },
 
     insuranceCertImage: {
       type: String,
-      // required: true,
     },
 
     insuranceCertImagePublicId: {
@@ -45,7 +39,6 @@ const vehicleSchema = new mongoose.Schema(
 
     vehicleRegDocImage: {
       type: String,
-      // required: true,
     },
 
     vehicleRegDocImagePublicId: {
@@ -54,7 +47,6 @@ const vehicleSchema = new mongoose.Schema(
 
     DVLARoadworthyImage: {
       type: String,
-      // required: true,
     },
 
     DVLARoadworthyImagePublicId: {
@@ -63,18 +55,15 @@ const vehicleSchema = new mongoose.Schema(
 
     vehicleCapacity: {
       type: Number,
-      required: true,
     },
 
     routePreferences: [
       {
         from: {
           type: String,
-          required: true,
         },
         to: {
           type: String,
-          required: true,
         },
       },
     ],

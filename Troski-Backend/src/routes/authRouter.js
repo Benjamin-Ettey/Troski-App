@@ -32,7 +32,9 @@ const {
   authenticateDriver,
   authenticateAdmin,
 } = require("../middleware/authMiddleware");
+
 const rateLimiter = require("express-rate-limit");
+const { upload } = require("../middleware/multerMiddleware");
 
 const requestOtpAPILimiter = rateLimiter({
   windowMs: 1000 * 60 * 10, //10 mins
@@ -66,7 +68,14 @@ router
   .route("/passenger/logout")
   .delete(authenticatePassenger, passengerLogout);
 
-router.route("/driver/sign-up").post(validateDriverSignUpInput, driverSignUp);
+router.route("/driver/sign-up").post(
+  upload.fields([
+    { name: "licenseImage", maxCount: 1 },
+    { name: "ghanaCardImage", maxCount: 1 },
+  ]),
+  validateDriverSignUpInput,
+  driverSignUp,
+);
 router
   .route("/driver/create-pin")
   .post(authenticateDriver, validateCreatePinInput, createDriverPinCode);
@@ -78,7 +87,17 @@ router
   .post(verifyOtpAPILimiter, validateVerifyOtpInput, verifyDriverOTP);
 router.route("/driver/logout").delete(authenticateDriver, driverLogout);
 
-router.route("/vehicle/register").post(authenticateDriver, validateVehicleRegistrationInput, vehicleRegistration);
+router.route("/vehicle/register").post(
+  authenticateDriver,
+  upload.fields([
+    { name: "vehicleImage", maxCount: 1 },
+    { name: "insuranceCertImage", maxCount: 1 },
+    { name: "vehicleRegDocImage", maxCount: 1 },
+    { name: "DVLARoadworthyImage", maxCount: 1 },
+  ]),
+  validateVehicleRegistrationInput,
+  vehicleRegistration,
+);
 router.route("/vehicle/check-plate-number").post(checkPlateNumber);
 
 router.route("/admin/sign-up").post(adminSignUp);
