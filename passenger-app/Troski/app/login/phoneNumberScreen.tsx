@@ -38,7 +38,7 @@ const PhoneNumberScreen = () => {
 
         setNumber(value);
 
-        router.push("../signup/pinScreen");
+        router.push("../login/otpScreen");
     };
 
 
@@ -62,14 +62,14 @@ const PhoneNumberScreen = () => {
                         </View>
 
                         <View className="flex justify-center items-center w-[65%]">
-                            <Text className="text-xl font-medium">Create account</Text>
+                            <Text className="text-xl font-medium">Login</Text>
                         </View>
                     </View>
 
 
                     <View className="w-full flex-1 flex items-center px-6">
                         <View className="w-full">
-                            <Text className="text-xl font-medium">What&apos;s your phone number?</Text>
+                            <Text className="text-xl font-medium">Enter phone number?</Text>
                         </View>
 
                         <TextInput
@@ -93,7 +93,7 @@ const PhoneNumberScreen = () => {
                                 </Text>
                             </View>
                         ) : <View className="mb-6 w-full items-start">
-                            <Text className="text-sm ">Make sure to enter a valid and active phone number.</Text>
+                            <Text className="text-sm ">This is the number you provided when you created your account.</Text>
                         </View>}
 
                         <PrimaryButton name="Next" disabled={value.length !== 10} onPress={handleNext}/>

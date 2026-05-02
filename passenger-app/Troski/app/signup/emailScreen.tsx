@@ -10,20 +10,48 @@ import {useAppStore} from "@/utils/store"
 
 const EmailScreen = () => {
     const [emailAddress, setEmailAddress] = useState('')
-
     const setEmail = useAppStore((state) => state.setEmail);
+    const [error, setError] = useState("");
+
+
+    const isValidEmail = (email:string) => {
+        return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+    };
+
+    const isDisabled = !isValidEmail(emailAddress.trim());
 
     const handleNext = ()=>{
 
-        setEmail(emailAddress)
+        if (!isValidEmail(emailAddress.trim())) {
+            console.log("Invalid email");
+            return;
+        }
 
-        router.push("../signup/phoneNumberScreen")
+        setEmail(emailAddress.trim());
+        router.push("../signup/phoneNumberScreen");
     }
+
+    const handleEmailChange = (text: string) => {
+        setEmailAddress(text);
+
+        if (text.length === 0) {
+            setError("");
+            return;
+        }
+
+        if (!isValidEmail(text)) {
+            setError("Enter a valid email address");
+        } else {
+            setError("");
+        }
+    };
 
     return (
 
         <View className="flex-1 bg-general">
-            <KeyboardAwareScrollView className="flex-1">
+            <KeyboardAwareScrollView
+                keyboardShouldPersistTaps="handled"
+                className="flex-1">
                 <SafeAreaView className="flex-1">
                     <StatusBar style="dark"/>
 
@@ -51,7 +79,7 @@ const EmailScreen = () => {
                             autoCorrect={false}
                             autoCapitalize="none"
                             value={emailAddress}
-                            onChangeText={(text) => setEmailAddress(text)}
+                            onChangeText={handleEmailChange}
                             keyboardType="email-address"
                             autoFocus={true}
                             style={{paddingLeft: 16}}
@@ -59,10 +87,17 @@ const EmailScreen = () => {
 
                         />
                         <View className="mb-6 w-full items-start">
-                            <Text className="text-sm ">You&apos;ll need to verify this email later.</Text>
+
+                            {error ? (
+                                <Text className="text-red-500 text-sm mt-1">
+                                    {error}
+                                </Text>
+                            ) :
+                                <Text className="text-sm ">You&apos;ll need to verify this email later.</Text>
+                            }
                         </View>
 
-                        <PrimaryButton name="Next" disabled={false} onPress={handleNext}/>
+                        <PrimaryButton name="Next" disabled={isDisabled} onPress={handleNext}/>
                     </View>
 
                 </SafeAreaView>

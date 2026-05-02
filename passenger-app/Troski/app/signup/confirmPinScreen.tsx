@@ -1,17 +1,39 @@
-import {View, Text, Pressable, TextInput} from 'react-native'
-import React from 'react'
+import {View, Text, Pressable} from 'react-native'
+import React, {useState} from 'react'
 import {KeyboardAwareScrollView, KeyboardToolbar} from "react-native-keyboard-controller";
 import {SafeAreaView} from "react-native-safe-area-context";
 import {StatusBar} from "expo-status-bar";
-import {router} from "expo-router";
+import {router, useLocalSearchParams} from "expo-router";
 import {Ionicons} from "@expo/vector-icons";
 import PrimaryButton from "@/components/PrimaryButton";
 import { OtpInput } from "react-native-otp-entry";
 
-const confirmPinScreen = () => {
+const ConfirmPinScreen = () => {
+
+    const {pin} = useLocalSearchParams();
+    const [disable, setDisable] = useState(true);
+    const [value, setValue] = useState("");
+    const handleNext = ()=>{
+
+        if (value.length !== 6 ) return
+        router.push("../signup/fullNameScreen")
+    }
+
+    const handleOTP = (text: string) => {
+        setValue(text);
+
+        if (text.length === 6 && pin === text) {
+            setDisable(false);
+        } else {
+            setDisable(true);
+        }
+    };
+
     return (
         <View className="flex-1 bg-general">
-            <KeyboardAwareScrollView className="flex-1">
+            <KeyboardAwareScrollView
+                keyboardShouldPersistTaps="handled"
+                className="flex-1">
                 <SafeAreaView className="flex-1">
                     <StatusBar style="dark"/>
 
@@ -38,9 +60,10 @@ const confirmPinScreen = () => {
                         </View>
 
                         <OtpInput
+                            placeholder="******"
                             numberOfDigits={6}
                             autoFocus={true}
-                            onFilled={()=>console.log("Code re-entered and matches successfully.")}
+                            onTextChange={handleOTP}
                             type="numeric"
 
 
@@ -58,7 +81,7 @@ const confirmPinScreen = () => {
                         </View>
 
 
-                        <PrimaryButton name="Next" onPress={()=>router.push("../signup/fullNameScreen")}/>
+                        <PrimaryButton name="Next" disabled={disable} onPress={handleNext}/>
                     </View>
 
                 </SafeAreaView>
@@ -68,4 +91,4 @@ const confirmPinScreen = () => {
 
     )
 }
-export default confirmPinScreen
+export default ConfirmPinScreen

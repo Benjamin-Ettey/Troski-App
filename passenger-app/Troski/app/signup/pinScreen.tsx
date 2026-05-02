@@ -1,5 +1,5 @@
-import {View, Text, Pressable, TextInput} from 'react-native'
-import React from 'react'
+import {View, Text, Pressable } from 'react-native'
+import React, {useState} from 'react'
 import {KeyboardAwareScrollView, KeyboardToolbar} from "react-native-keyboard-controller";
 import {SafeAreaView} from "react-native-safe-area-context";
 import {StatusBar} from "expo-status-bar";
@@ -9,9 +9,34 @@ import PrimaryButton from "@/components/PrimaryButton";
 import { OtpInput } from "react-native-otp-entry";
 
 const PinScreen = () => {
+
+    const [disable, setDisable] = useState(true);
+    const [value, setValue] = useState("");
+    const handleNext = ()=>{
+
+        if (value.length !== 6) return
+        router.push({
+            pathname: "../signup/confirmPinScreen",
+            params: {pin: value}
+
+        })
+    }
+
+    const handleOTP = (text: any) => {
+        setValue(text);
+
+        if (text.length === 6) {
+            setDisable(false);
+        } else {
+            setDisable(true);
+        }
+    };
+
     return (
         <View className="flex-1 bg-general">
-            <KeyboardAwareScrollView className="flex-1">
+            <KeyboardAwareScrollView
+                keyboardShouldPersistTaps="handled"
+                className="flex-1">
                 <SafeAreaView className="flex-1">
                     <StatusBar style="dark"/>
 
@@ -38,9 +63,10 @@ const PinScreen = () => {
                         </View>
 
                         <OtpInput
+                            placeholder="******"
                             numberOfDigits={6}
                             autoFocus={true}
-                            onFilled={()=>console.log("Code received")}
+                            onTextChange={handleOTP}
                             type="numeric"
 
 
@@ -57,7 +83,7 @@ const PinScreen = () => {
                             </View>
                         </View>
 
-                        <PrimaryButton name="Next" onPress={()=>router.push("../signup/confirmPinScreen")}/>
+                        <PrimaryButton disabled={disable} name="Next" onPress={handleNext}/>
                     </View>
 
                 </SafeAreaView>

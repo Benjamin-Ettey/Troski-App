@@ -1,5 +1,5 @@
 import {View, Text, Pressable, TextInput, TouchableOpacity} from 'react-native'
-import React from 'react'
+import React, {useState} from 'react'
 import {SafeAreaView} from "react-native-safe-area-context";
 import {StatusBar} from "expo-status-bar";
 import {Ionicons} from "@expo/vector-icons";
@@ -8,10 +8,25 @@ import {KeyboardAwareScrollView, KeyboardToolbar} from "react-native-keyboard-co
 import PrimaryButton from "@/components/PrimaryButton";
 
 const FullnameScreen = () => {
+    const [fullName, setFullName] = useState("")
+    const isDisabled = fullName.trim().length <= 3;
+
+    const handleFullName = (text: string)=>{
+        setFullName(text)
+
+    }
+
+    const handleCreateAccount = () => {
+        if (fullName.trim().length <= 3) return;
+
+        router.push("../signup/otpScreen");
+    };
     return (
 
         <View className="flex-1 bg-general">
-            <KeyboardAwareScrollView className="flex-1">
+            <KeyboardAwareScrollView
+                keyboardShouldPersistTaps="handled"
+                className="flex-1">
                 <SafeAreaView className="flex-1">
                     <StatusBar style="dark"/>
 
@@ -36,6 +51,10 @@ const FullnameScreen = () => {
                         </View>
 
                         <TextInput
+                            value={fullName}
+                            autoCorrect={false}
+                            autoCapitalize="none"
+                            onChangeText={handleFullName}
                             keyboardType="default"
                             autoFocus={true}
                             style={{paddingLeft: 16}}
@@ -44,6 +63,7 @@ const FullnameScreen = () => {
                         />
                         <View className="mb-8 w-full items-start">
                             <Text className="text-sm ">This shows on your Troski profile.</Text>
+                            <Text className="text-sm ">Your full name should be at least 3 characters.</Text>
 
                         </View>
 
@@ -61,7 +81,7 @@ const FullnameScreen = () => {
                             </View>
                         </View>
 
-                        <PrimaryButton name="Next" onPress={()=>router.push("../signup/otpScreen")}/>
+                        <PrimaryButton disabled={isDisabled} name="Create account" onPress={handleCreateAccount}/>
                     </View>
 
                 </SafeAreaView>

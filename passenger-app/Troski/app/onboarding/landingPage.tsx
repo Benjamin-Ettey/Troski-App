@@ -1,4 +1,4 @@
-import {View, Text, Image, TouchableOpacity} from 'react-native'
+import {View, Text, Image} from 'react-native'
 import React from 'react'
 import {StatusBar} from "expo-status-bar";
 import PrimaryButton from "@/components/PrimaryButton";
@@ -19,7 +19,7 @@ const LandingPage = () => {
             />
 
             <View
-                style={{borderTopLeftRadius: 48, borderTopRightRadius: 48}}
+                style={{borderTopLeftRadius: 36, borderTopRightRadius: 36}}
                 className="w-full h-[40%] absolute bottom-0 flex items-center bg-general py-4 ">
 
                 <View className=" w-full flex flex-col items-center mb-6">
@@ -33,8 +33,8 @@ const LandingPage = () => {
 
                 <View className="w-full flex items-center gap-2 mb-4">
 
-                    <PrimaryButton  name="Sign up for free" onPress={()=>router.push("../signup/emailScreen")}/>
-                    <SecondaryButton title="Login" onPress={()=>router.push("/")}/>
+                    <PrimaryButton disabled={false}  name="Sign up for free" onPress={()=>router.push("../signup/emailScreen")}/>
+                    <SecondaryButton title="Login" onPress={()=>router.push("../login/phoneNumberScreen")}/>
 
                 </View>
 
