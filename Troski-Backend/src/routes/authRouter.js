@@ -24,6 +24,7 @@ const {
   validateCreatePinInput,
   validateLoginInput,
   validateVerifyOtpInput,
+  validateVehicleRegistrationInput,
 } = require("../middleware/validationMiddleware");
 
 const {
@@ -77,7 +78,7 @@ router
   .post(verifyOtpAPILimiter, validateVerifyOtpInput, verifyDriverOTP);
 router.route("/driver/logout").delete(authenticateDriver, driverLogout);
 
-router.route("/vehicle/register").post(authenticateDriver, vehicleRegistration);
+router.route("/vehicle/register").post(authenticateDriver, validateVehicleRegistrationInput, vehicleRegistration);
 router.route("/vehicle/check-plate-number").post(checkPlateNumber);
 
 router.route("/admin/sign-up").post(adminSignUp);
