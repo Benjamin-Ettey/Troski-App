@@ -18,7 +18,12 @@ const {
   rejectVehicleDetails,
 } = require("../controllers/adminController.js");
 
-const { validateIdParam } = require("../middleware/validationMiddleware");
+const {
+  validateIdParam,
+  validateUpdateDriverInput,
+  validateUpdatePassengerInput,
+  validateUpdateVehicleInput,
+} = require("../middleware/validationMiddleware");
 
 router.route("/current").get(getCurrentAdmin);
 router.route("/all-drivers").get(getAllDrivers);
@@ -33,17 +38,17 @@ router
 router
   .route("/driver/:id")
   .get(validateIdParam, getSingleDriver)
-  .patch(validateIdParam, updateDriver)
+  .patch(validateIdParam, validateUpdateDriverInput, updateDriver)
   .delete(validateIdParam, deleteDriver);
 router
   .route("/passenger/:id")
   .get(validateIdParam, getSinglePassenger)
-  .patch(validateIdParam, updatePassenger)
+  .patch(validateIdParam, validateUpdatePassengerInput, updatePassenger)
   .delete(validateIdParam, deletePassenger);
 router
   .route("/vehicle/:id")
   .get(validateIdParam, getSingleVehicle)
-  .patch(validateIdParam, updateVehicle)
+  .patch(validateIdParam, validateUpdateVehicleInput, updateVehicle)
   .delete(validateIdParam, deleteVehicle);
 
 module.exports = router;

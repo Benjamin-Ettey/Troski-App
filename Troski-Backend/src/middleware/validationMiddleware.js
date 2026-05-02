@@ -132,6 +132,97 @@ const validateVehicleRegistrationInput = withValidationErrors([
     .withMessage("At least one route preference is required"),
 ]);
 
+const validateUpdateDriverInput = withValidationErrors([
+  body("name").optional().trim().notEmpty().withMessage("name is required"),
+  body("phoneNumber")
+    .optional()
+    .trim()
+    .notEmpty()
+    .withMessage("phone number is required")
+    .isMobilePhone("en-GH")
+    .withMessage("invalid phone number"),
+  body("email")
+    .optional()
+    .trim()
+    .notEmpty()
+    .withMessage("email is required")
+    .isEmail()
+    .withMessage("invalid email address"),
+  body("city")
+    .optional()
+    .notEmpty()
+    .withMessage("city is required")
+    .isIn(Object.values(ghanaCapitalCities))
+    .withMessage("invalid city"),
+  body("licenseID")
+    .optional()
+    .trim()
+    .toUpperCase()
+    .notEmpty()
+    .withMessage("license ID is required")
+    .matches(/^[A-Z]{3}-\d{8}-\d{4,5}$/)
+    .withMessage("Invalid Ghana license ID format"),
+  body("ghanaCardNumber")
+    .optional()
+    .trim()
+    .toUpperCase()
+    .notEmpty()
+    .withMessage("Ghana card number is required")
+    .matches(/^GHA-\d{9}-\d$/)
+    .withMessage("Invalid Ghana Card number format"),
+]);
+
+const validateUpdatePassengerInput = withValidationErrors([
+  body("name").optional().trim().notEmpty().withMessage("name is required"),
+  body("phoneNumber")
+    .optional()
+    .trim()
+    .notEmpty()
+    .withMessage("phone number is required")
+    .isMobilePhone("en-GH")
+    .withMessage("invalid phone number"),
+  body("email")
+    .optional()
+    .trim()
+    .notEmpty()
+    .withMessage("email is required")
+    .isEmail()
+    .withMessage("invalid email address"),
+]);
+
+const validateUpdateVehicleInput = withValidationErrors([
+  body("vehicleType")
+    .optional()
+    .trim()
+    .notEmpty()
+    .withMessage("vehicle type is required"),
+  body("plateNumber")
+    .optional()
+    .trim()
+    .toUpperCase()
+    .notEmpty()
+    .withMessage("plate number is required")
+    .matches(/^[A-Z]{1,3}-\d{1,5}-\d{2}$/)
+    .withMessage("Plate number must follow format: GT-1234-24"),
+  body("vehicleColor")
+    .optional()
+    .trim()
+    .notEmpty()
+    .withMessage("vehicle color is required"),
+  body("vehicleCapacity")
+    .optional()
+    .trim()
+    .notEmpty()
+    .isInt({ min: 4 })
+    .withMessage("vehicle capacity must have at least 4 seats")
+    .withMessage("vehicle capactiy is required"),
+  body("routePreferences")
+    .optional()
+    .trim()
+    .isArray({ min: 1 })
+    .withMessage("At least one route preference is required"),
+]);
+
 module.exports = {
   validateIdParam,
   validatePassengerSignUpInput,
@@ -140,4 +231,7 @@ module.exports = {
   validateCreatePinInput,
   validateDriverSignUpInput,
   validateVehicleRegistrationInput,
+  validateUpdateDriverInput,
+  validateUpdatePassengerInput,
+  validateUpdateVehicleInput,
 };
