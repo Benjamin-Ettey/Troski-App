@@ -42,9 +42,19 @@ const _Layout = () => {
             <Stack.Screen
                 name="homepage"
                 options={{
+                    headerShown: false,
+                    gestureEnabled: false
+
+                }}
+            />
+
+            <Stack.Screen
+                name="profile"
+                options={{
                     headerShown: false
                 }}
             />
+
         </Stack>
 
     )
