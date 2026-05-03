@@ -37,27 +37,7 @@ const passengerSignUp = async (req, res) => {
 
   const passenger = await Passenger.create(req.body);
 
-  res.status(StatusCodes.CREATED).json({ msg: "passenger created" });
-};
-
-const createPassengerPinCode = async (req, res) => {
-  const passengerId = req.user.passengerId;
-
-  const { pinCode } = req.body;
-
-  const passenger = await Passenger.findById(passengerId);
-
-  if (!passenger) {
-    return res.status(StatusCodes.NOT_FOUND).json({
-      msg: "Passenger not found",
-    });
-  }
-
-  passenger.pinCode = pinCode;
-
-  await passenger.save();
-
-  res.status(StatusCodes.OK).json({ msg: "Pin code created successfully" });
+  res.status(StatusCodes.CREATED).json({ msg: "passenger created", passenger });
 };
 
 const requestPassengerOTP = async (req, res) => {
@@ -294,26 +274,6 @@ const driverSignUp = async (req, res) => {
       msg: "Driver signup failed. Please try again.",
     });
   }
-};
-
-const createDriverPinCode = async (req, res) => {
-  const driverId = req.user.driverId;
-
-  const { pinCode } = req.body;
-
-  const driver = await Driver.findById(driverId);
-
-  if (!driver) {
-    return res.status(StatusCodes.NOT_FOUND).json({
-      msg: "Driver not found",
-    });
-  }
-
-  driver.pinCode = pinCode;
-
-  await driver.save();
-
-  res.status(StatusCodes.OK).json({ msg: "Pin code created successfully" });
 };
 
 const requestDriverOTP = async (req, res) => {
@@ -743,6 +703,4 @@ module.exports = {
   adminLogout,
   passengerLogout,
   driverLogout,
-  createPassengerPinCode,
-  createDriverPinCode,
 };

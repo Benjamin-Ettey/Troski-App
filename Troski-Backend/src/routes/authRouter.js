@@ -14,14 +14,11 @@ const {
   passengerLogout,
   driverLogout,
   checkPlateNumber,
-  createPassengerPinCode,
-  createDriverPinCode,
 } = require("../controllers/authController");
 
 const {
   validatePassengerSignUpInput,
   validateDriverSignUpInput,
-  validateCreatePinInput,
   validateLoginInput,
   validateVerifyOtpInput,
   validateVehicleRegistrationInput,
@@ -56,9 +53,6 @@ router
   .route("/passenger/sign-up")
   .post(validatePassengerSignUpInput, passengerSignUp);
 router
-  .route("/passenger/create-pin")
-  .post(authenticatePassenger, validateCreatePinInput, createPassengerPinCode);
-router
   .route("/passenger/request-otp")
   .post(requestOtpAPILimiter, validateLoginInput, requestPassengerOTP);
 router
@@ -76,9 +70,6 @@ router.route("/driver/sign-up").post(
   validateDriverSignUpInput,
   driverSignUp,
 );
-router
-  .route("/driver/create-pin")
-  .post(authenticateDriver, validateCreatePinInput, createDriverPinCode);
 router
   .route("/driver/request-otp")
   .post(requestOtpAPILimiter, validateLoginInput, requestDriverOTP);

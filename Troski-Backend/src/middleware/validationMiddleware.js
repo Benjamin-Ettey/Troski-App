@@ -43,6 +43,12 @@ const validatePassengerSignUpInput = withValidationErrors([
     .withMessage("email is required")
     .isEmail()
     .withMessage("invalid email address"),
+  body("pinCode")
+    .trim()
+    .notEmpty()
+    .withMessage("PIN code is required")
+    .isLength({ min: 6, max: 6 })
+    .withMessage("PIN code must be 6 digits"),
 ]);
 
 const validateDriverSignUpInput = withValidationErrors([
@@ -78,6 +84,12 @@ const validateDriverSignUpInput = withValidationErrors([
     .withMessage("Ghana card number is required")
     .matches(/^GHA-\d{9}-\d$/)
     .withMessage("Invalid Ghana Card number format"),
+  body("pinCode")
+    .trim()
+    .notEmpty()
+    .withMessage("PIN code is required")
+    .isLength({ min: 6, max: 6 })
+    .withMessage("PIN code must be 6 digits"),
 ]);
 
 const validateLoginInput = withValidationErrors([
@@ -96,15 +108,6 @@ const validateVerifyOtpInput = withValidationErrors([
     .withMessage("OTP code is required")
     .isLength({ min: 6, max: 6 })
     .withMessage("OTP code must be 6 digits"),
-]);
-
-const validateCreatePinInput = withValidationErrors([
-  body("pinCode")
-    .trim()
-    .notEmpty()
-    .withMessage("PIN code is required")
-    .isLength({ min: 6, max: 6 })
-    .withMessage("PIN code must be 6 digits"),
 ]);
 
 const validateVehicleRegistrationInput = withValidationErrors([
@@ -239,7 +242,6 @@ module.exports = {
   validatePassengerSignUpInput,
   validateLoginInput,
   validateVerifyOtpInput,
-  validateCreatePinInput,
   validateDriverSignUpInput,
   validateVehicleRegistrationInput,
   validateUpdateDriverInput,
