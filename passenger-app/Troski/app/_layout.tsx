@@ -24,6 +24,37 @@ const _Layout = () => {
                     headerShown: false
                 }}
             />
+
+            <Stack.Screen
+                name="signup"
+                options={{
+                    headerShown: false
+                }}
+            />
+
+            <Stack.Screen
+                name="login"
+                options={{
+                    headerShown: false
+                }}
+            />
+
+            <Stack.Screen
+                name="homepage"
+                options={{
+                    headerShown: false,
+                    gestureEnabled: false
+
+                }}
+            />
+
+            <Stack.Screen
+                name="profile"
+                options={{
+                    headerShown: false
+                }}
+            />
+
         </Stack>
 
     )

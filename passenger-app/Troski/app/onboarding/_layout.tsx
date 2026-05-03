@@ -12,14 +12,6 @@ const _Layout = () => {
 
             />
 
-            <Stack.Screen
-                name="signup"
-                options={{
-                    headerShown: false
-                }}
-
-            />
-
 
         </Stack>
     )
