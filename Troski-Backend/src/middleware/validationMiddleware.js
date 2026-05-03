@@ -47,6 +47,8 @@ const validatePassengerSignUpInput = withValidationErrors([
     .trim()
     .notEmpty()
     .withMessage("PIN code is required")
+    .isNumeric()
+    .withMessage("PIN Code should contain only numbers")
     .isLength({ min: 6, max: 6 })
     .withMessage("PIN code must be 6 digits"),
 ]);
@@ -88,6 +90,8 @@ const validateDriverSignUpInput = withValidationErrors([
     .trim()
     .notEmpty()
     .withMessage("PIN code is required")
+    .isNumeric()
+    .withMessage("PIN Code should contain only numbers")
     .isLength({ min: 6, max: 6 })
     .withMessage("PIN code must be 6 digits"),
 ]);
@@ -178,6 +182,15 @@ const validateUpdateDriverInput = withValidationErrors([
     .withMessage("Ghana card number is required")
     .matches(/^GHA-\d{9}-\d$/)
     .withMessage("Invalid Ghana Card number format"),
+  body("pinCode")
+    .optional()
+    .trim()
+    .notEmpty()
+    .withMessage("PIN code is required")
+    .isNumeric()
+    .withMessage("PIN Code should contain only numbers")
+    .isLength({ min: 6, max: 6 })
+    .withMessage("PIN code must be 6 digits"),
 ]);
 
 const validateUpdatePassengerInput = withValidationErrors([
@@ -196,6 +209,15 @@ const validateUpdatePassengerInput = withValidationErrors([
     .withMessage("email is required")
     .isEmail()
     .withMessage("invalid email address"),
+  body("pinCode")
+    .optional()
+    .trim()
+    .notEmpty()
+    .withMessage("PIN code is required")
+    .isNumeric()
+    .withMessage("PIN Code should contain only numbers")
+    .isLength({ min: 6, max: 6 })
+    .withMessage("PIN code must be 6 digits"),
 ]);
 
 const validateUpdateVehicleInput = withValidationErrors([
