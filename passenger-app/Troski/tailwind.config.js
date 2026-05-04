@@ -6,22 +6,21 @@ module.exports = {
     theme: {
         extend: {
             fontFamily: {
-                ManropeRegular: ["Manrope-Regular", "sans-serif"],
-                ManropeBold: ["Manrope-Bold", "sans-serif"],
-                ManropeExtraBold: ["Manrope-ExtraBold", "sans-serif"],
-                ManropeExtraLight: ["Manrope-ExtraLight", "sans-serif"],
-                ManropeLight: ["Manrope-Light", "sans-serif"],
-                ManropeMedium: ["Manrope-Medium", "sans-serif"],
-                ManropeSemiBold: ["Manrope-SemiBold", "sans-serif"],
+                GoogleSansRegular: ["GoogleSans-Regular", "sans-serif"],
+                GoogleSansBold: ["GoogleSans-Bold", "sans-serif"],
+                GoogleSansMedium: ["GoogleSans-Medium", "sans-serif"],
+                GoogleSansSemiBold: ["GoogleSans-SemiBold", "sans-serif"],
 
-                InterThin: ["Inter_18pt-Thin", "sans-serif"],
-                InterRegular: ["Inter_18pt-Regular", "sans-serif"],
-                InterBold: ["Inter_18pt-Bold", "sans-serif"],
-                InterExtraBold: ["Inter_18pt-ExtraBold", "sans-serif"],
-                InterExtraLight: ["Inter_18pt-ExtraLight", "sans-serif"],
-                InterLight: ["Inter_18pt-Light", "sans-serif"],
-                InterMedium: ["Inter_18pt-Medium", "sans-serif"],
-                InterSemiBold: ["Inter_18pt-SemiBold", "sans-serif"],
+                PoppinsThin: ["Poppins-Thin", "sans-serif"],
+                PoppinsRegular: ["Poppins-Regular", "sans-serif"],
+                PoppinsBold: ["Poppins-Bold", "sans-serif"],
+                PoppinsExtraBold: ["Poppins-ExtraBold", "sans-serif"],
+                PoppinsExtraLight: ["Poppins-ExtraLight", "sans-serif"],
+                PoppinsLight: ["Poppins-Light", "sans-serif"],
+                PoppinsMedium: ["Poppins-Medium", "sans-serif"],
+                PoppinsSemiBold: ["Poppins-SemiBold", "sans-serif"],
+                PoppinsBlack: ["Poppins-Black", "sans-serif"],
+
             },
 
 
