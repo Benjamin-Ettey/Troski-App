@@ -41,9 +41,9 @@ const OtpModal = () => {
                         <View
                             style={{marginTop: "50%"}}
                             className="w-full flex justify-center items-center absolute">
-                            <Text className="text-xl font-medium mb-2">Verification Successful!</Text>
-                            <Text className="text-sm ">Please be patient...</Text>
-                            <Text className="text-sm ">You will be redirected to the homepage.</Text>
+                            <Text className="text-xl font-GoogleSansMedium mb-2">Verification Successful!</Text>
+                            <Text className="text-sm font-GoogleSansRegular">Please be patient...</Text>
+                            <Text className="text-sm font-GoogleSansRegular">You will be redirected to the homepage.</Text>
                         </View>
 
 

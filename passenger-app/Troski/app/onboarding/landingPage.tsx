@@ -27,7 +27,7 @@ const LandingPage = () => {
                     <View className="w-16 h-16 rounded-full p-2 mb-2">
                         <Image style={{width: "100%", height: "100%"}} source={require("../../assets/images/favicon.png")} resizeMode="cover"/>
                     </View>
-                    <Text className="text-secondaryBlack text-4xl font-medium text-center tracking-tighter leading-tighter max-w-[60%]">Book your rides on the go.</Text>
+                    <Text className="text-secondaryBlack font-GoogleSansMedium text-4xl font-medium text-center tracking-tighter leading-tighter max-w-[60%]">Book your rides on the go.</Text>
 
                 </View>
 

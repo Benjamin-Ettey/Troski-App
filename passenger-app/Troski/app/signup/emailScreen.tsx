@@ -1,8 +1,6 @@
-import {View, Text, Pressable, TextInput} from 'react-native'
+import {View, Text, TextInput} from 'react-native'
 import React, {useState} from 'react'
-import {SafeAreaView} from "react-native-safe-area-context";
 import {StatusBar} from "expo-status-bar";
-import {Ionicons} from "@expo/vector-icons";
 import {router} from "expo-router";
 import {KeyboardAwareScrollView, KeyboardToolbar} from "react-native-keyboard-controller";
 import PrimaryButton from "@/components/PrimaryButton";
@@ -52,55 +50,43 @@ const EmailScreen = () => {
             <KeyboardAwareScrollView
                 keyboardShouldPersistTaps="handled"
                 className="flex-1">
-                <SafeAreaView className="flex-1">
                     <StatusBar style="dark"/>
 
-                    <View className="w-full flex flex-row py-2 mb-2  ">
-                        <View className="px-4 flex justify-center items-center">
-                            <Pressable
-                                onPress={()=>router.back()}
-                                className="rounded-full bg-general p-2 shadow-black shadow-2xl">
-                                <Ionicons name="arrow-back" size={24} />
-                            </Pressable>
-                        </View>
 
-                        <View className="flex justify-center items-center w-[65%]">
-                            <Text className="text-xl font-medium">Create account</Text>
-                        </View>
-                    </View>
 
 
                     <View className="w-full flex-1 flex items-center px-6">
                         <View className="w-full">
-                            <Text className="text-xl font-medium">What&apos;s your email?</Text>
+                            <Text className="text-xl font-GoogleSansMedium tracking-tight">What&apos;s your email?</Text>
                         </View>
 
                         <TextInput
                             autoCorrect={false}
                             autoCapitalize="none"
+                            textContentType="emailAddress"
+                            autoComplete="email"
                             value={emailAddress}
                             onChangeText={handleEmailChange}
                             keyboardType="email-address"
                             autoFocus={true}
                             style={{paddingLeft: 16}}
-                            className="bg-general mb-1 text-secondaryBlack w-full py-4 border border-tertiaryGray  rounded-xl focus:border focus:border-green-600/40"
+                            className="bg-general mb-1 font-GoogleSansMedium text-secondaryBlack w-full py-4 border border-tertiaryGray  rounded-xl focus:border focus:border-green-600/40"
 
                         />
                         <View className="mb-6 w-full items-start">
 
                             {error ? (
-                                <Text className="text-red-500 text-sm mt-1">
+                                <Text className="text-red-500 text-sm mt-1 font-GoogleSansMedium">
                                     {error}
                                 </Text>
                             ) :
-                                <Text className="text-sm ">You&apos;ll need to verify this email later.</Text>
+                                <Text className="text-sm font-GoogleSansRegular">You&apos;ll need to verify this email later.</Text>
                             }
                         </View>
 
                         <PrimaryButton name="Next" disabled={isDisabled} onPress={handleNext}/>
                     </View>
 
-                </SafeAreaView>
             </KeyboardAwareScrollView>
             <KeyboardToolbar/>
         </View>

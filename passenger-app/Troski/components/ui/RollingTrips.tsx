@@ -19,7 +19,7 @@ const RollingTrips = () => {
                 <View
                     style={{marginTop: 6}}
                     className="w-full flex items-start justify-start mb-2">
-                    <Text className="font-medium text-xl tracking-tighter">
+                    <Text className="font-GoogleSansMedium text-xl tracking-tighter">
                     Rolling Trips
                     </Text>
                 </View>
@@ -43,14 +43,14 @@ const RollingTrips = () => {
                             style={{width: "50%", gap: 2}}
                             className="flex flex-col justify-center items-center ">
                             <View className="flex flex-row justify-start items-center w-full gap-2">
-                                <Text className="text-xl font-medium">
+                                <Text className="text-xl font-GoogleSansRegular">
                                     {item.pickup}
                                 </Text>
 
-                                <Ionicons name="arrow-forward" size={24} />
+                                <Ionicons name="arrow-forward" size={18} color="gray" />
 
 
-                                <Text className="text-xl font-medium">
+                                <Text className="text-xl font-GoogleSansRegular">
                                     {item.destination}
                                 </Text>
                             </View>
@@ -58,13 +58,13 @@ const RollingTrips = () => {
                             <View className="w-full flex flex-row gap-2 items-center ">
                                 <Text
                                     style={{paddingHorizontal: 4, paddingVertical: 1, fontSize: 10}}
-                                    className=" text-white bg-tertiaryGray rounded-full">{item.minutes}</Text>
+                                    className=" text-white bg-black font-GoogleSansRegular rounded-full">{item.minutes}</Text>
 
                                 <View
                                     style={{gap: 2}}
                                     className="flex flex-row items-center ">
                                     <Ionicons name="person" size={10} color="gray"/>
-                                    <Text style={{fontSize: 12}}>{item.passengercount}</Text>
+                                    <Text className="font-GoogleSansRegular" style={{fontSize: 12}}>{item.passengercount}</Text>
                                 </View>
 
                             </View>
@@ -73,7 +73,7 @@ const RollingTrips = () => {
                         <View
                             style={{width: 84, height: 32, paddingHorizontal: 2}}
                             className="rounded-full bg-primary flex justify-center items-center">
-                            <Text numberOfLines={1} className="font-bold text-sm">{item.price}</Text>
+                            <Text numberOfLines={1} className="font-GoogleSansBold text-sm">{item.price}</Text>
                         </View>
                     </Pressable>
                 )
