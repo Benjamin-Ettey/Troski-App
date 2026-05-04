@@ -232,7 +232,7 @@ const validateUpdateVehicleInput = withValidationErrors([
     .toUpperCase()
     .notEmpty()
     .withMessage("plate number is required")
-    .matches(/^[A-Z]{1,3}-\d{1,5}-\d{2}$/)
+    .matches(/^[A-Z]{1,3}-\d{1,4}-\d{2}$/)
     .withMessage("Plate number must follow format: GT-1234-24"),
   body("vehicleColor")
     .optional()
