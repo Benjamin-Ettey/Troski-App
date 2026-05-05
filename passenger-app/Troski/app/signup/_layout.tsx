@@ -1,7 +1,8 @@
-import {View, Text} from 'react-native'
+import {View, Text, TouchableOpacity} from 'react-native'
 import React from 'react'
-import {Stack} from "expo-router";
+import {router, Stack} from "expo-router";
 import {KeyboardProvider} from "react-native-keyboard-controller";
+import {Ionicons} from "@expo/vector-icons";
 
 const _Layout = () => {
     return (
@@ -10,50 +11,92 @@ const _Layout = () => {
 
                 <Stack.Screen
                     name="emailScreen"
-                    options={{
-                        headerShown: false
-                    }}
+                    options={()=> ({
+                        headerShadowVisible: false,
+                        headerStyle: {backgroundColor: "#ffffff"},
+                        headerTitle: 'Create Account',
+                        headerLeft: ()=>(
+                            <TouchableOpacity onPress={()=>router.back()} style={{display: "flex", justifyContent: "center", alignItems: "center"}}>
+                                <Ionicons name="chevron-back" size={30} color="black"/>
+                            </TouchableOpacity>
+                        )
+                    })}
 
                 />
 
                 <Stack.Screen
                     name="phoneNumberScreen"
-                    options={{
-                        headerShown: false
-                    }}
+                    options={()=> ({
+                        headerShadowVisible: false,
+                        headerStyle: {backgroundColor: "#ffffff"},
+                        headerTitle: 'Create Account',
+                        headerLeft: ()=>(
+                            <TouchableOpacity onPress={()=>router.back()} style={{display: "flex", justifyContent: "center", alignItems: "center"}}>
+                                <Ionicons name="chevron-back" size={30} color="black"/>
+                            </TouchableOpacity>
+                        )
+                    })}
 
                 />
 
                 <Stack.Screen
                     name="pinScreen"
-                    options={{
-                        headerShown: false
-                    }}
+                    options={()=> ({
+                        headerShadowVisible: false,
+                        headerStyle: {backgroundColor: "#ffffff"},
+                        headerTitle: 'Create Account',
+                        headerLeft: ()=>(
+                            <TouchableOpacity onPress={()=>router.back()} style={{display: "flex", justifyContent: "center", alignItems: "center"}}>
+                                <Ionicons name="chevron-back" size={30} color="black"/>
+                            </TouchableOpacity>
+                        )
+                    })}
 
                 />
 
                 <Stack.Screen
                     name="confirmPinScreen"
-                    options={{
-                        headerShown: false
-                    }}
+                    options={()=> ({
+                        headerShadowVisible: false,
+                        headerStyle: {backgroundColor: "#ffffff"},
+                        headerTitle: 'Create Account',
+                        headerLeft: ()=>(
+                            <TouchableOpacity onPress={()=>router.back()} style={{display: "flex", justifyContent: "center", alignItems: "center"}}>
+                                <Ionicons name="chevron-back" size={30} color="black"/>
+                            </TouchableOpacity>
+                        )
+                    })}
 
                 />
 
 
                 <Stack.Screen
                     name="fullNameScreen"
-                    options={{
-                        headerShown: false
-                    }}
+                    options={()=> ({
+                        headerShadowVisible: false,
+                        headerStyle: {backgroundColor: "#ffffff"},
+                        headerTitle: 'Create Account',
+                        headerLeft: ()=>(
+                            <TouchableOpacity onPress={()=>router.back()} style={{display: "flex", justifyContent: "center", alignItems: "center"}}>
+                                <Ionicons name="chevron-back" size={30} color="black"/>
+                            </TouchableOpacity>
+                        )
+                    })}
 
                 />
 
                 <Stack.Screen
                     name="otpScreen"
-                    options={{
-                        headerShown: false
-                    }}
+                    options={()=> ({
+                        headerShadowVisible: false,
+                        headerStyle: {backgroundColor: "#ffffff"},
+                        headerTitle: 'Create Account',
+                        headerLeft: ()=>(
+                            <TouchableOpacity onPress={()=>router.back()} style={{display: "flex", justifyContent: "center", alignItems: "center"}}>
+                                <Ionicons name="chevron-back" size={30} color="black"/>
+                            </TouchableOpacity>
+                        )
+                    })}
 
                 />
             </Stack>

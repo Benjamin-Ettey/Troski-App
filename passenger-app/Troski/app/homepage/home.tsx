@@ -1,6 +1,6 @@
 // @ts-ignore
 
-import { View, Image, Text, Pressable } from "react-native";
+import { View, Image, Pressable } from "react-native";
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { StatusBar } from "expo-status-bar";
 import MapView, { Marker, Circle } from "react-native-maps";

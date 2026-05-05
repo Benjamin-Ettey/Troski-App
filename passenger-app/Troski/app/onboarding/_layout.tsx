@@ -1,5 +1,6 @@
 import React from 'react'
 import { Stack } from 'expo-router'
+import LandingPage from "@/app/onboarding/landingPage";
 
 const _Layout = () => {
     return (
@@ -7,7 +8,8 @@ const _Layout = () => {
             <Stack.Screen
                 name="landingPage"
                 options={{
-                    headerShown: false
+                    headerShown: false,
+                    gestureEnabled: false
                 }}
 
             />
