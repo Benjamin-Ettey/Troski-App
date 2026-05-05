@@ -47,7 +47,7 @@ const RollingTrips = () => {
                                     {item.pickup}
                                 </Text>
 
-                                <Ionicons name="arrow-forward" size={18} color="gray" />
+                                <Ionicons name="arrow-forward" size={12} color="black" />
 
 
                                 <Text className="text-xl font-GoogleSansRegular">
