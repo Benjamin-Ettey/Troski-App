@@ -1,10 +1,16 @@
 import {View, Text, Pressable} from 'react-native'
 import React from 'react'
 import {Ionicons} from "@expo/vector-icons";
+import {router} from "expo-router";
 
 const LogoutNavBar = ({name, title} : any) => {
+    const handleLogout= ()=>{
+        router.replace("../onboarding/landingPage")
+    }
+
     return (
         <Pressable
+            onPress={handleLogout}
             style={{paddingHorizontal: 16, paddingVertical: 16,}}
             className="flex flex-row justify-between items-center">
             <View className="flex flex-row justify-start items-center gap-4">

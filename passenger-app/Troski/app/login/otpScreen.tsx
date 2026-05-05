@@ -76,10 +76,10 @@ const OtpScreen = () => {
                             <View className="w-full mb-4">
                                 <Text className="text-2xl font-GoogleSansMedium tracking-tight">Enter OTP</Text>
                                 {via?
-                                    <Text className="text-sm font-GoogleSansRegular">Type in the 6-digit verification sent to {number} in the
+                                    <Text className="text-sm font-GoogleSansRegular">Type in the 6-digit verification sent to <Text className="font-GoogleSansBold">{number}</Text> in the
                                         field provided.</Text>
                                     :
-                                    <Text className="text-sm font-GoogleSansRegular">Type in the 6-digit verification sent to {email} in the
+                                    <Text className="text-sm font-GoogleSansRegular">Type in the 6-digit verification sent to <Text className="font-GoogleSansMedium">{email}</Text> in the
                                         field provided.</Text>
                                 }
 
@@ -93,10 +93,10 @@ const OtpScreen = () => {
                                 type="numeric"
                                 placeholder="******"/>
                             <View className="mt-6 mb-8 w-full flex flex-col justify-center items-start">
-                                <View className="flex flex-row justify-start w-full ">
+                                <View className="flex flex-row justify-start w-full items-center">
                                     <Ionicons name="lock-closed" size={10} color="gray" style={{marginRight: "2%"}}
-                                              className="mt-1"/>
-                                    <Text style={{flexShrink: 1}} className="text-sm mb-1 font-GoogleSansRegular">Do not share this PIN code
+                                              className=""/>
+                                    <Text style={{flexShrink: 1}} className="text-sm  font-GoogleSansRegular">Do not share this PIN code
                                         with anyone. </Text>
                                 </View>
 

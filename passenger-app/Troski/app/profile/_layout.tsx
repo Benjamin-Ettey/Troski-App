@@ -19,6 +19,34 @@ const _Layout = () => {
                     )
                 })}
             />
+
+            <Stack.Screen
+                name="editProfile"
+                options={()=> ({
+                    headerShadowVisible: false,
+                    headerStyle: {backgroundColor: "#F5F7FA"},
+                    headerTitle: 'Edit Profile',
+                    headerLeft: ()=>(
+                        <TouchableOpacity onPress={()=>router.back()} style={{display: "flex", justifyContent: "center", alignItems: "center"}}>
+                            <Ionicons name="chevron-back" size={30} color="black"/>
+                        </TouchableOpacity>
+                    )
+                })}
+            />
+
+            <Stack.Screen
+                name="rideHistory"
+                options={()=> ({
+                    headerShadowVisible: false,
+                    headerStyle: {backgroundColor: "#F5F7FA"},
+                    headerTitle: 'Ride History',
+                    headerLeft: ()=>(
+                        <TouchableOpacity onPress={()=>router.back()} style={{display: "flex", justifyContent: "center", alignItems: "center"}}>
+                            <Ionicons name="chevron-back" size={30} color="black"/>
+                        </TouchableOpacity>
+                    )
+                })}
+            />
         </Stack>
     )
 }

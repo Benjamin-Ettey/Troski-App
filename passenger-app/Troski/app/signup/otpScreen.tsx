@@ -9,9 +9,12 @@ import OtpModal from "@/components/ui/OtpModal";
 
 const OtpScreen = () => {
     const number = useAppStore((state) => state.number);
+    const email = useAppStore((state) => state.email);
     const otpEndTime = useAppStore((state) => state.otpEndTime);
     const setOtpEndTime = useAppStore((state) => state.setOtpEndTime);
-    const [showModal, setShowModal] = useState(false)
+    const [showModal, setShowModal] = useState(false);
+
+    const [via, setVia] = useState(true);
 
 
     useEffect(() => {
@@ -43,7 +46,15 @@ const OtpScreen = () => {
     const resendCode = () => {
         const newEnd = Date.now() + 60 * 1000;
         setOtpEndTime(newEnd);
+        setVia(true)
     };
+
+    const handleEmailCode = () =>{
+        const newEnd = Date.now() + 60 * 1000;
+        setOtpEndTime(newEnd);
+
+        setVia(false)
+    }
 
     const handleOTP = ()=>{
 
@@ -56,15 +67,22 @@ const OtpScreen = () => {
             <KeyboardAwareScrollView
                 keyboardShouldPersistTaps="handled"
                 className="flex-1">
-                    <StatusBar style="dark"/>
+                <StatusBar style="dark"/>
 
-                    {showModal?
-                        <OtpModal/>: <>
-                            <View className="w-full flex-1 flex items-center px-6">
+                {showModal?
+                    <OtpModal/>: <>
+
+                        <View className="w-full flex-1 flex items-center px-6">
                             <View className="w-full mb-4">
                                 <Text className="text-2xl font-GoogleSansMedium tracking-tight">Enter OTP</Text>
-                                <Text className="text-sm font-GoogleSansRegular">Type in the 6-digit verification sent to {number} in the
-                                    field provided.</Text>
+                                {via?
+                                    <Text className="text-sm font-GoogleSansRegular">Type in the 6-digit verification sent to <Text className="font-GoogleSansBold">{number}</Text> in the
+                                        field provided.</Text>
+                                    :
+                                    <Text className="text-sm font-GoogleSansRegular">Type in the 6-digit verification sent to <Text className="font-GoogleSansBold">{email}</Text> in the
+                                        field provided.</Text>
+                                }
+
 
                             </View>
 
@@ -89,16 +107,31 @@ const OtpScreen = () => {
                             <View className="flex flex-col gap-2 justify-center items-center w-full mt-4">
                                 {seconds > 0 ?
                                     <View className="flex flex-row justify-center items-center">
-                                        <Text className="font-medium font-GoogleSansRegular">Send another code: {seconds}</Text>
+                                        <Text className="font-GoogleSansMedium">Send another code: {seconds}</Text>
                                     </View>
                                     :
-                                    <TouchableOpacity onPress={resendCode}
-                                                      className="flex flex-row justify-center items-center"><Text
-                                        className="font-GoogleSansMedium text-yellow-500 ">Resend code</Text></TouchableOpacity>}
+                                    <>
+                                        <TouchableOpacity
+                                            onPress={resendCode}
+                                            style={{marginBottom: 10}}
+                                            className="flex flex-row justify-center items-center">
+                                            <Text className="font-GoogleSansBold text-yellow-500">Resend code</Text>
+                                        </TouchableOpacity>
+
+                                        <TouchableOpacity
+                                            onPress={handleEmailCode}
+                                            style={{paddingVertical: 4, paddingHorizontal: 8}}
+                                            className="flex flex-row justify-center items-center  rounded-full border border-black">
+                                            <Text className="font-GoogleSansBold text-secondaryBlack">Send code via email</Text>
+                                        </TouchableOpacity>
+
+                                    </>
+
+                                }
 
                             </View>
                         </View></>
-                    }
+                }
 
 
             </KeyboardAwareScrollView>
