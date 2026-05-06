@@ -28,7 +28,8 @@ const ProfileScreen = () => {
 
         const result = await ImagePicker.launchImageLibraryAsync({
             mediaTypes: ["images"],
-            quality: 1
+            quality: 1,
+            allowsEditing: true,
         });
         if (!result.canceled){
             setImage(result.assets[0].uri)
@@ -90,7 +91,7 @@ const ProfileScreen = () => {
                             className="w-full bg-general">
                             <NavBar onPress={()=>router.push("/profile/rideHistory")} name="time" title="Ride History" textcolor="#444444" color="black" goforwardcolor="gray"/>
                             <View style={{width: "100%", height: 1, backgroundColor: "#e4e4e477"}} />
-                            <NavBar name="card" title="Payment Methods" textcolor="#444444" color="black" goforwardcolor="gray"/>
+                            <NavBar onPress={()=> router.push("/profile/paymentMethod")} name="card" title="Payment Methods" textcolor="#444444" color="black" goforwardcolor="gray"/>
                             <View style={{width: "100%", height: 1, backgroundColor: "#e4e4e477"}} />
                             <NavBar name="wallet" title="My Wallet" textcolor="#444444" color="black" goforwardcolor="gray"/>
 

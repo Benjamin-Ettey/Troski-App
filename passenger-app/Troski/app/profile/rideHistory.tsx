@@ -1,15 +1,42 @@
-import {View, Text, FlatList, Image, TouchableOpacity, Alert} from 'react-native'
+import {View, Text, FlatList, Image, TouchableOpacity, Alert, SectionList} from 'react-native'
 import React, {useState} from 'react'
 import {Ionicons} from "@expo/vector-icons";
 
 const RideHistory = () => {
     const [showRideHistory, setShowRideHistory] = useState(false);
 
-    const data = [
-        {id: 1, pickup: "Kasoa", destination: "Madina", price: "GH₵10.50", date: "15 Jan", passengercount: 8},
-        {id: 2, pickup: "Madina", destination: "Circle", price: "GH₵20.00", date: "4 May", passengercount: 2},
-        {id: 3, pickup: "Circle", destination: "Kasoa", price: "GH₵30.55", date: "2 Apr", passengercount: 10},
-        {id: 4, pickup: "Tema", destination: "Airport", price: "GH₵5.50", date: "10 Feb", passengercount: 20},
+    const DATA = [
+        {date: "Jan 2026",
+
+            data:[
+            {id: 1, pickup: "Kasoa", destination: "Madina", price: "GH₵10.50", date: "15 Jan", passengercount: 8},
+            {id: 2, pickup: "Madina", destination: "Circle", price: "GH₵20.00", date: "4 May", passengercount: 2},
+            {id: 3, pickup: "Circle", destination: "Kasoa", price: "GH₵30.55", date: "2 Apr", passengercount: 10},
+            {id: 4, pickup: "Tema", destination: "Airport", price: "GH₵5.50", date: "10 Feb", passengercount: 20},
+            {id: 5, pickup: "Madina", destination: "Circle", price: "GH₵20.00", date: "4 May", passengercount: 2},
+            ]
+        },
+
+        {date: "Feb 2026",
+            data:[
+            {id: 6, pickup: "Circle", destination: "Kasoa", price: "GH₵30.55", date: "2 Apr", passengercount: 10},
+            {id: 7, pickup: "Tema", destination: "Airport", price: "GH₵5.50", date: "10 Feb", passengercount: 20},
+            {id: 8, pickup: "Madina", destination: "Circle", price: "GH₵20.00", date: "4 May", passengercount: 2},
+            {id: 9, pickup: "Circle", destination: "Kasoa", price: "GH₵30.55", date: "2 Apr", passengercount: 10},
+            {id: 10, pickup: "Tema", destination: "Airport", price: "GH₵5.50", date: "10 Feb", passengercount: 20},
+            ]
+        },
+
+        {date: "Feb 2026",
+            data:[
+                {id: 11, pickup: "Circle", destination: "Kasoa", price: "GH₵30.55", date: "2 Apr", passengercount: 10},
+                {id: 12, pickup: "Tema", destination: "Airport", price: "GH₵5.50", date: "10 Feb", passengercount: 20},
+                {id: 13, pickup: "Madina", destination: "Circle", price: "GH₵20.00", date: "4 May", passengercount: 2},
+                {id: 14, pickup: "Circle", destination: "Kasoa", price: "GH₵30.55", date: "2 Apr", passengercount: 10},
+                {id: 15, pickup: "Tema", destination: "Airport", price: "GH₵5.50", date: "10 Feb", passengercount: 20},
+            ]
+        },
+
     ];
 
     const handleClearRideHistory = ()=>{
@@ -44,23 +71,27 @@ const RideHistory = () => {
                 <View style={{flex: 1, marginTop: "-20%"}} className="w-full flex justify-center items-center">
                     <Ionicons style={{marginBottom: 10}} name="timer-outline" size={100} color="gray"/>
                     <Text className="font-GoogleSansMedium">No Ride History.</Text>
-                    <Text style={{marginBottom: 16}} className="font-GoogleSansRegular">Your ride history will appear here.</Text>
+                    <Text style={{marginBottom: 16}} className="font-GoogleSansRegular text-center flex-shrink">Your ride history will appear here once you book a ride.</Text>
 
                     <TouchableOpacity style={{paddingHorizontal: 12, paddingVertical: 12}} className="bg-primary rounded-full flex justify-center items-center">
                         <Text className="font-GoogleSansMedium">Book a ride</Text>
                     </TouchableOpacity>
                 </View>
                 :
-                <View style={{paddingHorizontal: 16}} className="w-full flex items-center">
+                <View style={{paddingLeft: 16}} className="w-full flex items-center">
                     <View style={{borderRadius: 32, marginTop: 4}} >
-                    <FlatList
-                        data={data}
+                    <SectionList
+                        sections={DATA}
                         keyExtractor={(item)=>item.id.toString()}
-                        ListHeaderComponent= {
-                            <View style={{paddingHorizontal: 16}}>
-                                <Text className="font-GoogleSansMedium text-xl">Jan 2026</Text>
-                            </View>
-                    }
+
+                        renderSectionHeader={({section})=>{
+                            return(
+                                <View style={{paddingHorizontal: 16, marginTop: 24}}>
+                                    <Text className="font-GoogleSansMedium text-xl">{section.date}</Text>
+                                </View>
+                            )
+                        }}
+
                         renderItem={({item})=>{
                             return(
 
@@ -69,10 +100,8 @@ const RideHistory = () => {
                                     style={{height: 72, borderRadius: 24, paddingLeft: 20, paddingRight: 20,}}
                                     className="w-full  flex flex-row justify-between items-center">
                                     <View>
-                                        <Image
-                                            source={require("../../assets/images/minibus.png")}
-                                            style={{width: 32, height: 32}}
-                                        />
+                                        <Ionicons name="location" size={32} color="black"/>
+
                                     </View>
 
 
@@ -80,6 +109,11 @@ const RideHistory = () => {
                                         style={{width: "50%", gap: 2, }}
                                         className="flex  flex-col justify-center items-center ">
                                         <View className="flex flex-row justify-start items-center w-full gap-2">
+                                            <Text className="text-xl font-GoogleSansRegular">
+                                                {item.pickup}
+                                            </Text>
+
+                                            <Ionicons name="arrow-forward" size={12} color="black"/>
 
                                             <Text className="text-xl font-GoogleSansRegular">
                                                 {item.destination}
@@ -103,7 +137,9 @@ const RideHistory = () => {
 
                                 </View>
 
-                            <View style={{height: 1, backgroundColor: "#44444422"}} className="w-full "/>
+                                <View className="w-full flex justify-end items-end">
+                                    <View style={{height: 1, backgroundColor: "#44444422"}} className="w-[80%] "/>
+                                </View>
 
 
                             </>
@@ -112,7 +148,7 @@ const RideHistory = () => {
                     </View>
 
                     <View style={{ bottom: 0, height: "15%"}} className="absolute w-full flex justify-center items-center">
-                        <TouchableOpacity onPress={handleClearRideHistory} style={{paddingHorizontal: 12, paddingVertical: 12}} className="bg-primary rounded-full flex justify-center items-center">
+                        <TouchableOpacity onPress={handleClearRideHistory} style={{paddingHorizontal: 12, paddingVertical: 12}} className="bg-primary rounded-full shadow-2xl shadow-white flex justify-center items-center">
                             <Text className="font-GoogleSansMedium">Clear Ride History</Text>
                         </TouchableOpacity>
                     </View>

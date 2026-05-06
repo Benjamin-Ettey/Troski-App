@@ -6,11 +6,13 @@ export const useAppStore = create((set)=> ({
         email: '',
         number: '',
         image: '',
+        serviceprovider: '',
 
         setName: (name) => set({ name }),
         setEmail: (email) => set({ email }),
         setNumber: (number) => set({ number }),
         setImage: (image) => set({ image }),
+        setServiceProvider: (serviceprovider)=> set({serviceprovider}),
 
     otpEndTime: null,
 

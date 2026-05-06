@@ -1,9 +1,8 @@
-import {View, Text, TouchableOpacity, Modal, TextInput} from 'react-native'
+import {View, Text, TouchableOpacity} from 'react-native'
 import React, {useState} from 'react'
 import {Ionicons} from "@expo/vector-icons";
 import {useAppStore} from "@/utils/store";
-import PrimaryButton from "@/components/PrimaryButton";
-import {router} from "expo-router";
+
 
 const EditProfile = () => {
     const email = useAppStore((state)=>state.email);
@@ -12,11 +11,9 @@ const EditProfile = () => {
     const myimage =  useAppStore((state)=> state.image);
 
 
-    const [showNamePop, setShowNamePop] = useState(false);
     const [showProfile, setShowProfile] = useState(true)
 
     const handleNameChange = () => {
-        setShowNamePop(true)
         setShowProfile(false)
     }
 
@@ -78,39 +75,6 @@ const EditProfile = () => {
     </>
 }
 
-
-            {showNamePop &&
-                <View
-                    style={{bottom: 0, borderTopLeftRadius: 36, borderTopRightRadius: 36, height: "100%", paddingHorizontal: 16, paddingVertical: 16}}
-                    className="absolute w-full bg-general shadow-2xl shadow-tertiaryGray">
-
-                    <View style={{marginBottom: "10%"}} className="w-full flex justify-start items-center flex-row ">
-                        <TouchableOpacity style={{padding: 5}} className="bg-general rounded-full shadow-2xl ">
-                            <Ionicons name="close" size={32} color="black" className="ml-auto"/>
-                        </TouchableOpacity>
-                    </View>
-                    <Text className="font-GoogleSansRegular">
-                        Edit Full Name
-                    </Text>
-                    <TextInput
-                        autoCorrect={false}
-                        autoFocus={true}
-                        autoCapitalize="none"
-                        textContentType="name"
-                        autoComplete="name"
-                        keyboardType="default"
-                        style={{paddingLeft: 16, marginBottom: 16}}
-                        className="bg-general mb-1 font-GoogleSansMedium text-secondaryBlack w-full py-4 border border-tertiaryGray  rounded-xl focus:border focus:border-green-600/40"
-
-                    />
-
-                    <View className="w-full flex justify-center items-center">
-                        <PrimaryButton disabled={false} name="Save" onPress={()=>router.push("/profile/editProfile")}/>
-                    </View>
-
-                </View>
-
-            }
         </View>
     )
 }
