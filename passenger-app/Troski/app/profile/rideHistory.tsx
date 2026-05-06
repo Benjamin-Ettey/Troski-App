@@ -1,4 +1,4 @@
-import {View, Text, FlatList, Image, TouchableOpacity, Alert, SectionList} from 'react-native'
+import {View, Text,TouchableOpacity, Alert, SectionList} from 'react-native'
 import React, {useState} from 'react'
 import {Ionicons} from "@expo/vector-icons";
 

@@ -1,5 +1,5 @@
-import {Image, Pressable, ScrollView, Text, View} from 'react-native'
-import React, {useState} from 'react'
+import {Image, ScrollView, Text, View} from 'react-native'
+import React from 'react'
 import {StatusBar} from "expo-status-bar";
 import {Ionicons} from "@expo/vector-icons";
 import NavBar from "@/components/NavBar";
@@ -12,17 +12,14 @@ import * as ImagePicker from 'expo-image-picker'
 const ProfileScreen = () => {
     const email = useAppStore((state)=>state.email);
     const name =  useAppStore((state)=> state.name)
-    const myimage = useAppStore((state)=>state.setImage)
+    const image = useAppStore((state) => state.image);
+    const setImage = useAppStore((state) => state.setImage);
 
-    const [selectedImage, setSelectedImage] = useState(true);
-
-
-    const [image, setImage] = useState<string|null>(null);
     const handleImagePicker = async () => {
 
         const permission = await ImagePicker.requestMediaLibraryPermissionsAsync()
         if (!permission.granted){
-            alert("Permission to access gallery is reqired!")
+            alert("Permission to access gallery is required!")
             return
         }
 
@@ -54,6 +51,7 @@ const ProfileScreen = () => {
                                 className="flex justify-center items-center rounded-full border-2 border-primary"
                                 resizeMode="cover"
                             />
+
                         ) : (
                             <View
                                 style={{width: 60, height: 60, padding: 10, backgroundColor: "#ffcc0033" }}

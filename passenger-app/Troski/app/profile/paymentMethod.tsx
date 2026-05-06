@@ -9,6 +9,7 @@ const PaymentMethod = () => {
     const serviceprovider = useAppStore((state)=>state.serviceprovider)
     const number = useAppStore((state)=>state.number)
 
+
     const handleDeletePaymentMethod= () =>{
         Alert.alert("Delete Payment Method?", "You are about to permanently delete your payment method. This action cannot be reversed.",
             [

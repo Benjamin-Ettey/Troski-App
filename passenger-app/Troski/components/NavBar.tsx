@@ -11,7 +11,7 @@ const NavBar = ({name, title, textcolor, color, goforwardcolor, onPress} : any) 
             className="flex flex-row justify-between items-center">
             <View className="flex flex-row justify-start items-center gap-4">
                 <Ionicons name={name} size={20} color={color}/>
-                    <Text style={{color: textcolor}} className="text-md font-GoogleSansMedium">{title}</Text>
+                <Text style={{color: textcolor}} className="text-md font-GoogleSansMedium">{title}</Text>
             </View>
 
             <Ionicons name="chevron-forward" size={20} color={goforwardcolor}/>
