@@ -125,6 +125,106 @@ const _Layout = () => {
                                 )
                             })}
                         />
+
+                        <Stack.Screen
+                            name="myWallet"
+                            options={()=> ({
+                                headerShadowVisible: false,
+                                headerStyle: {backgroundColor: "#F5F7FA"},
+                                headerTitle: 'My wallet',
+                                headerLeft: ()=>(
+                                    <TouchableOpacity onPress={()=>router.back()} style={{display: "flex", justifyContent: "center", alignItems: "center"}}>
+                                        <Ionicons name="chevron-back" size={30} color="black"/>
+                                    </TouchableOpacity>
+                                )
+                            })}
+                        />
+
+                        <Stack.Screen
+                            name="settings"
+                            options={()=> ({
+                                headerShadowVisible: false,
+                                headerStyle: {backgroundColor: "#F5F7FA"},
+                                headerTitle: 'Settings',
+                                headerLeft: ()=>(
+                                    <TouchableOpacity onPress={()=>router.back()} style={{display: "flex", justifyContent: "center", alignItems: "center"}}>
+                                        <Ionicons name="chevron-back" size={30} color="black"/>
+                                    </TouchableOpacity>
+                                )
+                            })}
+                        />
+
+                        <Stack.Screen
+                            name="oldPinCode"
+                            options={()=> ({
+                                headerShadowVisible: false,
+                                headerStyle: {backgroundColor: "#F5F7FA"},
+                                headerTitle: 'Change pin code',
+                                headerLeft: ()=>(
+                                    <TouchableOpacity onPress={()=>router.back()} style={{display: "flex", justifyContent: "center", alignItems: "center"}}>
+                                        <Ionicons name="chevron-back" size={30} color="black"/>
+                                    </TouchableOpacity>
+                                )
+                            })}
+                        />
+
+                        <Stack.Screen
+                            name="newPinCode"
+                            options={()=> ({
+                                headerShadowVisible: false,
+                                headerStyle: {backgroundColor: "#F5F7FA"},
+                                headerTitle: 'Change pin code',
+                                headerLeft: ()=>(
+                                    <TouchableOpacity onPress={()=>router.back()} style={{display: "flex", justifyContent: "center", alignItems: "center"}}>
+                                        <Ionicons name="chevron-back" size={30} color="black"/>
+                                    </TouchableOpacity>
+                                )
+                            })}
+                        />
+
+                        <Stack.Screen
+                            name="notifications"
+                            options={()=> ({
+                                headerShadowVisible: false,
+                                headerStyle: {backgroundColor: "#F5F7FA"},
+                                headerTitle: 'Notifications',
+                                headerLeft: ()=>(
+                                    <TouchableOpacity onPress={()=>router.back()} style={{display: "flex", justifyContent: "center", alignItems: "center"}}>
+                                        <Ionicons name="chevron-back" size={30} color="black"/>
+                                    </TouchableOpacity>
+                                )
+                            })}
+                        />
+
+                        <Stack.Screen
+                            name="information"
+                            options={()=> ({
+                                headerShadowVisible: false,
+                                headerStyle: {backgroundColor: "#F5F7FA"},
+                                headerTitle: 'Information',
+                                headerLeft: ()=>(
+                                    <TouchableOpacity onPress={()=>router.back()} style={{display: "flex", justifyContent: "center", alignItems: "center"}}>
+                                        <Ionicons name="chevron-back" size={30} color="black"/>
+                                    </TouchableOpacity>
+                                )
+                            })}
+                        />
+
+                        <Stack.Screen
+                            name="recentEmails"
+                            options={()=> ({
+                                headerShadowVisible: false,
+                                headerStyle: {backgroundColor: "#F5F7FA"},
+                                headerTitle: 'Recent emails',
+                                headerLeft: ()=>(
+                                    <TouchableOpacity onPress={()=>router.back()} style={{display: "flex", justifyContent: "center", alignItems: "center"}}>
+                                        <Ionicons name="chevron-back" size={30} color="black"/>
+                                    </TouchableOpacity>
+                                )
+                            })}
+                        />
+
+
                     </Stack>
                 </KeyboardProvider>
             </BottomSheetModalProvider>

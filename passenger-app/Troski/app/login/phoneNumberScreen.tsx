@@ -34,7 +34,7 @@ const PhoneNumberScreen = () => {
 
         setNumber(value);
 
-        router.push("../login/otpScreen");
+        router.replace("../login/otpScreen");
     };
 
 

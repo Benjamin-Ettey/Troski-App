@@ -50,7 +50,7 @@ const EditProfile = () => {
         if (fullName.trim().length <= 3) return;
 
         setName(fullName)
-        router.replace("/homepage/home");
+        router.replace("/profile/editProfile");
     };
 
     const isDisabledFullName = fullName.trim().length <= 3;
@@ -100,7 +100,7 @@ const EditProfile = () => {
         }
 
         setEmail(emailAddress.trim());
-        router.push("/homepage/home");
+        router.replace("/profile/editProfile");
     }
 
     const handleEmailChange = (text: string) => {
@@ -153,14 +153,14 @@ const EditProfile = () => {
 
                     </View>
 
-                    <View style={{paddingHorizontal: 16, marginBottom: 20}} className="w-full">
-                <Text style={{fontSize: 16, paddingLeft: 10, marginBottom: 5}} className="font-GoogleSansRegular">Name</Text>
-                <View style={{borderRadius: 24, height: 48, paddingLeft: 24}} className="bg-general flex justify-center items-center">
-                    <TouchableOpacity style={{ flex:1}} onPress={()=>openSheet("name")} className="w-full flex flex-row justify-between items-center">
-                        <Text className="font-GoogleSansMedium text-secondaryGray">{name}</Text>
-                        <Ionicons style={{paddingRight: 16}} name="create-outline" size={18} color="gray"/>
-                    </TouchableOpacity>
-                </View>
+                 <View style={{paddingHorizontal: 16, marginBottom: 20}} className="w-full">
+                    <Text style={{fontSize: 16, paddingLeft: 10, marginBottom: 5}} className="font-GoogleSansRegular">Name</Text>
+                    <View style={{borderRadius: 24, height: 48, paddingLeft: 24}} className="bg-general flex justify-center items-center">
+                        <TouchableOpacity style={{ flex:1}} onPress={()=>openSheet("name")} className="w-full flex flex-row justify-between items-center">
+                            <Text className="font-GoogleSansMedium text-secondaryGray">{name}</Text>
+                            <Ionicons style={{paddingRight: 16}} name="create-outline" size={18} color="gray"/>
+                        </TouchableOpacity>
+                 </View>
                 <Text
                     style={{paddingLeft: 10, marginTop: 5}}
                     className="text-xs font-GoogleSansRegular"

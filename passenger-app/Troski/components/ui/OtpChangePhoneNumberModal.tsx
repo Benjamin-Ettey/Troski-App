@@ -12,7 +12,7 @@ const OtpChangePhoneNumber = () => {
 
     useEffect(() => {
         const timer = setTimeout(() => {
-            router.replace("/homepage/home");
+            router.back();
         }, 3000);
 
         return () => clearTimeout(timer);

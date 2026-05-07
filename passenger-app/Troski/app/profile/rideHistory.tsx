@@ -148,8 +148,10 @@ const RideHistory = () => {
                     </View>
 
                     <View style={{ bottom: 0, height: "15%"}} className="absolute w-full flex justify-center items-center">
-                        <TouchableOpacity onPress={handleClearRideHistory} style={{paddingHorizontal: 12, paddingVertical: 12}} className="bg-primary rounded-full shadow-2xl shadow-white flex justify-center items-center">
-                            <Text className="font-GoogleSansMedium">Clear Ride History</Text>
+                        <TouchableOpacity onPress={handleClearRideHistory}
+                              style={{paddingHorizontal: 12, paddingVertical: 12, backgroundColor: "#ff0000"}}
+                              className=" rounded-full shadow-2xl shadow-white flex justify-center items-center">
+                            <Text style={{color: "white"}} className="font-GoogleSansMedium">Clear Ride History</Text>
                         </TouchableOpacity>
                     </View>
 
