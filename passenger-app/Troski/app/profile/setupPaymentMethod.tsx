@@ -32,20 +32,21 @@ const SetupPaymentMethod = () => {
         }
     };
 
-    const handleNext = () => {
-        if (value.length !== 10 ) {
+    const addPaymentMethod = useAppStore((state) => state.addPaymentMethod);
+
+    const handleSetup = () => {
+        if (value.length !== 10) {
             setError('Enter a valid 10-digit number');
             return;
         }
 
+        addPaymentMethod({
+            number: value,
+            provider: selectedValue,
+        });
 
-        setNumber(value);
-        setServiceProvider(selectedValue)
-
-
-        router.replace("/profile/paymentMethod");
+        router.back();
     };
-
 
 
 
@@ -124,7 +125,7 @@ const SetupPaymentMethod = () => {
                         <Text className="text-sm font-GoogleSansRegular">This number will be used for payment transactions.</Text>
                     </View>}
 
-                    <PrimaryButton name="Setup" disabled={value.length !== 10 } onPress={handleNext}/>
+                    <PrimaryButton name="Setup" disabled={value.length !== 10 } onPress={handleSetup}/>
                 </View>
 
             </KeyboardAwareScrollView>

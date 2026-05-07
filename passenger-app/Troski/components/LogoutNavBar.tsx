@@ -5,7 +5,7 @@ import {router} from "expo-router";
 
 const LogoutNavBar = ({name, title} : any) => {
     const handleLogout= ()=>{
-        router.replace("../onboarding/landingPage")
+        router.replace("../login/phoneNumberScreen")
     }
 
     return (

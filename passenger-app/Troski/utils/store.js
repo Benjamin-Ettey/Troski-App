@@ -15,6 +15,17 @@ export const useAppStore = create((set)=> ({
         setImage: (image) => set({ image }),
         setServiceProvider: (serviceprovider)=> set({serviceprovider}),
 
+        removePaymentMethod: (index) =>
+            set((state) => ({
+                paymentMethods: state.paymentMethods.filter((_, i) => i !== index),
+        })),
+
+        paymentMethods: [],
+        addPaymentMethod: (method) =>
+            set((state) => ({
+                paymentMethods: [...state.paymentMethods, method],
+            })),
+
 
         otpEndTime: null,
 

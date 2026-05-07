@@ -21,7 +21,7 @@ const ChangeNumberInfo = () => {
             </View>
 
             <View style={{bottom: 0, height: 100}} className="absolute w-full flex justify-center items-center">
-                <PrimaryButton name="Next" disabled={false} onPress={()=>router.push("/profile/changePhoneNumber")}/>
+                <PrimaryButton name="Next" disabled={false} onPress={()=>router.replace("/profile/changePhoneNumber")}/>
             </View>
 
         </View>

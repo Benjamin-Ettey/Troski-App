@@ -67,7 +67,7 @@ const ChangePhoneNumber = () => {
         }
 
         setNumber(newValue);
-        router.push("/profile/otpChangePhoneNumber");
+        router.replace("/profile/otpChangePhoneNumber");
     };
 
 
