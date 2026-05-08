@@ -7,6 +7,8 @@ export const useAppStore = create((set)=> ({
         number: '',
         image: '',
         serviceprovider: '',
+        pin: '',
+        tempPin: '',
 
 
         setName: (name) => set({ name }),
@@ -14,6 +16,8 @@ export const useAppStore = create((set)=> ({
         setNumber: (number) => set({ number }),
         setImage: (image) => set({ image }),
         setServiceProvider: (serviceprovider)=> set({serviceprovider}),
+        setPin: (pin) => set({pin}),
+        setTempPin: (tempPin)=> set({tempPin}),
 
         removePaymentMethod: (index) =>
             set((state) => ({
@@ -34,4 +38,31 @@ export const useAppStore = create((set)=> ({
 
             clearUser: () => set({ name: '', email: '' , number: '',}),
 
+
+            notifications: {
+                rideUpdates: true,
+                paymentNotifications: true,
+                announcements: false,
+            },
+
+            toggleNotification: (key) =>
+                set((state) => ({
+                    notifications: {
+                        ...state.notifications,
+                        [key]: !state.notifications[key],
+                    },
+                })),
+
+
+        resetNotifications: () =>
+            set({
+                notifications: {
+                    rideUpdates: true,
+                    paymentNotifications: true,
+                    announcements: false,
+                },
+            }),
+
+
         }));
+

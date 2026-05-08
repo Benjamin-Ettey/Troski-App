@@ -52,6 +52,13 @@ const _Layout = () => {
                 }}
             />
 
+            <Stack.Screen
+                name="bookings"
+                options={{
+                    headerShown: false
+                }}
+            />
+
         </Stack>
 
     )

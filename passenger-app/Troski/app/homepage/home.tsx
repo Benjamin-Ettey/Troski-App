@@ -1,6 +1,6 @@
 // @ts-ignore
 
-import { View, Image, Pressable } from "react-native";
+import {View, Image, Pressable, Modal, Text, TouchableOpacity} from "react-native";
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { StatusBar } from "expo-status-bar";
 import MapView, { Marker, Circle } from "react-native-maps";
@@ -118,10 +118,11 @@ const Home = () => {
             </MapView>
 
             <View
+                className="w-full flex flex-row justify-between items-center"
                 style={{
                     position: "absolute",
                     top: 60,
-                    left: 20,
+
                 }}
             >
                 <Pressable
@@ -131,9 +132,30 @@ const Home = () => {
                         padding: 10,
                         borderRadius: 20,
                         elevation: 5,
+                        left: 20,
                     }}
                 >
                     <Ionicons name="menu" size={24} />
+                </Pressable>
+
+                <Pressable
+                    className="flex flex-row justify-between items-center rounded-full"
+                    style={{
+                        backgroundColor: "white",
+                        padding: 10,
+                        elevation: 5,
+                        right: 20,
+                        gap: 10
+                    }}
+                >
+                    <TouchableOpacity onPress={()=>router.push("/profile/rideHistory")}>
+                        <Ionicons name="car-outline" size={24} />
+                    </TouchableOpacity>
+
+                    <TouchableOpacity onPress={()=>router.push("/profile/recentNotifications")}>
+                        <Ionicons name="notifications-outline" size={24} />
+                    </TouchableOpacity>
+
                 </Pressable>
             </View>
 
@@ -146,13 +168,15 @@ const Home = () => {
             >
                 <BottomSheetView>
                     <View className="flex flex-col gap-4" style={{ padding: 16 }}>
-                        <SearchBarButton name="Where are you going?" onPress={()=>router.push("../homepage/home")}/>
+                        <SearchBarButton name="Where are you going?" onPress={()=>router.push("/bookings/searchRides")}/>
                         <RollingTrips/>
                     </View>
 
 
                 </BottomSheetView>
             </BottomSheet>
+
+
         </View>
     );
 };

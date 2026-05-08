@@ -63,9 +63,15 @@ const MyWallet = () => {
     return (
         <View style={{backgroundColor: "#F5F7FA", flex: 1}} className="w-full">
             <View style={{height: "30%", marginBottom: 16 }} className="w-full flex flex-col justify-center items-center">
+                <View style={{ marginBottom: 10, paddingHorizontal: 10, paddingVertical: 5}} className="rounded-full bg-secondaryBlack flex flex-row justify-center items-center">
+                    <Ionicons style={{marginRight: 8}} name="wallet-outline" size={16} color="white"/>
+                    <Text style={{fontSize: 16}}  className=" font-GoogleSansMedium  text-general text-center flex-shrink ">Total Balance</Text>
+                </View>
+
                 <Text
                     style={{fontSize: 40, marginBottom: 30}}
-                    className=" font-GoogleSansMedium text-center flex-shrink">GH₵10.50</Text>
+                    className=" font-GoogleSansMedium text-center flex-shrink">GH₵10.50
+                </Text>
                 <View
                     style={{gap: 48}}
                     className="w-full flex flex-row justify-center items-center">
@@ -95,7 +101,7 @@ const MyWallet = () => {
                 <View style={{height: 1, width: "50%"}} className="bg-tertiaryGray"/>
             </View>
 
-            <View style={{flex: 1}} className="w-full bg-red-600 items-center">
+            <View style={{flex: 1}} className="w-full items-center">
                 {showRideHistory?
                     <View style={{flex: 1}} className="w-full flex justify-center items-center">
                         <Ionicons style={{marginBottom: 10}} name="list-outline" size={100} color="gray"/>

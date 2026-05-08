@@ -2,30 +2,28 @@ import {View, Text} from 'react-native'
 import React, {useState} from 'react'
 import {KeyboardAwareScrollView, KeyboardToolbar} from "react-native-keyboard-controller";
 import {StatusBar} from "expo-status-bar";
-import {router} from "expo-router";
+import {router, useLocalSearchParams} from "expo-router";
 import {Ionicons} from "@expo/vector-icons";
 import PrimaryButton from "@/components/PrimaryButton";
 import { OtpInput } from "react-native-otp-entry";
+import {useAppStore} from "@/utils/store";
 
 const OldPinCode = () => {
 
+    const pin = useAppStore((state)=> state.pin)
     const [disable, setDisable] = useState(true);
     const [value, setValue] = useState("");
 
     const handleNext = ()=>{
 
         if (value.length !== 6) return
-        router.replace({
-            pathname: "/profile/newPinCode",
-            params: {pin: value}
-
-        })
+        router.push("/profile/newPinCode")
     }
 
     const handleOTP = (text: any) => {
         setValue(text);
 
-        if (text.length === 6) {
+        if (text.length === 6 && pin === text) {
             setDisable(false);
         } else {
             setDisable(true);

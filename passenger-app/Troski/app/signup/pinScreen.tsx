@@ -6,31 +6,30 @@ import {router} from "expo-router";
 import {Ionicons} from "@expo/vector-icons";
 import PrimaryButton from "@/components/PrimaryButton";
 import { OtpInput } from "react-native-otp-entry";
+import {useAppStore} from "@/utils/store";
 
 const PinScreen = () => {
 
+    const pin = useAppStore((state) => state.pin);
+    const setPin = useAppStore((state) => state.setPin);
+
     const [disable, setDisable] = useState(true);
     const [value, setValue] = useState("");
-    const handleNext = ()=>{
 
-        if (value.length !== 6) return
+    const handleNext = () => {
+        if (value.length !== 6) return;
+
         router.push({
             pathname: "../signup/confirmPinScreen",
-            params: {pin: value}
-
-        })
-    }
-
-    const handleOTP = (text: any) => {
-        setValue(text);
-
-        if (text.length === 6) {
-            setDisable(false);
-        } else {
-            setDisable(true);
-        }
+        });
     };
 
+    const handleOTP = (pin: string) => {
+        setValue(pin);
+        setPin(pin);
+
+        setDisable(pin.length !== 6);
+    };
     return (
         <View className="flex-1 bg-general">
             <KeyboardAwareScrollView

@@ -87,7 +87,7 @@ const ProfileScreen = () => {
                         <View
                             style={{borderRadius: 24}}
                             className="w-full bg-general">
-                            <NavBar onPress={()=>router.push("/profile/rideHistory")} name="time" title="Ride History" textcolor="#444444" color="black" goforwardcolor="gray"/>
+                            <NavBar onPress={()=>router.push("/profile/rideHistory")} name="car" title="Ride History" textcolor="#444444" color="black" goforwardcolor="gray"/>
                             <View style={{width: "100%", height: 1, backgroundColor: "#e4e4e477"}} />
                             <NavBar onPress={()=> router.push("/profile/paymentMethod")} name="card" title="Payment Methods" textcolor="#444444" color="black" goforwardcolor="gray"/>
                             <View style={{width: "100%", height: 1, backgroundColor: "#e4e4e477"}} />
