@@ -5,11 +5,13 @@ import {StatusBar} from "expo-status-bar";
 import {router} from "expo-router";
 import PrimaryButton from "@/components/PrimaryButton";
 import {useAppStore} from "@/utils/store";
+import DisabledPrimaryButton from "@/components/DisabledPrimaryButton";
 
 const PhoneNumberScreen = () => {
 
     const [value, setValue] = useState('');
     const [error, setError] = useState('');
+    const isDisabled = value.length !== 10;
 
     const setNumber = useAppStore((state) => state.setNumber);
 
@@ -79,7 +81,13 @@ const PhoneNumberScreen = () => {
                             <Text className="text-sm font-GoogleSansRegular">This is the number you provided when you created your account.</Text>
                         </View>}
 
-                        <PrimaryButton name="Next" disabled={value.length !== 10} onPress={handleNext}/>
+                        {isDisabled?
+                            (<DisabledPrimaryButton name="Next" />)
+                            :
+                            (<PrimaryButton name="Next" disabled={isDisabled} onPress={handleNext}/>)
+
+                        }
+
                     </View>
 
             </KeyboardAwareScrollView>

@@ -64,5 +64,30 @@ export const useAppStore = create((set)=> ({
             }),
 
 
+        pickup: null,
+        destination: null,
+
+        setPickup: (pickup) => set({ pickup }),
+        setDestination: (destination) => set({ destination }),
+
+        clearRide: () =>
+            set({
+                pickup: null,
+                destination: null,
+            }),
+
+            pickupPoint: "",
+            pickupCoords: null,
+
+            destinationPoint: "",
+            destinationCoords: null,
+
+            setPickupPoint: (pickupPoint) => set({ pickupPoint }),
+            setPickupCoords: (pickupCoords) => set({ pickupCoords }),
+
+            setDestinationPoint: (destinationPoint) => set({ destinationPoint }),
+            setDestinationCoords: (destinationCoords) => set({ destinationCoords }),
+
+
         }));
 

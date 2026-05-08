@@ -7,6 +7,7 @@ import {Ionicons} from "@expo/vector-icons";
 import PrimaryButton from "@/components/PrimaryButton";
 import { OtpInput } from "react-native-otp-entry";
 import {useAppStore} from "@/utils/store";
+import DisabledPrimaryButton from "@/components/DisabledPrimaryButton";
 
 const ConfirmPinScreen = () => {
 
@@ -63,7 +64,12 @@ const ConfirmPinScreen = () => {
                         </View>
 
 
-                        <PrimaryButton name="Next" disabled={disable} onPress={handleNext}/>
+                        {disable?
+                            (<DisabledPrimaryButton name="Next" />)
+                            :
+                            (<PrimaryButton name="Next" disabled={disable} onPress={handleNext}/>)
+
+                        }
                     </View>
 
             </KeyboardAwareScrollView>
