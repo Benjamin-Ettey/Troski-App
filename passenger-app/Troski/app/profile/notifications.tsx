@@ -2,18 +2,13 @@ import {View, Text, ScrollView, TouchableOpacity, Alert, Switch} from 'react-nat
 import React, {useState} from 'react'
 import {Ionicons} from "@expo/vector-icons";
 import {router} from "expo-router";
+import {useAppStore} from "@/utils/store";
 
 const Notifications = () => {
 
-    const [isEnabledRideUpdate, setIsEnabledRideUpdate] = useState(true);
-    const [isEnabledPaymentNotifications, setIsEnabledPaymentNotifications] = useState(true);
-    const [isEnabledAnnouncements, setIsEnabledAnnouncements] = useState(false);
-
-    const toggleSwitchRideUpdate = ()=> setIsEnabledRideUpdate(previous=>!previous)
-    const toggleSwitchPaymentNotifications = ()=> setIsEnabledPaymentNotifications(previous=>!previous)
-    const toggleSwitchAnnouncements = ()=> setIsEnabledAnnouncements(previous=>!previous)
-
-
+    const notifications = useAppStore((state) => state.notifications);
+    const toggleNotification = useAppStore((state) => state.toggleNotification);
+    const resetNotifications = useAppStore((state)=> state.resetNotifications);
 
     const handleResetNotification = ()=>{
         Alert.alert(
@@ -26,7 +21,7 @@ const Notifications = () => {
                 {
                     text: "Delete",
                     style: "destructive",
-                    onPress: ()=>router.replace("/profile/settings")
+                    onPress: ()=>resetNotifications()
                 }
 
 
@@ -43,8 +38,8 @@ const Notifications = () => {
                             className="w-full flex flex-row justify-between items-center">
                             <Text className="font-GoogleSansMedium text-secondaryGray">Ride Update Notifications</Text>
                             <Switch
-                                value={isEnabledRideUpdate}
-                                onValueChange={toggleSwitchRideUpdate}
+                                value={notifications.rideUpdates}
+                                onValueChange={()=>toggleNotification("rideUpdates")}
                                 trackColor={{ false: "#d1d5db", true: "#22C55E"}}
                                 style={{marginRight: 16}}/>
 
@@ -66,8 +61,8 @@ const Notifications = () => {
                             className="w-full flex flex-row justify-between items-center">
                             <Text className="font-GoogleSansMedium text-secondaryGray">Payment Notifications</Text>
                             <Switch
-                                value={isEnabledPaymentNotifications}
-                                onValueChange={toggleSwitchPaymentNotifications}
+                                value={notifications.paymentNotifications}
+                                onValueChange={()=>toggleNotification("paymentNotifications")}
                                 trackColor={{ false: "#d1d5db", true: "#22C55E"}}
                                 style={{marginRight: 16}}/>
                         </TouchableOpacity>
@@ -86,8 +81,8 @@ const Notifications = () => {
                             className="w-full flex flex-row justify-between items-center">
                             <Text className="font-GoogleSansMedium text-secondaryGray">Announcements</Text>
                             <Switch
-                                value={isEnabledAnnouncements}
-                                onValueChange={toggleSwitchAnnouncements}
+                                value={notifications.announcements}
+                                onValueChange={()=>toggleNotification("announcements")}
                                 trackColor={{ false: "#d1d5db", true: "#22C55E"}}
                                 style={{marginRight: 16}}/>
                         </TouchableOpacity>
@@ -111,7 +106,7 @@ const Notifications = () => {
 
                     <Text
                         style={{paddingLeft: 10, marginTop: 5, color: "#ff0000"}}
-                        className="text-xs font-GoogleSansRegular">Permanently delete your account and all associated data.</Text>
+                        className="text-xs font-GoogleSansRegular">Reset all notification settings to default values.</Text>
                 </View>
             </ScrollView>
         </View>

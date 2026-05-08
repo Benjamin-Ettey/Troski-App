@@ -2,26 +2,39 @@ import {View, Text} from 'react-native'
 import React, {useState} from 'react'
 import {KeyboardAwareScrollView, KeyboardToolbar} from "react-native-keyboard-controller";
 import {StatusBar} from "expo-status-bar";
-import {router} from "expo-router";
+import {router, useFocusEffect} from "expo-router";
 import {Ionicons} from "@expo/vector-icons";
 import PrimaryButton from "@/components/PrimaryButton";
 import { OtpInput } from "react-native-otp-entry";
 import {useAppStore} from "@/utils/store";
 
-const NewPinCode = () => {
+const ConfirmNewPinCode = () => {
 
-    const setTempPin = useAppStore((state) => state.setTempPin);
+    const tempPin = useAppStore((state) => state.tempPin);
+    const setPin = useAppStore((state) => state.setPin);
+    const setTempPin = useAppStore((state)=> state.setTempPin)
 
     const [value, setValue] = useState("");
 
-    const disable = value.length !== 6;
+    const disable =
+        value.length !== 6 || value !== tempPin;
+
+
+    useFocusEffect(() => {
+        return () => {
+            setTempPin("");
+        };
+    });
 
     const handleNext = () => {
         if (disable) return;
 
-        setTempPin(value);
 
-        router.push("/profile/confirmNewPinCode");
+        setPin(value);
+        useAppStore.getState().setTempPin("");
+
+
+        router.replace("/homepage/home");
     };
 
     const handleOTP = (text: string) => {
@@ -39,8 +52,8 @@ const NewPinCode = () => {
 
                 <View className="w-full flex-1 flex items-center px-6">
                     <View className="w-full mb-4">
-                        <Text className="text-2xl font-GoogleSansMedium tracking-tight">Create a new 6-digit PIN</Text>
-                        <Text className="text-sm font-GoogleSansRegular">Choose a new PIN to secure your account and authorize transactions.</Text>
+                        <Text className="text-2xl font-GoogleSansMedium tracking-tight">Confirm new 6-digit PIN</Text>
+                        <Text className="text-sm font-GoogleSansRegular">Verify your new pin code.</Text>
 
                     </View>
 
@@ -76,4 +89,4 @@ const NewPinCode = () => {
 
     )
 }
-export default NewPinCode
+export default ConfirmNewPinCode

@@ -224,6 +224,34 @@ const _Layout = () => {
                             })}
                         />
 
+                        <Stack.Screen
+                            name="confirmNewPinCode"
+                            options={()=> ({
+                                headerShadowVisible: false,
+                                headerStyle: {backgroundColor: "#F5F7FA"},
+                                headerTitle: 'Confirm new pin',
+                                headerLeft: ()=>(
+                                    <TouchableOpacity onPress={()=>router.back()} style={{display: "flex", justifyContent: "center", alignItems: "center"}}>
+                                        <Ionicons name="chevron-back" size={30} color="black"/>
+                                    </TouchableOpacity>
+                                )
+                            })}
+                        />
+
+                        <Stack.Screen
+                            name="recentNotifications"
+                            options={()=> ({
+                                headerShadowVisible: false,
+                                headerStyle: {backgroundColor: "#F5F7FA"},
+                                headerTitle: 'Recent notifications',
+                                headerLeft: ()=>(
+                                    <TouchableOpacity onPress={()=>router.back()} style={{display: "flex", justifyContent: "center", alignItems: "center"}}>
+                                        <Ionicons name="chevron-back" size={30} color="black"/>
+                                    </TouchableOpacity>
+                                )
+                            })}
+                        />
+
 
                     </Stack>
                 </KeyboardProvider>

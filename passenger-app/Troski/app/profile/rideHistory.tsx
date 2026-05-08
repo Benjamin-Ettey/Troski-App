@@ -106,7 +106,7 @@ const RideHistory = () => {
 
 
                                     <View
-                                        style={{width: "50%", gap: 2, }}
+                                        style={{flex: 1, gap: 2, paddingLeft: 16 }}
                                         className="flex  flex-col justify-center items-center ">
                                         <View className="flex flex-row justify-start items-center w-full gap-2">
                                             <Text className="text-xl font-GoogleSansRegular">
