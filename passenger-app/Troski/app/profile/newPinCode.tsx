@@ -7,6 +7,7 @@ import {Ionicons} from "@expo/vector-icons";
 import PrimaryButton from "@/components/PrimaryButton";
 import { OtpInput } from "react-native-otp-entry";
 import {useAppStore} from "@/utils/store";
+import DisabledPrimaryButton from "@/components/DisabledPrimaryButton";
 
 const NewPinCode = () => {
 
@@ -67,7 +68,12 @@ const NewPinCode = () => {
 
                     </View>
 
-                    <PrimaryButton disabled={disable} name="Next" onPress={handleNext}/>
+                    {disable?
+                        (<DisabledPrimaryButton name="Create new pin" />)
+                        :
+                        (<PrimaryButton name="Create new pin" disabled={disable} onPress={handleNext}/>)
+
+                    }
                 </View>
 
             </KeyboardAwareScrollView>

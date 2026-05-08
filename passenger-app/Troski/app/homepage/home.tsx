@@ -54,20 +54,36 @@ const Home = () => {
 
                     setCoords({ latitude, longitude });
 
-                    mapRef.current?.animateToRegion({
-                        latitude,
-                        longitude,
-                        latitudeDelta: 0.001,
-                        longitudeDelta: 0.01,
-                    });
+                    if (!coords) {
+                        mapRef.current?.animateToRegion(
+                            {
+                                latitude,
+                                longitude,
+                                latitudeDelta: 0.001,
+                                longitudeDelta: 0.01,
+                            }
+                        )
+                    }
+
                 }
             );
         })();
+
 
         return () => {
             subscription?.remove();
         };
     }, []);
+
+    const handleSearchRides = ()=>{
+        router.push({
+            pathname: "/bookings/searchRides",
+            params: {
+                latitude: coords?.latitude,
+                longitude: coords?.longitude,
+            },
+        })
+    }
 
     return (
         <View style={{ flex: 1 }}>
@@ -168,7 +184,7 @@ const Home = () => {
             >
                 <BottomSheetView>
                     <View className="flex flex-col gap-4" style={{ padding: 16 }}>
-                        <SearchBarButton name="Where are you going?" onPress={()=>router.push("/bookings/searchRides")}/>
+                        <SearchBarButton name="Where are you going?" onPress={handleSearchRides}/>
                         <RollingTrips/>
                     </View>
 

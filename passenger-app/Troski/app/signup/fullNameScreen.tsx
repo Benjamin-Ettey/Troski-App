@@ -5,6 +5,7 @@ import {router} from "expo-router";
 import {KeyboardAwareScrollView, KeyboardToolbar} from "react-native-keyboard-controller";
 import PrimaryButton from "@/components/PrimaryButton";
 import {useAppStore} from "@/utils/store";
+import DisabledPrimaryButton from "@/components/DisabledPrimaryButton";
 
 const FullnameScreen = () => {
     const [fullName, setFullName] = useState("")
@@ -72,7 +73,14 @@ const FullnameScreen = () => {
                             </View>
                         </View>
 
-                        <PrimaryButton disabled={isDisabled} name="Create account" onPress={handleCreateAccount}/>
+
+                        {isDisabled?
+                            (<DisabledPrimaryButton name="Create account" />)
+                            :
+                            (<PrimaryButton name="Create account" disabled={isDisabled} onPress={handleCreateAccount}/>)
+
+                        }
+
                     </View>
 
             </KeyboardAwareScrollView>

@@ -1,178 +1,494 @@
-import {View, Text, TextInput, Pressable, Image, FlatList, TouchableOpacity} from 'react-native'
-import React, {useState} from 'react'
-import {Ionicons} from "@expo/vector-icons";
+import {
+    View,
+    Text,
+    TextInput,
+    Pressable,
+    TouchableOpacity,
+    FlatList
+} from "react-native";
+
+import React, { useEffect, useState } from "react";
+import { Ionicons } from "@expo/vector-icons";
+import * as Location from "expo-location";
+import { useAppStore } from "@/utils/store";
+
+// ---------------- TYPES ----------------
+
+type GeoFeature = {
+    type: "geo";
+    properties: {
+        name?: string;
+        city?: string;
+        state?: string;
+        country?: string;
+        osm_id?: string | number;
+    };
+    geometry: {
+        coordinates: [number, number];
+    };
+};
+
+type RideItem = {
+    type: "ride";
+    id: number;
+    destination: string;
+    area: string;
+    passengercount: number;
+};
+
+type ListItem = GeoFeature | RideItem;
+
+// ---------------- DISTANCE ----------------
+
+const haversineKm = (
+    lat1: number,
+    lon1: number,
+    lat2: number,
+    lon2: number
+): string => {
+    const R = 6371;
+
+    const dLat = ((lat2 - lat1) * Math.PI) / 180;
+    const dLon = ((lon2 - lon1) * Math.PI) / 180;
+
+    const a =
+        Math.sin(dLat / 2) ** 2 +
+        Math.cos((lat1 * Math.PI) / 180) *
+        Math.cos((lat2 * Math.PI) / 180) *
+        Math.sin(dLon / 2) ** 2;
+
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+
+    return (R * c).toFixed(1);
+};
+
+// ---------------- COMPONENT ----------------
 
 const SearchRides = () => {
-    const [swap, setSwap] = useState(true);
 
-    const data = [
-        {id: 1, destination: "Madina Station", kilometers: "2km", area: "Madina, Accra", passengercount: 8},
-        {id: 2, destination: "Circle", kilometers: "8km", area: "Circle, Accra", passengercount: 2},
-        {id: 3, destination: "Kasoa Market", kilometers: "15km", area: "Kasoa Road", passengercount: 10},
-        {id: 4, destination: "Kotoka Internal Airport", kilometers: "9km", area: "10min", passengercount: 20},
-        {id: 5, destination: "Madina Market", kilometers: "10km", area: "Madina, Accra", passengercount: 8},
-        {id: 6, destination: "Tarkwa", kilometers: "8km", area: "Tarkwa Road", passengercount: 2},
-        {id: 7, destination: "Adenta", kilometers: "15km", area: "Adenta, OffTown", passengercount: 10},
-        {id: 8, destination: "Tema Station", kilometers: "0.5km", area: "Tema Road", passengercount: 20},
-        {id: 9, destination: "Mallam Junction", kilometers: "10km", area: "Mallam, Accra", passengercount: 8},
-        {id: 10, destination: "Offsite", kilometers: "8km", area: "Kasoa, Road", passengercount: 2},
-        {id: 11, destination: "Amasaman", kilometers: "15km", area: "Amasaman Road", passengercount: 10},
-    ]
+    const [activeField, setActiveField] =
+        useState<"pickup" | "destination" | null>(null);
 
+    const [search, setSearch] = useState<string>("");
+    const [results, setResults] = useState<GeoFeature[]>([]);
 
-    return (
-        <View style={{ flex: 1}} className="w-full bg-general">
-            <View style={{ paddingHorizontal: 16, paddingBottom: 16}} className="w-full flex flex-row justify-between items-center">
+    // STORE
+    const pickupPoint = useAppStore((s) => s.pickupPoint);
+    const destinationPoint = useAppStore((s) => s.destinationPoint);
 
-                {swap?
-                    <>
-                    <View style={{}} className="flex-1 flex flex-col justify-center items-center gap-2">
+    const pickupCoords = useAppStore((s) => s.pickupCoords);
+    const destinationCoords = useAppStore((s) => s.destinationCoords);
 
-                        <View style={{ paddingHorizontal: 10, height: 48}} className="w-full border rounded-xl border-tertiaryGray  flex flex-row justify-between items-center">
+    const setPickupPoint = useAppStore((s) => s.setPickupPoint);
+    const setDestinationPoint = useAppStore((s) => s.setDestinationPoint);
 
-                            <Ionicons name="radio-button-on" size={24} color="#3B82F6"/>
-                            <TextInput
-                                placeholder="Pickup point"
-                                style={{ flex: 1, paddingLeft: 10,}}
-                                className="font-medium text-secondaryGray font-GoogleSansRegular w-full py-4  rounded-xl "
+    const setPickupCoords = useAppStore((s) => s.setPickupCoords);
+    const setDestinationCoords = useAppStore((s) => s.setDestinationCoords);
 
-                            />
-                            <Ionicons name="apps-outline" size={24} color="#a9a9a9"/>
+    // ---------------- GET USER LOCATION ----------------
 
-                        </View>
-                        <View style={{ paddingHorizontal: 10, height: 48}} className="w-full border rounded-xl border-tertiaryGray  flex flex-row justify-between items-center">
+    useEffect(() => {
 
-                            <TextInput
-                                placeholder="Destination"
-                                style={{ flex: 1, paddingLeft: 10,}}
-                                className="font-medium text-secondaryGray font-GoogleSansRegular w-full py-4  rounded-xl "
+        const getCurrentLocation = async () => {
 
-                            />
-                            <Ionicons name="apps-outline" size={24} color="#a9a9a9"/>
-                        </View>
+            try {
 
-                    </View>
-
-                        <View style={{ width: "10%", height: 100, gap: 25}} className="flex justify-center items-center">
-                            <TouchableOpacity >
-                                <Ionicons  name="add" size={24} color="black"/>
-                            </TouchableOpacity>
-                            <TouchableOpacity onPress={()=> setSwap(false)} >
-                                <Ionicons  name="swap-vertical" size={24} color="black"/>
-                            </TouchableOpacity>
-
-                        </View>
-
-
-                    </>
-                    :
-
-
-                    <>
-                    <View className="flex-1 flex flex-col justify-center items-center gap-2">
-
-
-                        <View style={{ paddingHorizontal: 10, height: 48}} className="w-full border rounded-xl border-tertiaryGray  flex flex-row justify-between items-center">
-
-                            <TextInput
-                                placeholder="Destination"
-                                style={{ flex: 1, paddingLeft: 10,}}
-                                className="font-medium text-secondaryGray font-GoogleSansRegular w-full py-4  rounded-xl "
-
-                            />
-                            <Ionicons name="apps-outline" size={24} color="#a9a9a9"/>
-                        </View>
-
-
-                        <View style={{ paddingHorizontal: 10, height: 48}} className="w-full border rounded-xl border-tertiaryGray  flex flex-row justify-between items-center">
-
-                            <Ionicons name="radio-button-on" size={24} color="#3B82F6"/>
-                            <TextInput
-                                    placeholder="Pickup point"
-                                style={{ flex: 1, paddingLeft: 10,}}
-                                className="font-medium text-secondaryGray font-GoogleSansRegular w-full py-4  rounded-xl "
-
-                            />
-                            <Ionicons name="apps-outline" size={24} color="#a9a9a9"/>
-                        </View>
-
-                    </View>
-
-                        <View style={{ width: "10%", height: 100, gap: 25}} className="flex justify-center items-center">
-                            <TouchableOpacity >
-                                <Ionicons  name="add" size={24} color="black"/>
-                            </TouchableOpacity>
-                            <TouchableOpacity onPress={()=> setSwap(true)} >
-                                <Ionicons  name="swap-vertical" size={24} color="black"/>
-                            </TouchableOpacity>
-
-                        </View>
-                    </>
-
+                // don't overwrite if already set
+                if (pickupPoint && pickupCoords) {
+                    return;
                 }
 
+                const { status } =
+                    await Location.requestForegroundPermissionsAsync();
+
+                if (status !== "granted") {
+                    return;
+                }
+
+                const location =
+                    await Location.getCurrentPositionAsync({});
+
+                const latitude = location.coords.latitude;
+                const longitude = location.coords.longitude;
+
+                // reverse geocode
+                const reverseGeocode =
+                    await Location.reverseGeocodeAsync({
+                        latitude,
+                        longitude
+                    });
+
+                const place = reverseGeocode[0];
+
+                const nearestJunction =
+                    place?.street ||
+                    place?.district ||
+                    place?.subregion ||
+                    place?.city ||
+                    "Current Location";
+
+                const area = [
+                    place?.city,
+                    place?.region
+                ]
+                    .filter(Boolean)
+                    .join(", ");
+
+                const fullLocation =
+                    area.length > 0
+                        ? `${nearestJunction}, ${area}`
+                        : nearestJunction;
+
+                setPickupPoint(fullLocation);
+
+                setPickupCoords({
+                    latitude,
+                    longitude
+                });
+
+            } catch (error) {
+                console.log("LOCATION ERROR:", error);
+            }
+        };
+
+        getCurrentLocation();
+
+    }, []);
+
+    // ---------------- SEARCH ----------------
+
+    const searchPlaces = async (text: string) => {
+
+        try {
+
+            const res = await fetch(
+                `https://photon.komoot.io/api/?q=${encodeURIComponent(text)}&limit=10`
+            );
+
+            const data = await res.json();
+
+            const formattedResults: GeoFeature[] =
+                (data.features ?? []).map((item: Omit<GeoFeature, "type">) => ({
+                    ...item,
+                    type: "geo"
+                }));
+
+            setResults(formattedResults);
+
+        } catch (e) {
+            console.log(e);
+        }
+    };
+
+    const onChangeSearch = (text: string) => {
+
+        setSearch(text);
+
+        if (text.trim().length > 1) {
+            searchPlaces(text);
+        } else {
+            setResults([]);
+        }
+    };
+
+    // ---------------- SELECT ----------------
+
+    const handleSelect = (item: GeoFeature) => {
+
+        const [lng, lat] = item.geometry.coordinates;
+
+        const name =
+            item.properties?.name ||
+            item.properties?.city ||
+            "Unknown location";
+
+        if (activeField === "pickup") {
+
+            setPickupPoint(name);
+
+            setPickupCoords({
+                latitude: lat,
+                longitude: lng
+            });
+        }
+
+        if (activeField === "destination") {
+
+            setDestinationPoint(name);
+
+            setDestinationCoords({
+                latitude: lat,
+                longitude: lng
+            });
+        }
+
+        setSearch("");
+        setResults([]);
+        setActiveField(null);
+    };
+
+    // ---------------- DESTINATIONS ----------------
+
+    const rides: RideItem[] = [
+        {
+            type: "ride",
+            id: 1,
+            destination: "Madina Station",
+            area: "Madina, Accra",
+            passengercount: 8
+        },
+        {
+            type: "ride",
+            id: 2,
+            destination: "Circle",
+            area: "Circle, Accra",
+            passengercount: 2
+        },
+        {
+            type: "ride",
+            id: 3,
+            destination: "Kasoa Market",
+            area: "Kasoa Road",
+            passengercount: 10
+        },
+        {
+            type: "ride",
+            id: 4,
+            destination: "Kotoka Airport",
+            area: "Airport, Accra",
+            passengercount: 20
+        }
+    ];
+
+    const listData: ListItem[] =
+        search.trim().length > 1
+            ? results
+            : rides;
+
+    // ---------------- UI ----------------
+
+    return (
+        <View style={{ flex: 1 }} className="bg-general">
+
+            {/* INPUTS */}
+            <View style={{ padding: 16 }}>
+
+                {/* PICKUP */}
+                <TouchableOpacity
+                    onPress={() => setActiveField("pickup")}
+                >
+                    <View
+                        style={{
+                            padding: 12,
+                            borderWidth: 1,
+                            borderRadius: 10,
+                            flexDirection: "row",
+                            alignItems: "center"
+                        }}
+                    >
+                        <Ionicons
+                            name="radio-button-on"
+                            size={22}
+                            color="#0165FC"
+                        />
+
+                        {activeField === "pickup" ? (
+                            <TextInput
+                                value={search}
+                                onChangeText={onChangeSearch}
+                                placeholder="Search pickup"
+                                style={{
+                                    flex: 1,
+                                    marginLeft: 10
+                                }}
+                                autoFocus
+                            />
+                        ) : (
+                            <Text
+                                style={{
+                                    marginLeft: 10,
+                                    flex: 1
+                                }}
+                                numberOfLines={1}
+                            >
+                                {pickupPoint || "Pickup point"}
+                            </Text>
+                        )}
+                    </View>
+                </TouchableOpacity>
+
+                {/* DESTINATION */}
+                <TouchableOpacity
+                    onPress={() => setActiveField("destination")}
+                >
+                    <View
+                        style={{
+                            padding: 12,
+                            borderWidth: 1,
+                            borderRadius: 10,
+                            marginTop: 10,
+                            flexDirection: "row",
+                            alignItems: "center"
+                        }}
+                    >
+                        {activeField === "destination" ? (
+                            <TextInput
+                                value={search}
+                                onChangeText={onChangeSearch}
+                                placeholder="Search destination"
+                                style={{ flex: 1 }}
+                                autoFocus
+                            />
+                        ) : (
+                            <Text
+                                style={{ flex: 1 }}
+                                numberOfLines={1}
+                            >
+                                {destinationPoint || "Destination"}
+                            </Text>
+                        )}
+
+                        <Ionicons
+                            name="apps-outline"
+                            size={22}
+                        />
+                    </View>
+                </TouchableOpacity>
 
             </View>
 
+            {/* LIST */}
+            <FlatList<ListItem>
+                data={listData}
+                keyExtractor={(item, index) => {
 
-            <View style={{paddingLeft: 16}} className="w-full flex-1">
+                    if (item.type === "geo") {
 
-            <FlatList
-                numColumns={1}
-                showsVerticalScrollIndicator={true}
-                data={data || []}
-                keyExtractor={(item)=>item.id.toString()}
-                renderItem={({item})=>{
+                        return `geo-${
+                            item.properties?.osm_id ??
+                            item.properties?.name ??
+                            index
+                        }`;
+                    }
+
+                    return `ride-${item.id}`;
+                }}
+                renderItem={({ item }) => {
+
+                    // ---------------- SEARCH RESULTS ----------------
+
+                    if (item.type === "geo") {
+
+                        const name =
+                            item.properties?.name ||
+                            item.properties?.city ||
+                            "Place";
+
+                        const subtitle = [
+                            item.properties?.city,
+                            item.properties?.state,
+                            item.properties?.country
+                        ]
+                            .filter(Boolean)
+                            .join(", ");
+
+                        return (
+                            <Pressable
+                                onPress={() => handleSelect(item)}
+                                style={{
+                                    padding: 16,
+                                    flexDirection: "row",
+                                    alignItems: "center"
+                                }}
+                            >
+                                <Ionicons
+                                    name="location-outline"
+                                    size={20}
+                                />
+
+                                <View style={{ marginLeft: 10 }}>
+                                    <Text>{name}</Text>
+
+                                    {subtitle ? (
+                                        <Text
+                                            style={{
+                                                fontSize: 12,
+                                                color: "gray"
+                                            }}
+                                        >
+                                            {subtitle}
+                                        </Text>
+                                    ) : null}
+                                </View>
+                            </Pressable>
+                        );
+                    }
+
+                    // ---------------- DESTINATION ITEMS ----------------
+
+                    let km = "0";
+
+                    if (pickupCoords && destinationCoords) {
+
+                        km = haversineKm(
+                            pickupCoords.latitude,
+                            pickupCoords.longitude,
+                            destinationCoords.latitude,
+                            destinationCoords.longitude
+                        );
+                    }
+
                     return (
-                        <>
                         <Pressable
-                            style={{height: 72, borderRadius: 24, paddingLeft: 20, paddingRight: 20, gap: 24}}
-                            className="w-full flex flex-row justify-between items-center">
-                            <View>
-                                <Ionicons name="arrow-up-right-box-outline" size={16}/>
-                            </View>
+                            onPress={() => {
 
+                                setDestinationPoint(item.destination);
 
-                            <View
-                                style={{flex: 1, gap: 2}}
-                                className="flex flex-col justify-center items-center ">
-                                <View className="flex flex-row justify-start items-center w-full gap-2">
-                                    <Text className="text-xl font-GoogleSansRegular">
-                                        {item.destination}
-                                    </Text>
-
-                                </View>
-
-                                <View className="w-full flex flex-row gap-2 justify-start items-center ">
-                                    <Text
-                                        style={{paddingHorizontal: 4, paddingVertical: 1, fontSize: 10}}
-                                        className=" text-secondaryGray font-GoogleSansRegular rounded-full">{item.area}</Text>
-
-                                    <View
-                                        style={{gap: 2}}
-                                        className="flex flex-row items-center ">
-                                        <Ionicons name="person" size={10} color="gray"/>
-                                        <Text className="font-GoogleSansRegular" style={{fontSize: 12}}>{item.passengercount}</Text>
-                                    </View>
-
-                                </View>
-                            </View>
+                                setActiveField(null);
+                            }}
+                            style={{
+                                paddingVertical: 16,
+                                paddingHorizontal: 24,
+                                flexDirection: "row",
+                                justifyContent: "space-between"
+                            }}
+                        >
+                            <Ionicons
+                                name="bus-outline"
+                                size={24}
+                            />
 
                             <View
-                                style={{width: 84, height: 32, paddingHorizontal: 2}}
-                                className="rounded-full  flex justify-center items-end">
-                                <Text numberOfLines={1} className="font-GoogleSansRegular text-secondaryGray text-sm">{item.kilometers}</Text>
+                                className="flex flex-col justify-start"
+                                style={{
+                                    flex: 1,
+                                    paddingLeft: 24
+                                }}
+                            >
+                                <Text style={{ fontSize: 16 }}>
+                                    {item.destination}
+                                </Text>
+
+                                <Text
+                                    style={{
+                                        fontSize: 12,
+                                        color: "gray"
+                                    }}
+                                >
+                                    {item.area}
+                                </Text>
                             </View>
+
+                            <Text style={{ fontSize: 12 }}>
+                                {km} km
+                            </Text>
                         </Pressable>
-                            <View className="w-full flex justify-center items-end">
-                                <View style={{height: 1, backgroundColor: "#e4e4e488", width: "85%"}} />
-                            </View>
-                    </>
-                    )
-                }}/>
-            </View>
+                    );
+                }}
+            />
 
         </View>
-    )
-}
-export default SearchRides
+    );
+};
+
+export default SearchRides;

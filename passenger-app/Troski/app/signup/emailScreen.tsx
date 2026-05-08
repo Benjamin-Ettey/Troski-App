@@ -5,6 +5,7 @@ import {router} from "expo-router";
 import {KeyboardAwareScrollView, KeyboardToolbar} from "react-native-keyboard-controller";
 import PrimaryButton from "@/components/PrimaryButton";
 import {useAppStore} from "@/utils/store"
+import DisabledPrimaryButton from "@/components/DisabledPrimaryButton";
 
 const EmailScreen = () => {
     const [emailAddress, setEmailAddress] = useState('')
@@ -84,7 +85,12 @@ const EmailScreen = () => {
                             }
                         </View>
 
-                        <PrimaryButton name="Next" disabled={isDisabled} onPress={handleNext}/>
+                        {isDisabled?
+                            (<DisabledPrimaryButton name="Next" />)
+                            :
+                            (<PrimaryButton name="Next" disabled={isDisabled} onPress={handleNext}/>)
+
+                        }
                     </View>
 
             </KeyboardAwareScrollView>

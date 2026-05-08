@@ -22,6 +22,34 @@ const _Layout = () => {
                     })}
                 />
 
+                <Stack.Screen
+                    name="selectPickupPoint"
+                    options={()=> ({
+                        headerShadowVisible: false,
+                        headerStyle: {backgroundColor: "#ffffff"},
+                        headerTitle: 'Select pickup point',
+                        headerLeft: ()=>(
+                            <TouchableOpacity onPress={()=>router.back()} style={{display: "flex", justifyContent: "center", alignItems: "center"}}>
+                                <Ionicons name="chevron-back" size={30} color="black"/>
+                            </TouchableOpacity>
+                        )
+                    })}
+                />
+
+                <Stack.Screen
+                    name="selectDestination"
+                    options={()=> ({
+                        headerShadowVisible: false,
+                        headerStyle: {backgroundColor: "#ffffff"},
+                        headerTitle: 'Select destination',
+                        headerLeft: ()=>(
+                            <TouchableOpacity onPress={()=>router.back()} style={{display: "flex", justifyContent: "center", alignItems: "center"}}>
+                                <Ionicons name="chevron-back" size={30} color="black"/>
+                            </TouchableOpacity>
+                        )
+                    })}
+                />
+
 
             </Stack>
         </KeyboardProvider>
