@@ -1,43 +1,89 @@
 const mongoose = require("mongoose");
-const { create } = require("./passengers");
 
-const paymentSchema = new mongoose.Schema({
-  ride: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: "Ride",
-    required: true,
-  },
+const paymentSchema = new mongoose.Schema(
+  {
+    ride: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Ride",
+      required: true,
+    },
 
-  amount: {
-    type: Number,
-    required: true,
-  },
+    passenger: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Passenger",
+      required: true,
+    },
 
-  paymentMethod: {
-    type: String,
-    enum: ["card", "mobile_money"],
-    default: "mobile_money",
-  },
+    driver: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Driver",
+    },
 
-  status: {
-    type: String,
-    enum: ["pending", "completed", "failed"],
-    default: "pending",
-  },
+    amount: {
+      type: Number,
+      required: true,
+    },
 
-  authorizationURL: {
-    type: String,
-  },
+    currency: {
+      type: String,
+      default: "GHS",
+    },
 
-  createdAt: {
-    type: Date,
-    default: Date.now,
-  },
+    // Platform commission (15%)
+    commission: {
+      type: Number,
+      required: true,
+    },
 
-  paidAt: {
-    type: Date,
+    // What the driver receives after commission
+    driverEarnings: {
+      type: Number,
+      required: true,
+    },
+
+    paymentMethod: {
+      type: String,
+      enum: ["cash", "mobile_money", "card"],
+      required: true,
+    },
+
+    // Mobile money specifics
+    mobileMoneyNetwork: {
+      type: String,
+      enum: ["mtn", "vodafone", "tigo"],
+    },
+
+    mobileMoneyNumber: {
+      type: String,
+    },
+
+    status: {
+      type: String,
+      enum: ["pending", "processing", "completed", "failed", "refunded"],
+      default: "pending",
+    },
+
+    // Paystack fields
+    paystackReference: {
+      type: String,
+      unique: true,
+      sparse: true,
+    },
+
+    paystackTransactionId: {
+      type: String,
+    },
+
+    authorizationURL: {
+      type: String,
+    },
+
+    paidAt: {
+      type: Date,
+    },
   },
-});
+  { timestamps: true }
+);
 
 const Payment = mongoose.model("Payment", paymentSchema);
 module.exports = Payment;

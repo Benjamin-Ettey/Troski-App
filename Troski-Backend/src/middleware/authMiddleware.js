@@ -14,10 +14,15 @@ const authenticatePassenger = async (req, res, next) => {
 
   try {
     if (accessToken) {
-      const payload = isTokenValid(accessToken);
-      req.user = payload.passenger;
-      return next();
+      try {
+        const payload = isTokenValid(accessToken);
+        req.user = payload.passenger;
+        return next();
+      } catch {
+        // access token expired — fall through to refresh token
+      }
     }
+
     const payload = isTokenValid(refreshToken);
 
     const existingToken = await PassengerToken.findOne({
@@ -25,16 +30,21 @@ const authenticatePassenger = async (req, res, next) => {
       refreshToken: payload.refreshToken,
     });
 
-    if (!existingToken || !existingToken?.isValid) {
+    if (!existingToken || !existingToken.isValid) {
       return res
         .status(StatusCodes.UNAUTHORIZED)
         .json({ msg: "Authentication Invalid" });
     }
 
+    const newRefreshToken = require("crypto").randomBytes(40).toString("hex");
+
+    existingToken.refreshToken = newRefreshToken;
+    await existingToken.save();
+
     attachPassengerCookiesToResponse({
       res,
       passenger: payload.passenger,
-      refreshToken: existingToken.refreshToken,
+      refreshToken: newRefreshToken,
     });
 
     req.user = payload.passenger;
@@ -51,10 +61,15 @@ const authenticateDriver = async (req, res, next) => {
 
   try {
     if (accessToken) {
-      const payload = isTokenValid(accessToken);
-      req.user = payload.driver;
-      return next();
+      try {
+        const payload = isTokenValid(accessToken);
+        req.user = payload.driver;
+        return next();
+      } catch {
+        // access token expired — fall through to refresh token
+      }
     }
+
     const payload = isTokenValid(refreshToken);
 
     const existingToken = await DriverToken.findOne({
@@ -62,16 +77,21 @@ const authenticateDriver = async (req, res, next) => {
       refreshToken: payload.refreshToken,
     });
 
-    if (!existingToken || !existingToken?.isValid) {
+    if (!existingToken || !existingToken.isValid) {
       return res
         .status(StatusCodes.UNAUTHORIZED)
         .json({ msg: "Authentication Invalid" });
     }
 
+    const newRefreshToken = require("crypto").randomBytes(40).toString("hex");
+
+    existingToken.refreshToken = newRefreshToken;
+    await existingToken.save();
+
     attachDriverCookiesToResponse({
       res,
       driver: payload.driver,
-      refreshToken: existingToken.refreshToken,
+      refreshToken: newRefreshToken,
     });
 
     req.user = payload.driver;
@@ -88,10 +108,15 @@ const authenticateAdmin = async (req, res, next) => {
 
   try {
     if (accessToken) {
-      const payload = isTokenValid(accessToken);
-      req.user = payload.admin;
-      return next();
+      try {
+        const payload = isTokenValid(accessToken);
+        req.user = payload.admin;
+        return next();
+      } catch {
+        // access token expired — fall through to refresh token
+      }
     }
+
     const payload = isTokenValid(refreshToken);
 
     const existingToken = await AdminToken.findOne({
@@ -99,16 +124,21 @@ const authenticateAdmin = async (req, res, next) => {
       refreshToken: payload.refreshToken,
     });
 
-    if (!existingToken || !existingToken?.isValid) {
+    if (!existingToken || !existingToken.isValid) {
       return res
         .status(StatusCodes.UNAUTHORIZED)
         .json({ msg: "Authentication Invalid" });
     }
 
+    const newRefreshToken = require("crypto").randomBytes(40).toString("hex");
+
+    existingToken.refreshToken = newRefreshToken;
+    await existingToken.save();
+
     attachAdminCookiesToResponse({
       res,
       admin: payload.admin,
-      refreshToken: existingToken.refreshToken,
+      refreshToken: newRefreshToken,
     });
 
     req.user = payload.admin;
@@ -123,9 +153,9 @@ const authenticateAdmin = async (req, res, next) => {
 const authorizePermissions = (...roles) => {
   return (req, res, next) => {
     if (!roles.includes(req.user.role)) {
-      throw new CustomError.UnauthorizedError(
-        "Unauthorized to access this route",
-      );
+      return res
+        .status(StatusCodes.FORBIDDEN)
+        .json({ msg: "Unauthorized to access this route" });
     }
     next();
   };

@@ -10,9 +10,7 @@ const withValidationErrors = (validateValues) => {
       const errors = validationResult(req);
       if (!errors.isEmpty()) {
         const errorMessages = errors.array().map((error) => error.msg);
-        return res
-          .status(StatusCodes.BAD_REQUEST)
-          .json({ error: errorMessages });
+        return res.status(StatusCodes.BAD_REQUEST).json({ error: errorMessages });
       }
       next();
     },
@@ -21,91 +19,31 @@ const withValidationErrors = (validateValues) => {
 
 const validateIdParam = withValidationErrors([
   param("id").custom((value) => {
-    const isValidMongoId = mongoose.Types.ObjectId.isValid(value);
-    if (!isValidMongoId) {
-      throw new Error("invalid mongodb id");
+    if (!mongoose.Types.ObjectId.isValid(value)) {
+      throw new Error("Invalid ID");
     }
     return true;
   }),
 ]);
 
-const validatePassengerSignUpInput = withValidationErrors([
-  body("name").trim().notEmpty().withMessage("name is required"),
-  body("phoneNumber")
-    .trim()
-    .notEmpty()
-    .withMessage("phone number is required")
-    .isMobilePhone("en-GH")
-    .withMessage("invalid phone number"),
-  body("email")
-    .trim()
-    .notEmpty()
-    .withMessage("email is required")
-    .isEmail()
-    .withMessage("invalid email address"),
-  body("pinCode")
-    .trim()
-    .notEmpty()
-    .withMessage("PIN code is required")
-    .isNumeric()
-    .withMessage("PIN Code should contain only numbers")
-    .isLength({ min: 6, max: 6 })
-    .withMessage("PIN code must be 6 digits"),
-]);
-
-const validateDriverSignUpInput = withValidationErrors([
-  body("name").trim().notEmpty().withMessage("name is required"),
-  body("phoneNumber")
-    .trim()
-    .notEmpty()
-    .withMessage("phone number is required")
-    .isMobilePhone("en-GH")
-    .withMessage("invalid phone number"),
-  body("email")
-    .trim()
-    .notEmpty()
-    .withMessage("email is required")
-    .isEmail()
-    .withMessage("invalid email address"),
-  body("city")
-    .notEmpty()
-    .withMessage("city is required")
-    .isIn(Object.values(ghanaCapitalCities))
-    .withMessage("invalid city"),
-  body("licenseID")
-    .trim()
-    .toUpperCase()
-    .notEmpty()
-    .withMessage("license ID is required")
-    .matches(/^[A-Z]{3}-\d{8}-\d{4,5}$/)
-    .withMessage("Invalid Ghana license ID format"),
-  body("ghanaCardNumber")
-    .trim()
-    .toUpperCase()
-    .notEmpty()
-    .withMessage("Ghana card number is required")
-    .matches(/^GHA-\d{9}-\d$/)
-    .withMessage("Invalid Ghana Card number format"),
-  body("pinCode")
-    .trim()
-    .notEmpty()
-    .withMessage("PIN code is required")
-    .isNumeric()
-    .withMessage("PIN Code should contain only numbers")
-    .isLength({ min: 6, max: 6 })
-    .withMessage("PIN code must be 6 digits"),
-]);
-
+// Phone-only — used for both passenger and driver OTP request
 const validateLoginInput = withValidationErrors([
   body("phoneNumber")
     .trim()
     .notEmpty()
-    .withMessage("phone number is required")
+    .withMessage("Phone number is required")
     .isMobilePhone("en-GH")
-    .withMessage("invalid phone number"),
+    .withMessage("Invalid Ghana phone number"),
 ]);
 
+// OTP verify requires both phone and code
 const validateVerifyOtpInput = withValidationErrors([
+  body("phoneNumber")
+    .trim()
+    .notEmpty()
+    .withMessage("Phone number is required")
+    .isMobilePhone("en-GH")
+    .withMessage("Invalid Ghana phone number"),
   body("otpCode")
     .trim()
     .notEmpty()
@@ -114,159 +52,205 @@ const validateVerifyOtpInput = withValidationErrors([
     .withMessage("OTP code must be 6 digits"),
 ]);
 
+// Driver completes profile after OTP verification
+const validateDriverCompleteProfileInput = withValidationErrors([
+  body("name").trim().notEmpty().withMessage("Name is required"),
+  body("email")
+    .trim()
+    .notEmpty()
+    .withMessage("Email is required")
+    .isEmail()
+    .withMessage("Invalid email address"),
+  body("city")
+    .notEmpty()
+    .withMessage("City is required")
+    .isIn(Object.values(ghanaCapitalCities))
+    .withMessage("Invalid city — must be a Ghana regional capital"),
+  body("licenseID")
+    .trim()
+    .toUpperCase()
+    .notEmpty()
+    .withMessage("License ID is required")
+    .matches(/^[A-Z]{3}-\d{8}-\d{4,5}$/)
+    .withMessage("Invalid Ghana license ID format (e.g. DRI-12345678-2024)"),
+  body("ghanaCardNumber")
+    .trim()
+    .toUpperCase()
+    .notEmpty()
+    .withMessage("Ghana Card number is required")
+    .matches(/^GHA-\d{9}-\d$/)
+    .withMessage("Invalid Ghana Card format (e.g. GHA-123456789-0)"),
+  body("pinCode")
+    .optional()
+    .trim()
+    .isNumeric()
+    .withMessage("PIN must contain only numbers")
+    .isLength({ min: 6, max: 6 })
+    .withMessage("PIN must be 6 digits"),
+]);
+
 const validateVehicleRegistrationInput = withValidationErrors([
-  body("vehicleType").trim().notEmpty().withMessage("vehicle type is required"),
+  body("vehicleType").trim().notEmpty().withMessage("Vehicle type is required"),
   body("plateNumber")
     .trim()
     .toUpperCase()
     .notEmpty()
-    .withMessage("plate number is required")
+    .withMessage("Plate number is required")
     .matches(/^[A-Z]{1,3}-\d{1,5}-\d{2}$/)
     .withMessage("Plate number must follow format: GT-1234-24"),
-  body("vehicleColor")
-    .trim()
-    .notEmpty()
-    .withMessage("vehicle color is required"),
+  body("vehicleColor").trim().notEmpty().withMessage("Vehicle color is required"),
   body("vehicleCapacity")
-    .trim()
     .notEmpty()
+    .withMessage("Vehicle capacity is required")
     .isInt({ min: 4 })
-    .withMessage("vehicle capacity must have at least 4 seats")
-    .withMessage("vehicle capactiy is required"),
-  body("routePreferences").trim(),
+    .withMessage("Vehicle must have at least 4 seats"),
   body("routePreferences.*.from")
     .trim()
     .notEmpty()
-    .withMessage("From location is required"),
+    .withMessage("Route 'from' location is required"),
   body("routePreferences.*.to")
     .trim()
     .notEmpty()
-    .withMessage("To location is required"),
+    .withMessage("Route 'to' location is required"),
 ]);
 
 const validateUpdateDriverInput = withValidationErrors([
-  body("name").optional().trim().notEmpty().withMessage("name is required"),
+  body("name").optional().trim().notEmpty().withMessage("Name is required"),
   body("phoneNumber")
     .optional()
     .trim()
-    .notEmpty()
-    .withMessage("phone number is required")
     .isMobilePhone("en-GH")
-    .withMessage("invalid phone number"),
+    .withMessage("Invalid Ghana phone number"),
   body("email")
     .optional()
     .trim()
-    .notEmpty()
-    .withMessage("email is required")
     .isEmail()
-    .withMessage("invalid email address"),
+    .withMessage("Invalid email address"),
   body("city")
     .optional()
-    .notEmpty()
-    .withMessage("city is required")
     .isIn(Object.values(ghanaCapitalCities))
-    .withMessage("invalid city"),
+    .withMessage("Invalid city"),
   body("licenseID")
     .optional()
     .trim()
     .toUpperCase()
-    .notEmpty()
-    .withMessage("license ID is required")
     .matches(/^[A-Z]{3}-\d{8}-\d{4,5}$/)
     .withMessage("Invalid Ghana license ID format"),
   body("ghanaCardNumber")
     .optional()
     .trim()
     .toUpperCase()
-    .notEmpty()
-    .withMessage("Ghana card number is required")
     .matches(/^GHA-\d{9}-\d$/)
-    .withMessage("Invalid Ghana Card number format"),
+    .withMessage("Invalid Ghana Card format"),
   body("pinCode")
     .optional()
     .trim()
-    .notEmpty()
-    .withMessage("PIN code is required")
     .isNumeric()
-    .withMessage("PIN Code should contain only numbers")
+    .withMessage("PIN must contain only numbers")
     .isLength({ min: 6, max: 6 })
-    .withMessage("PIN code must be 6 digits"),
+    .withMessage("PIN must be 6 digits"),
 ]);
 
 const validateUpdatePassengerInput = withValidationErrors([
-  body("name").optional().trim().notEmpty().withMessage("name is required"),
+  body("name").optional().trim().notEmpty().withMessage("Name is required"),
   body("phoneNumber")
     .optional()
     .trim()
-    .notEmpty()
-    .withMessage("phone number is required")
     .isMobilePhone("en-GH")
-    .withMessage("invalid phone number"),
+    .withMessage("Invalid Ghana phone number"),
   body("email")
     .optional()
     .trim()
-    .notEmpty()
-    .withMessage("email is required")
     .isEmail()
-    .withMessage("invalid email address"),
+    .withMessage("Invalid email address"),
   body("pinCode")
     .optional()
     .trim()
-    .notEmpty()
-    .withMessage("PIN code is required")
     .isNumeric()
-    .withMessage("PIN Code should contain only numbers")
+    .withMessage("PIN must contain only numbers")
     .isLength({ min: 6, max: 6 })
-    .withMessage("PIN code must be 6 digits"),
+    .withMessage("PIN must be 6 digits"),
 ]);
 
 const validateUpdateVehicleInput = withValidationErrors([
-  body("vehicleType")
-    .optional()
-    .trim()
-    .notEmpty()
-    .withMessage("vehicle type is required"),
+  body("vehicleType").optional().trim().notEmpty().withMessage("Vehicle type is required"),
   body("plateNumber")
     .optional()
     .trim()
     .toUpperCase()
-    .notEmpty()
-    .withMessage("plate number is required")
     .matches(/^[A-Z]{1,3}-\d{1,4}-\d{2}$/)
     .withMessage("Plate number must follow format: GT-1234-24"),
-  body("vehicleColor")
-    .optional()
-    .trim()
-    .notEmpty()
-    .withMessage("vehicle color is required"),
+  body("vehicleColor").optional().trim().notEmpty().withMessage("Vehicle color is required"),
   body("vehicleCapacity")
     .optional()
-    .trim()
-    .notEmpty()
     .isInt({ min: 4 })
-    .withMessage("vehicle capacity must have at least 4 seats")
-    .withMessage("vehicle capactiy is required"),
-  body("routePreferences").optional().trim(),
+    .withMessage("Vehicle must have at least 4 seats"),
   body("routePreferences.*.from")
     .optional()
     .trim()
     .notEmpty()
-    .withMessage("From location is required"),
+    .withMessage("Route 'from' location is required"),
   body("routePreferences.*.to")
     .optional()
     .trim()
     .notEmpty()
-    .withMessage("To location is required"),
+    .withMessage("Route 'to' location is required"),
+]);
+
+const validateInitiatePaymentInput = withValidationErrors([
+  body("rideId")
+    .notEmpty()
+    .withMessage("Ride ID is required")
+    .custom((value) => {
+      if (!mongoose.Types.ObjectId.isValid(value)) throw new Error("Invalid ride ID");
+      return true;
+    }),
+  body("paymentMethod")
+    .notEmpty()
+    .withMessage("Payment method is required")
+    .isIn(["mobile_money", "card", "cash"])
+    .withMessage("Payment method must be mobile_money, card, or cash"),
+  body("mobileMoneyNetwork")
+    .if(body("paymentMethod").equals("mobile_money"))
+    .notEmpty()
+    .withMessage("Mobile money network is required")
+    .isIn(["mtn", "vodafone", "tigo"])
+    .withMessage("Network must be mtn, vodafone, or tigo"),
+  body("mobileMoneyNumber")
+    .if(body("paymentMethod").equals("mobile_money"))
+    .notEmpty()
+    .withMessage("Mobile money number is required")
+    .isMobilePhone("en-GH")
+    .withMessage("Invalid Ghana phone number for mobile money"),
+]);
+
+const validateWithdrawalInput = withValidationErrors([
+  body("amount")
+    .notEmpty()
+    .withMessage("Withdrawal amount is required")
+    .isFloat({ min: 1 })
+    .withMessage("Minimum withdrawal is GHS 1"),
+  body("mobileMoneyNetwork")
+    .notEmpty()
+    .withMessage("Mobile money network is required")
+    .isIn(["mtn", "vodafone", "tigo"])
+    .withMessage("Network must be mtn, vodafone, or tigo"),
+  body("mobileMoneyNumber")
+    .notEmpty()
+    .withMessage("Mobile money number is required")
+    .isMobilePhone("en-GH")
+    .withMessage("Invalid Ghana phone number"),
 ]);
 
 module.exports = {
   validateIdParam,
-  validatePassengerSignUpInput,
   validateLoginInput,
   validateVerifyOtpInput,
-  validateDriverSignUpInput,
+  validateDriverCompleteProfileInput,
   validateVehicleRegistrationInput,
   validateUpdateDriverInput,
   validateUpdatePassengerInput,
   validateUpdateVehicleInput,
+  validateInitiatePaymentInput,
+  validateWithdrawalInput,
 };

@@ -40,7 +40,7 @@ const getAllPassengers = async (req, res) => {
       .json({ msg: "No passengers found" });
   }
 
-  const passengersWithoutPinCode = drivers.map((passenger) => {
+  const passengersWithoutPinCode = passengers.map((passenger) => {
     return passenger.toJSON();
   });
 

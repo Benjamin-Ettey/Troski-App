@@ -2,9 +2,11 @@ const Passenger = require("../models/passengers");
 const Driver = require("../models/drivers");
 const Admin = require("../models/admins");
 const Vehicle = require("../models/vehicles");
+const DriverWallet = require("../models/driverWallet");
 const PassengerToken = require("../models/passengerToken");
 const DriverToken = require("../models/driverToken");
 const AdminToken = require("../models/adminToken");
+const OtpVerification = require("../models/otpVerification");
 const { StatusCodes } = require("http-status-codes");
 const crypto = require("crypto");
 const {
@@ -12,7 +14,6 @@ const {
   attachDriverCookiesToResponse,
   attachAdminCookiesToResponse,
 } = require("../utils/tokenUtils");
-const { sendOTPEmail } = require("../utils/sendOTPEmail");
 const { sendOTPSMS } = require("../utils/sendOTPSMS");
 const createHash = require("../utils/createHash");
 const createTokenPassenger = require("../utils/createTokenPassenger");
@@ -21,187 +22,211 @@ const createTokenAdmin = require("../utils/createTokenAdmin");
 const cloudinary = require("cloudinary");
 const { formatImage } = require("../middleware/multerMiddleware");
 
-const passengerSignUp = async (req, res) => {
-  const { phoneNumber } = req.body;
-
-  const passengerAlreadyExists = await Passenger.findOne({
-    phoneNumber,
-    role: "passenger",
-  });
-
-  if (passengerAlreadyExists) {
-    return res
-      .status(StatusCodes.BAD_REQUEST)
-      .json({ msg: "Passenger already exists" });
-  }
-
-  const passenger = await Passenger.create(req.body);
-
-  res.status(StatusCodes.CREATED).json({ msg: "passenger created", passenger });
-};
+// ─── PASSENGER AUTH ──────────────────────────────────────────────────────────
 
 const requestPassengerOTP = async (req, res) => {
-  const { phoneNumber, method = "sms" } = req.body;
-
-  if (!phoneNumber) {
-    return res.status(StatusCodes.BAD_REQUEST).json({
-      msg: "Please provide phone number",
-    });
-  }
-
-  const passenger = await Passenger.findOne({
-    phoneNumber,
-    role: "passenger",
-  });
-
-  if (!passenger) {
-    return res.status(StatusCodes.NOT_FOUND).json({
-      msg: "Passenger account not found",
-    });
-  }
+  const { phoneNumber } = req.body;
 
   const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
 
-  passenger.otpCode = createHash(otpCode);
+  await OtpVerification.deleteMany({ phoneNumber, role: "passenger" });
 
-  passenger.otpExpiresAt = new Date(Date.now() + 1000 * 60 * 5); // OTP expires in 5 minutes
-
-  await passenger.save();
-
-  if (method === "email") {
-    await sendOTPEmail({
-      email: passenger.email,
-      otpCode,
-    });
-  } else {
-    await sendOTPSMS({
-      phoneNumber: passenger.phoneNumber,
-      otpCode,
-    });
-  }
-
-  res.status(StatusCodes.OK).json({
-    msg:
-      method === "email"
-        ? "OTP sent to email successfully"
-        : "OTP sent to phone number successfully",
+  await OtpVerification.create({
+    phoneNumber,
+    role: "passenger",
+    otpCode: createHash(otpCode),
+    expiresAt: new Date(Date.now() + 1000 * 60 * 5),
   });
+
+  await sendOTPSMS({ phoneNumber, otpCode });
+
+  res.status(StatusCodes.OK).json({ msg: "OTP sent successfully" });
 };
 
 const verifyPassengerOTP = async (req, res) => {
-  const { otpCode } = req.body;
+  const { phoneNumber, otpCode } = req.body;
 
-  if (!otpCode) {
-    return res.status(StatusCodes.BAD_REQUEST).json({
-      msg: "Invalid OTP",
-    });
-  }
-
-  const passenger = await Passenger.findOne({
-    otpCode: createHash(otpCode),
+  const otpRecord = await OtpVerification.findOne({
+    phoneNumber,
     role: "passenger",
   });
 
+  if (!otpRecord) {
+    return res.status(StatusCodes.NOT_FOUND).json({ msg: "No OTP request found" });
+  }
+
+  if (otpRecord.expiresAt < new Date()) {
+    await OtpVerification.deleteOne({ _id: otpRecord._id });
+    return res.status(StatusCodes.BAD_REQUEST).json({ msg: "OTP has expired" });
+  }
+
+  if (createHash(otpCode) !== otpRecord.otpCode) {
+    return res.status(StatusCodes.UNAUTHORIZED).json({ msg: "Invalid OTP" });
+  }
+
+  await OtpVerification.deleteOne({ _id: otpRecord._id });
+
+  let passenger = await Passenger.findOne({ phoneNumber });
+
+  const isNewUser = !passenger;
+
   if (!passenger) {
-    return res.status(StatusCodes.NOT_FOUND).json({
-      msg: "Passenger not found",
+    passenger = await Passenger.create({
+      phoneNumber,
+      isPhoneVerified: true,
     });
+  } else {
+    passenger.isPhoneVerified = true;
+    await passenger.save();
   }
-
-  if (!passenger.otpCode) {
-    return res.status(StatusCodes.BAD_REQUEST).json({
-      msg: "No OTP request found",
-    });
-  }
-
-  if (passenger.otpExpiresAt && passenger.otpExpiresAt < new Date()) {
-    return res.status(StatusCodes.BAD_REQUEST).json({
-      msg: "OTP has expired",
-    });
-  }
-
-  const hashedOTP = createHash(otpCode);
-
-  if (hashedOTP !== passenger.otpCode) {
-    return res.status(StatusCodes.UNAUTHORIZED).json({
-      msg: "Invalid OTP",
-    });
-  }
-
-  passenger.otpCode = null;
-  passenger.otpExpiresAt = null;
-
-  await passenger.save();
 
   const tokenPassenger = createTokenPassenger(passenger);
 
-  let refreshToken = "";
+  let existingToken = await PassengerToken.findOne({ passenger: passenger._id });
 
-  const existingToken = await PassengerToken.findOne({
-    passenger: passenger._id,
-  });
+  let refreshToken;
 
   if (existingToken) {
     if (!existingToken.isValid) {
-      return res.status(StatusCodes.UNAUTHORIZED).json({
-        msg: "Invalid credentials",
-      });
+      return res.status(StatusCodes.UNAUTHORIZED).json({ msg: "Invalid credentials" });
     }
-
-    refreshToken = existingToken.refreshToken;
-
-    attachPassengerCookiesToResponse({
-      res,
-      passenger: tokenPassenger,
+    refreshToken = crypto.randomBytes(40).toString("hex");
+    existingToken.refreshToken = refreshToken;
+    existingToken.ip = req.ip;
+    existingToken.userAgent = req.headers["user-agent"];
+    await existingToken.save();
+  } else {
+    refreshToken = crypto.randomBytes(40).toString("hex");
+    await PassengerToken.create({
       refreshToken,
-    });
-
-    return res.status(StatusCodes.OK).json({
-      msg: "Login successful",
-      passenger: tokenPassenger,
+      ip: req.ip,
+      userAgent: req.headers["user-agent"],
+      passenger: passenger._id,
     });
   }
 
-  refreshToken = crypto.randomBytes(40).toString("hex");
-
-  const passengerToken = {
-    refreshToken,
-    ip: req.ip,
-    userAgent: req.headers["user-agent"],
-    passenger: passenger._id,
-  };
-
-  await PassengerToken.create(passengerToken);
-
-  attachPassengerCookiesToResponse({
-    res,
-    passenger: tokenPassenger,
-    refreshToken,
-  });
+  attachPassengerCookiesToResponse({ res, passenger: tokenPassenger, refreshToken });
 
   res.status(StatusCodes.OK).json({
-    msg: "Login successful",
+    msg: "Authentication successful",
     passenger: tokenPassenger,
+    isNewUser,
+    isProfileComplete: passenger.isProfileComplete,
   });
 };
 
-const driverSignUp = async (req, res) => {
+const passengerLogout = async (req, res) => {
+  await PassengerToken.findOneAndDelete({ passenger: req.user.passengerId });
+
+  res.cookie("accessToken", "logout", { httpOnly: true, expires: new Date(Date.now()) });
+  res.cookie("refreshToken", "logout", { httpOnly: true, expires: new Date(Date.now()) });
+
+  res.status(StatusCodes.OK).json({ msg: "Logged out successfully" });
+};
+
+// ─── DRIVER AUTH ─────────────────────────────────────────────────────────────
+
+const requestDriverOTP = async (req, res) => {
   const { phoneNumber } = req.body;
 
-  const driverAlreadyExists = await Driver.findOne({
+  const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
+
+  await OtpVerification.deleteMany({ phoneNumber, role: "driver" });
+
+  await OtpVerification.create({
+    phoneNumber,
+    role: "driver",
+    otpCode: createHash(otpCode),
+    expiresAt: new Date(Date.now() + 1000 * 60 * 5),
+  });
+
+  await sendOTPSMS({ phoneNumber, otpCode });
+
+  res.status(StatusCodes.OK).json({ msg: "OTP sent successfully" });
+};
+
+const verifyDriverOTP = async (req, res) => {
+  const { phoneNumber, otpCode } = req.body;
+
+  const otpRecord = await OtpVerification.findOne({
     phoneNumber,
     role: "driver",
   });
 
-  if (driverAlreadyExists) {
-    return res.status(StatusCodes.BAD_REQUEST).json({
-      msg: "Driver already exists",
+  if (!otpRecord) {
+    return res.status(StatusCodes.NOT_FOUND).json({ msg: "No OTP request found" });
+  }
+
+  if (otpRecord.expiresAt < new Date()) {
+    await OtpVerification.deleteOne({ _id: otpRecord._id });
+    return res.status(StatusCodes.BAD_REQUEST).json({ msg: "OTP has expired" });
+  }
+
+  if (createHash(otpCode) !== otpRecord.otpCode) {
+    return res.status(StatusCodes.UNAUTHORIZED).json({ msg: "Invalid OTP" });
+  }
+
+  await OtpVerification.deleteOne({ _id: otpRecord._id });
+
+  let driver = await Driver.findOne({ phoneNumber });
+
+  const isNewDriver = !driver;
+
+  if (!driver) {
+    driver = await Driver.create({ phoneNumber });
+
+    // create wallet for new drivers
+    await DriverWallet.create({ driver: driver._id });
+  }
+
+  const tokenDriver = createTokenDriver(driver);
+
+  let existingToken = await DriverToken.findOne({ driver: driver._id });
+
+  let refreshToken;
+
+  if (existingToken) {
+    if (!existingToken.isValid) {
+      return res.status(StatusCodes.UNAUTHORIZED).json({ msg: "Invalid credentials" });
+    }
+    refreshToken = crypto.randomBytes(40).toString("hex");
+    existingToken.refreshToken = refreshToken;
+    existingToken.ip = req.ip;
+    existingToken.userAgent = req.headers["user-agent"];
+    await existingToken.save();
+  } else {
+    refreshToken = crypto.randomBytes(40).toString("hex");
+    await DriverToken.create({
+      refreshToken,
+      ip: req.ip,
+      userAgent: req.headers["user-agent"],
+      driver: driver._id,
     });
   }
 
+  attachDriverCookiesToResponse({ res, driver: tokenDriver, refreshToken });
+
+  res.status(StatusCodes.OK).json({
+    msg: "Authentication successful",
+    driver: tokenDriver,
+    isNewDriver,
+    isProfileComplete: !!(driver.name && driver.licenseID && driver.ghanaCardNumber),
+  });
+};
+
+// Called after OTP verification — driver uploads documents and fills profile details
+const completeDriverProfile = async (req, res) => {
+  const driverId = req.user.driverId;
+
+  const driver = await Driver.findById(driverId);
+
+  if (!driver) {
+    return res.status(StatusCodes.NOT_FOUND).json({ msg: "Driver not found" });
+  }
+
   const uploadFields = {
-    ghanaCardImage: "Ghana card",
-    licenseImage: "license",
+    ghanaCardImage: "Ghana Card",
+    licenseImage: "Driver's License",
   };
 
   const missingFields = Object.keys(uploadFields).filter((field) => {
@@ -210,247 +235,123 @@ const driverSignUp = async (req, res) => {
 
   if (missingFields.length > 0) {
     return res.status(StatusCodes.BAD_REQUEST).json({
-      msg: `Please upload photo of ${missingFields
-        .map((field) => uploadFields[field])
-        .join(", ")}`,
+      msg: `Please upload photo of: ${missingFields.map((f) => uploadFields[f]).join(", ")}`,
     });
   }
 
-  // Track uploaded images for rollback cleanup
   const uploadedPublicIds = [];
 
+  // Delete old images from Cloudinary if re-uploading
+  const oldPublicIds = [driver.ghanaCardImagePublicId, driver.licenseImagePublicId].filter(Boolean);
+
   try {
-    // Upload all images concurrently
+    // Upload new images concurrently
     await Promise.all(
       Object.keys(uploadFields).map(async (field) => {
-        if (req.files && req.files[field]) {
-          const file = formatImage(req.files[field][0]);
+        const file = formatImage(req.files[field][0]);
 
-          const response = await cloudinary.v2.uploader.upload(file, {
-            use_filename: true,
-            folder: `/Troski/Troski-Driver-${field}s`,
-          });
+        const response = await cloudinary.v2.uploader.upload(file, {
+          use_filename: true,
+          folder: `/Troski/Troski-Driver-${field}s`,
+        });
 
-          // Save image URL
-          req.body[field] = response.secure_url;
-
-          // Save public ID
-          req.body[`${field}PublicId`] = response.public_id;
-
-          // Track uploaded images
-          uploadedPublicIds.push(response.public_id);
-        }
-      }),
+        req.body[field] = response.secure_url;
+        req.body[`${field}PublicId`] = response.public_id;
+        uploadedPublicIds.push(response.public_id);
+      })
     );
 
-    // Create driver
-    const driver = await Driver.create(req.body);
+    const { name, email, city, licenseID, ghanaCardNumber, pinCode } = req.body;
 
-    res.status(StatusCodes.CREATED).json({
-      msg: "Driver created successfully",
-      driver,
+    Object.assign(driver, {
+      name,
+      email,
+      city,
+      licenseID,
+      ghanaCardNumber,
+      ...(pinCode && { pinCode }),
+      ghanaCardImage: req.body.ghanaCardImage,
+      ghanaCardImagePublicId: req.body.ghanaCardImagePublicId,
+      licenseImage: req.body.licenseImage,
+      licenseImagePublicId: req.body.licenseImagePublicId,
+    });
+
+    await driver.save();
+
+    // Clean up old images after successful save
+    if (oldPublicIds.length > 0) {
+      await Promise.all(
+        oldPublicIds.map((id) => cloudinary.v2.uploader.destroy(id).catch(() => {}))
+      );
+    }
+
+    res.status(StatusCodes.OK).json({
+      msg: "Profile completed successfully. Please register your vehicle.",
+      driver: driver.toJSON(),
     });
   } catch (error) {
-    // Rollback cleanup:
-    // delete already uploaded images if anything fails
     if (uploadedPublicIds.length > 0) {
       await Promise.all(
-        uploadedPublicIds.map(async (publicId) => {
-          try {
-            await cloudinary.v2.uploader.destroy(publicId);
-          } catch (cleanupError) {
-            console.error(
-              `Failed to delete Cloudinary image: ${publicId}`,
-              cleanupError,
-            );
-          }
-        }),
+        uploadedPublicIds.map((id) => cloudinary.v2.uploader.destroy(id).catch(() => {}))
       );
     }
 
     console.error(error);
 
     return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
-      msg: "Driver signup failed. Please try again.",
+      msg: "Profile update failed. Please try again.",
     });
   }
 };
 
-const requestDriverOTP = async (req, res) => {
-  const { phoneNumber, method = "sms" } = req.body;
+const driverLogout = async (req, res) => {
+  await DriverToken.findOneAndDelete({ driver: req.user.driverId });
 
-  if (!phoneNumber) {
-    return res.status(StatusCodes.BAD_REQUEST).json({
-      msg: "Please provide phone number",
-    });
-  }
+  res.cookie("accessToken", "logout", { httpOnly: true, expires: new Date(Date.now()) });
+  res.cookie("refreshToken", "logout", { httpOnly: true, expires: new Date(Date.now()) });
 
-  const driver = await Driver.findOne({
-    phoneNumber,
-    role: "driver",
-  });
-
-  if (!driver) {
-    return res.status(StatusCodes.NOT_FOUND).json({
-      msg: "Driver account not found",
-    });
-  }
-
-  const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
-
-  driver.otpCode = createHash(otpCode);
-
-  driver.otpExpiresAt = new Date(Date.now() + 1000 * 60 * 5); // OTP expires in 5 minutes
-
-  await driver.save();
-
-  if (method === "email") {
-    await sendOTPEmail({
-      email: driver.email,
-      otpCode,
-    });
-  } else {
-    await sendOTPSMS({
-      phoneNumber: driver.phoneNumber,
-      otpCode,
-    });
-  }
-
-  res.status(StatusCodes.OK).json({
-    msg:
-      method === "email"
-        ? "OTP sent to email successfully"
-        : "OTP sent to phone number successfully",
-  });
+  res.status(StatusCodes.OK).json({ msg: "Logged out successfully" });
 };
 
-const verifyDriverOTP = async (req, res) => {
-  const { otpCode } = req.body;
-
-  if (!otpCode) {
-    return res.status(StatusCodes.BAD_REQUEST).json({
-      msg: "Invalid OTP",
-    });
-  }
-
-  const driver = await Driver.findOne({
-    otpCode: createHash(otpCode),
-    role: "driver",
-  });
-
-  if (!driver) {
-    return res.status(StatusCodes.NOT_FOUND).json({
-      msg: "Driver not found",
-    });
-  }
-
-  if (!driver.otpCode) {
-    return res.status(StatusCodes.BAD_REQUEST).json({
-      msg: "No OTP request found",
-    });
-  }
-
-  if (driver.otpExpiresAt && driver.otpExpiresAt < new Date()) {
-    return res.status(StatusCodes.BAD_REQUEST).json({
-      msg: "OTP has expired",
-    });
-  }
-
-  const hashedOTP = createHash(otpCode);
-
-  if (hashedOTP !== driver.otpCode) {
-    return res.status(StatusCodes.UNAUTHORIZED).json({
-      msg: "Invalid OTP",
-    });
-  }
-
-  driver.otpCode = null;
-  driver.otpExpiresAt = null;
-
-  await driver.save();
-
-  const tokenDriver = createTokenDriver(driver);
-
-  let refreshToken = "";
-
-  const existingToken = await DriverToken.findOne({
-    driver: driver._id,
-  });
-
-  if (existingToken) {
-    if (!existingToken.isValid) {
-      return res.status(StatusCodes.UNAUTHORIZED).json({
-        msg: "Invalid credentials",
-      });
-    }
-
-    refreshToken = existingToken.refreshToken;
-
-    attachDriverCookiesToResponse({
-      res,
-      driver: tokenDriver,
-      refreshToken,
-    });
-
-    return res.status(StatusCodes.OK).json({
-      msg: "Login successful",
-      driver: tokenDriver,
-    });
-  }
-
-  refreshToken = crypto.randomBytes(40).toString("hex");
-
-  const driverToken = {
-    refreshToken,
-    ip: req.ip,
-    userAgent: req.headers["user-agent"],
-    driver: driver._id,
-  };
-
-  await DriverToken.create(driverToken);
-
-  attachDriverCookiesToResponse({
-    res,
-    driver: tokenDriver,
-    refreshToken,
-  });
-
-  res.status(StatusCodes.OK).json({
-    msg: "Login successful",
-    driver: tokenDriver,
-  });
-};
+// ─── VEHICLE ─────────────────────────────────────────────────────────────────
 
 const vehicleRegistration = async (req, res) => {
   const driverId = req.user.driverId;
 
-  let { plateNumber, routePreferences } = req.body;
+  // Ensure driver has completed their profile before registering a vehicle
+  const driver = await Driver.findById(driverId);
 
-  const vehicleAlreadyExists = await Vehicle.findOne({
-    plateNumber,
-  });
-
-  if (vehicleAlreadyExists) {
+  if (!driver || !driver.name || !driver.licenseID || !driver.ghanaCardNumber) {
     return res.status(StatusCodes.BAD_REQUEST).json({
-      msg: "Vehicle already exists",
+      msg: "Please complete your driver profile before registering a vehicle",
     });
   }
 
-  if (routePreferences) {
-    routePreferences = JSON.parse(routePreferences);
-    req.body.routePreferences = routePreferences;
+  let { plateNumber, routePreferences } = req.body;
+
+  const vehicleAlreadyExists = await Vehicle.findOne({ plateNumber });
+
+  if (vehicleAlreadyExists) {
+    return res.status(StatusCodes.BAD_REQUEST).json({ msg: "Vehicle with this plate number already exists" });
   }
 
-  if (routePreferences.length < 1) {
+  if (routePreferences) {
+    try {
+      routePreferences = JSON.parse(routePreferences);
+      req.body.routePreferences = routePreferences;
+    } catch {
+      return res.status(StatusCodes.BAD_REQUEST).json({ msg: "Invalid route preferences format" });
+    }
+  }
+
+  if (!routePreferences || routePreferences.length < 1) {
     return res.status(StatusCodes.BAD_REQUEST).json({
       msg: "At least one route preference is required",
     });
   }
 
-  // console.log(routePreferences);
-
   const uploadFields = {
-    vehicleImage: "vehicle",
+    vehicleImage: "vehicle photo",
     insuranceCertImage: "insurance certificate",
     vehicleRegDocImage: "vehicle registration document",
     DVLARoadworthyImage: "DVLA roadworthy document",
@@ -462,65 +363,41 @@ const vehicleRegistration = async (req, res) => {
 
   if (missingFields.length > 0) {
     return res.status(StatusCodes.BAD_REQUEST).json({
-      msg: `Please upload photo of ${missingFields
-        .map((field) => uploadFields[field])
-        .join(", ")}`,
+      msg: `Please upload: ${missingFields.map((f) => uploadFields[f]).join(", ")}`,
     });
   }
 
-  // Track uploaded Cloudinary public IDs
-  // for rollback cleanup if something fails
   const uploadedPublicIds = [];
 
   try {
-    // Upload all images concurrently
     await Promise.all(
       Object.keys(uploadFields).map(async (field) => {
-        if (req.files && req.files[field]) {
-          const file = formatImage(req.files[field][0]);
+        const file = formatImage(req.files[field][0]);
 
-          const response = await cloudinary.v2.uploader.upload(file, {
-            use_filename: true,
-            folder: `/Troski/Troski-${field}s`,
-          });
+        const response = await cloudinary.v2.uploader.upload(file, {
+          use_filename: true,
+          folder: `/Troski/Troski-${field}s`,
+        });
 
-          // Save image URL
-          req.body[field] = response.secure_url;
-
-          // Save public ID
-          req.body[`${field}PublicId`] = response.public_id;
-
-          // Track uploaded images for rollback cleanup
-          uploadedPublicIds.push(response.public_id);
-        }
-      }),
+        req.body[field] = response.secure_url;
+        req.body[`${field}PublicId`] = response.public_id;
+        uploadedPublicIds.push(response.public_id);
+      })
     );
 
-    // Create vehicle record
-    const vehicle = await Vehicle.create({
-      ...req.body,
-      driver: driverId,
-    });
+    const vehicle = await Vehicle.create({ ...req.body, driver: driverId });
+
+    driver.vehicle = vehicle._id;
+    await driver.save();
 
     res.status(StatusCodes.CREATED).json({
-      msg: "Vehicle registered successfully. Please wait for approval",
+      msg: "Vehicle registered successfully. Pending admin approval.",
       vehicle,
     });
   } catch (error) {
-    // Rollback cleanup:
-    // delete already uploaded images if later upload fails
     if (uploadedPublicIds.length > 0) {
       await Promise.all(
-        uploadedPublicIds.map(async (publicId) => {
-          try {
-            await cloudinary.v2.uploader.destroy(publicId);
-          } catch (cleanupError) {
-            console.error(
-              `Failed to delete Cloudinary image: ${publicId}`,
-              cleanupError,
-            );
-          }
-        }),
+        uploadedPublicIds.map((id) => cloudinary.v2.uploader.destroy(id).catch(() => {}))
       );
     }
 
@@ -535,172 +412,98 @@ const vehicleRegistration = async (req, res) => {
 const checkPlateNumber = async (req, res) => {
   const { plateNumber } = req.body;
 
-  const vehicleAlreadyExists = await Vehicle.findOne({
-    plateNumber,
-  });
+  const vehicleAlreadyExists = await Vehicle.findOne({ plateNumber });
 
   if (vehicleAlreadyExists) {
-    return res
-      .status(StatusCodes.BAD_REQUEST)
-      .json({ msg: "Vehicle already exists" });
+    return res.status(StatusCodes.BAD_REQUEST).json({ msg: "Vehicle with this plate number already exists" });
   }
+
+  return res.status(StatusCodes.OK).json({ msg: "Plate number is available" });
 };
+
+// ─── ADMIN AUTH ───────────────────────────────────────────────────────────────
 
 const adminSignUp = async (req, res) => {
   const { username } = req.body;
 
-  const adminAlreadyExists = await Admin.findOne({
-    username,
-    role: "admin",
-  });
+  const adminAlreadyExists = await Admin.findOne({ username, role: "admin" });
 
   if (adminAlreadyExists) {
-    return res
-      .status(StatusCodes.BAD_REQUEST)
-      .json({ msg: "Admin already exists" });
+    return res.status(StatusCodes.BAD_REQUEST).json({ msg: "Admin already exists" });
   }
 
-  const admin = await Admin.create(req.body);
+  await Admin.create(req.body);
 
-  res.status(StatusCodes.CREATED).json({ msg: "admin created" });
-};
-
-const passengerLogout = async (req, res) => {
-  await PassengerToken.findOneAndDelete({ passenger: req.user.passengerId });
-
-  res.cookie("accessToken", "logout", {
-    httpOnly: true,
-    expires: new Date(Date.now()),
-  });
-  res.cookie("refreshToken", "logout", {
-    httpOnly: true,
-    expires: new Date(Date.now()),
-  });
-  res.status(StatusCodes.OK).json({ msg: "user logged out!" });
-};
-
-const driverLogout = async (req, res) => {
-  await DriverToken.findOneAndDelete({ driver: req.user.driverId });
-
-  res.cookie("accessToken", "logout", {
-    httpOnly: true,
-    expires: new Date(Date.now()),
-  });
-  res.cookie("refreshToken", "logout", {
-    httpOnly: true,
-    expires: new Date(Date.now()),
-  });
-
-  res.status(StatusCodes.OK).json({ msg: "user logged out!" });
+  res.status(StatusCodes.CREATED).json({ msg: "Admin created successfully" });
 };
 
 const adminLogin = async (req, res) => {
   const { username, password } = req.body;
 
   if (!username || !password) {
-    return res
-      .status(StatusCodes.UNAUTHORIZED)
-      .json({ msg: "Please provide username and password" });
+    return res.status(StatusCodes.BAD_REQUEST).json({ msg: "Please provide username and password" });
   }
 
-  const admin = await Admin.findOne({
-    username,
-    role: "admin",
-  });
+  const admin = await Admin.findOne({ username, role: "admin" });
 
   if (!admin) {
-    return res.status(StatusCodes.NOT_FOUND).json({
-      msg: "Admin not found",
-    });
+    return res.status(StatusCodes.UNAUTHORIZED).json({ msg: "Invalid credentials" });
   }
 
   const isPasswordCorrect = await admin.comparePassword(password);
 
   if (!isPasswordCorrect) {
-    return res
-      .status(StatusCodes.UNAUTHORIZED)
-      .json({ msg: "Invalid credentials" });
+    return res.status(StatusCodes.UNAUTHORIZED).json({ msg: "Invalid credentials" });
   }
 
   const tokenAdmin = createTokenAdmin(admin);
 
-  let refreshToken = "";
+  let existingToken = await AdminToken.findOne({ admin: admin._id });
 
-  const existingToken = await AdminToken.findOne({
-    admin: admin._id,
-  });
+  let refreshToken;
 
   if (existingToken) {
     if (!existingToken.isValid) {
-      return res.status(StatusCodes.UNAUTHORIZED).json({
-        msg: "Invalid credentials",
-      });
+      return res.status(StatusCodes.UNAUTHORIZED).json({ msg: "Invalid credentials" });
     }
-
-    refreshToken = existingToken.refreshToken;
-
-    attachAdminCookiesToResponse({
-      res,
-      admin: tokenAdmin,
+    refreshToken = crypto.randomBytes(40).toString("hex");
+    existingToken.refreshToken = refreshToken;
+    await existingToken.save();
+  } else {
+    refreshToken = crypto.randomBytes(40).toString("hex");
+    await AdminToken.create({
       refreshToken,
-    });
-
-    return res.status(StatusCodes.OK).json({
-      msg: "Login successful",
-      admin: tokenAdmin,
+      ip: req.ip,
+      userAgent: req.headers["user-agent"],
+      admin: admin._id,
     });
   }
 
-  refreshToken = crypto.randomBytes(40).toString("hex");
+  attachAdminCookiesToResponse({ res, admin: tokenAdmin, refreshToken });
 
-  const adminToken = {
-    refreshToken,
-    ip: req.ip,
-    userAgent: req.headers["user-agent"],
-    admin: admin._id,
-  };
-
-  await AdminToken.create(adminToken);
-
-  attachAdminCookiesToResponse({
-    res,
-    admin: tokenAdmin,
-    refreshToken,
-  });
-
-  res.status(StatusCodes.OK).json({
-    msg: "Login successful",
-    admin: tokenAdmin,
-  });
+  res.status(StatusCodes.OK).json({ msg: "Login successful", admin: tokenAdmin });
 };
 
 const adminLogout = async (req, res) => {
   await AdminToken.findOneAndDelete({ admin: req.user.adminId });
 
-  res.cookie("accessToken", "logout", {
-    httpOnly: true,
-    expires: new Date(Date.now()),
-  });
-  res.cookie("refreshToken", "logout", {
-    httpOnly: true,
-    expires: new Date(Date.now()),
-  });
+  res.cookie("accessToken", "logout", { httpOnly: true, expires: new Date(Date.now()) });
+  res.cookie("refreshToken", "logout", { httpOnly: true, expires: new Date(Date.now()) });
 
-  res.status(StatusCodes.OK).json({ msg: "admin logged out!" });
+  res.status(StatusCodes.OK).json({ msg: "Logged out successfully" });
 };
 
 module.exports = {
-  passengerSignUp,
   requestPassengerOTP,
   verifyPassengerOTP,
-  driverSignUp,
+  passengerLogout,
   requestDriverOTP,
   verifyDriverOTP,
+  completeDriverProfile,
+  driverLogout,
   vehicleRegistration,
   checkPlateNumber,
   adminSignUp,
   adminLogin,
   adminLogout,
-  passengerLogout,
-  driverLogout,
 };

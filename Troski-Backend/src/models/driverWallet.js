@@ -1,24 +1,43 @@
-const mongoose = require('mongoose');
+const mongoose = require("mongoose");
 
-const walletSchema = new mongoose.Schema({
-
-    balance:{
-        type: Number,
-        default: 0
+const walletSchema = new mongoose.Schema(
+  {
+    driver: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Driver",
+      required: true,
+      unique: true,
     },
 
-    driver:{
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'Driver',
-        required: true
+    // Funds ready for withdrawal
+    availableBalance: {
+      type: Number,
+      default: 0,
     },
 
-    commissionPaid:{
-        type: Number,
-        default: 0
+    // Earnings from rides still being processed
+    pendingBalance: {
+      type: Number,
+      default: 0,
     },
 
-});
+    totalEarned: {
+      type: Number,
+      default: 0,
+    },
 
-const DriverWallet = mongoose.model('DriverWallet', walletSchema);
+    totalWithdrawn: {
+      type: Number,
+      default: 0,
+    },
+
+    totalCommissionPaid: {
+      type: Number,
+      default: 0,
+    },
+  },
+  { timestamps: true }
+);
+
+const DriverWallet = mongoose.model("DriverWallet", walletSchema);
 module.exports = DriverWallet;
