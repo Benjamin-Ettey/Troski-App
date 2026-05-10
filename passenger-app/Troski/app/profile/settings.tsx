@@ -2,8 +2,11 @@ import {View, Text, ScrollView, TouchableOpacity, Alert} from 'react-native'
 import React from 'react'
 import {Ionicons} from "@expo/vector-icons";
 import {router} from "expo-router";
+import {useAppStore} from "@/utils/store";
 
 const Settings = () => {
+
+    const deleteAccount = useAppStore((state)=>state.deleteAccount)
 
     const handleDeleteAccount = ()=>{
         Alert.alert(
@@ -22,6 +25,8 @@ const Settings = () => {
 
             ]
         )
+
+        deleteAccount();
     }
     return (
         <View style={{backgroundColor: "#F5F7FA"}} className="flex-1">

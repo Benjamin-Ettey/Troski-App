@@ -13,7 +13,7 @@ const PhoneNumberScreen = () => {
     const [error, setError] = useState('');
     const isDisabled = value.length !== 10;
 
-    const setNumber = useAppStore((state) => state.setNumber);
+    const number = useAppStore((state)=> state.number);
 
     const validate = (text: string) => {
         const cleaned = text.replace(/[^0-9]/g, '');
@@ -34,7 +34,10 @@ const PhoneNumberScreen = () => {
             return;
         }
 
-        setNumber(value);
+        if (value !== number){
+            setError('Use your registered number to sign in, or create an account if this is your first time.')
+            return;
+        }
 
         router.replace("../login/otpScreen");
     };

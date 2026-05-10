@@ -1,6 +1,10 @@
 import {create} from "zustand"
+import { persist, createJSONStorage } from "zustand/middleware";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
-export const useAppStore = create((set)=> ({
+export const useAppStore = create(
+    persist(
+        (set)=> ({
 
         name: '',
         email: '',
@@ -64,6 +68,25 @@ export const useAppStore = create((set)=> ({
             }),
 
 
+        deleteAccount: ()=> set({
+            name: '',
+            email: '',
+            number: '',
+            image: '',
+            serviceprovider: '',
+            pin: '',
+            tempPin: '',
+            rideUpdates: true,
+            paymentNotifications: true,
+            announcements: false,
+            removePaymentMethod: (index) =>
+                set((state) => ({
+                    paymentMethods: state.paymentMethods.filter((_, i) => i !== index),
+                })),
+
+        }),
+
+
         pickup: null,
         destination: null,
 
@@ -89,5 +112,14 @@ export const useAppStore = create((set)=> ({
             setDestinationCoords: (destinationCoords) => set({ destinationCoords }),
 
 
-        }));
+    }),
+
+
+    {
+            name: "app-storage",
+            storage: createJSONStorage(() => AsyncStorage),
+        }
+
+
+    ));
 
