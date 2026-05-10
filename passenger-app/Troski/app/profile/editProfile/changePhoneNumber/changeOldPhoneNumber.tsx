@@ -6,13 +6,15 @@ import PrimaryButton from "@/components/PrimaryButton";
 import {useAppStore} from "@/utils/store";
 import {router} from "expo-router";
 import {Ionicons} from "@expo/vector-icons";
+import DisabledPrimaryButton from "@/components/DisabledPrimaryButton";
 
-const ChangePhoneNumber = () => {
+const ChangeOldPhoneNumber = () => {
 
     const [value, setValue] = useState('');
     const [newValue, setNewValue] = useState('')
     const [error, setError] = useState('');
     const [newError, setNewError] = useState('')
+
 
     const number = useAppStore((state)=>state.number)
     const setNumber = useAppStore((state) => state.setNumber);
@@ -45,7 +47,7 @@ const ChangePhoneNumber = () => {
         }
     };
 
-    const handleNext = () => {
+    const handleChangePhoneNumber = () => {
         if (value.length !== 10) {
             setError('Enter a valid 10-digit number');
             return;
@@ -67,9 +69,11 @@ const ChangePhoneNumber = () => {
         }
 
         setNumber(newValue);
-        router.push("/profile/otpChangePhoneNumber");
+        router.replace("/profile/editProfile/changePhoneNumber/otpChangePhoneNumber");
     };
 
+
+    const isDisabled = value.length !== 10 || newValue.length !== 10 || value !== number || newValue === value;
 
 
 
@@ -143,7 +147,13 @@ const ChangePhoneNumber = () => {
                             <Text className="text-sm font-GoogleSansRegula flex-shrink">To proceed, confirm that your new phone number can receive SMS or calls.</Text>
                     </View>}
 
-                    <PrimaryButton name="Change phone number" disabled={value.length !== 10 || newValue.length !== 10 || value !== number || newValue === value} onPress={handleNext}/>
+
+                    {isDisabled?
+                        (<DisabledPrimaryButton name="Change phone number" />)
+                        :
+                        (<PrimaryButton name="Change phone number" disabled={isDisabled} onPress={handleChangePhoneNumber}/>)
+
+                    }
                 </View>
 
             </KeyboardAwareScrollView>
@@ -152,4 +162,4 @@ const ChangePhoneNumber = () => {
         </View>
     )
 }
-export default ChangePhoneNumber
+export default ChangeOldPhoneNumber

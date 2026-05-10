@@ -1,8 +1,9 @@
 import {View, Text,TouchableOpacity, Alert, SectionList} from 'react-native'
 import React, {useState} from 'react'
 import {Ionicons} from "@expo/vector-icons";
+import {router} from "expo-router";
 
-const RideHistory = () => {
+const Index = () => {
     const [showRideHistory, setShowRideHistory] = useState(false);
 
     const DATA = [
@@ -73,7 +74,7 @@ const RideHistory = () => {
                     <Text className="font-GoogleSansMedium">No Ride History.</Text>
                     <Text style={{marginBottom: 16}} className="font-GoogleSansRegular text-center flex-shrink">Your ride history will appear here once you book a ride.</Text>
 
-                    <TouchableOpacity style={{paddingHorizontal: 12, paddingVertical: 12}} className="bg-primary rounded-full flex justify-center items-center">
+                    <TouchableOpacity onPress={()=>router.push("/homepage/bookings")} style={{paddingHorizontal: 12, paddingVertical: 12}} className="bg-primary rounded-full flex justify-center items-center">
                         <Text className="font-GoogleSansMedium">Book a ride</Text>
                     </TouchableOpacity>
                 </View>
@@ -106,7 +107,7 @@ const RideHistory = () => {
 
 
                                     <View
-                                        style={{width: "50%", gap: 2, }}
+                                        style={{flex: 1, gap: 2, paddingLeft: 16 }}
                                         className="flex  flex-col justify-center items-center ">
                                         <View className="flex flex-row justify-start items-center w-full gap-2">
                                             <Text className="text-xl font-GoogleSansRegular">
@@ -148,8 +149,10 @@ const RideHistory = () => {
                     </View>
 
                     <View style={{ bottom: 0, height: "15%"}} className="absolute w-full flex justify-center items-center">
-                        <TouchableOpacity onPress={handleClearRideHistory} style={{paddingHorizontal: 12, paddingVertical: 12}} className="bg-primary rounded-full shadow-2xl shadow-white flex justify-center items-center">
-                            <Text className="font-GoogleSansMedium">Clear Ride History</Text>
+                        <TouchableOpacity onPress={handleClearRideHistory}
+                              style={{paddingHorizontal: 12, paddingVertical: 12, backgroundColor: "#ff0000"}}
+                              className=" rounded-full shadow-2xl shadow-white flex justify-center items-center">
+                            <Text style={{color: "white"}} className="font-GoogleSansMedium">Clear Ride History</Text>
                         </TouchableOpacity>
                     </View>
 
@@ -160,4 +163,4 @@ const RideHistory = () => {
         </View>
     )
 }
-export default RideHistory
+export default Index

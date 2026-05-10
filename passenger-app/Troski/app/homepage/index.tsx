@@ -1,6 +1,6 @@
 // @ts-ignore
 
-import { View, Image, Pressable } from "react-native";
+import {View, Image, Pressable, Modal, Text, TouchableOpacity} from "react-native";
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { StatusBar } from "expo-status-bar";
 import MapView, { Marker, Circle } from "react-native-maps";
@@ -11,7 +11,7 @@ import BottomSheet, { BottomSheetView } from "@gorhom/bottom-sheet";
 import SearchBarButton from "@/components/SearchBarButton";
 import RollingTrips from "@/components/ui/RollingTrips";
 
-const Home = () => {
+const Index = () => {
     const bottomSheetRef = useRef<BottomSheet>(null);
 
     const snapPoints = useMemo(() => ["35%", "50%", "100%"], []);
@@ -54,20 +54,36 @@ const Home = () => {
 
                     setCoords({ latitude, longitude });
 
-                    mapRef.current?.animateToRegion({
-                        latitude,
-                        longitude,
-                        latitudeDelta: 0.001,
-                        longitudeDelta: 0.01,
-                    });
+                    if (!coords) {
+                        mapRef.current?.animateToRegion(
+                            {
+                                latitude,
+                                longitude,
+                                latitudeDelta: 0.001,
+                                longitudeDelta: 0.01,
+                            }
+                        )
+                    }
+
                 }
             );
         })();
+
 
         return () => {
             subscription?.remove();
         };
     }, []);
+
+    const handleSearchRides = ()=>{
+        router.push({
+            pathname: "/homepage/bookings",
+            params: {
+                latitude: coords?.latitude,
+                longitude: coords?.longitude,
+            },
+        })
+    }
 
     return (
         <View style={{ flex: 1 }}>
@@ -118,22 +134,44 @@ const Home = () => {
             </MapView>
 
             <View
+                className="w-full flex flex-row justify-between items-center"
                 style={{
                     position: "absolute",
                     top: 60,
-                    left: 20,
+
                 }}
             >
                 <Pressable
-                    onPress={() => router.push("../profile/profileScreen")}
+                    onPress={() => router.push("/profile")}
                     style={{
                         backgroundColor: "white",
                         padding: 10,
                         borderRadius: 20,
                         elevation: 5,
+                        left: 20,
                     }}
                 >
                     <Ionicons name="menu" size={24} />
+                </Pressable>
+
+                <Pressable
+                    className="flex flex-row justify-between items-center rounded-full"
+                    style={{
+                        backgroundColor: "white",
+                        padding: 10,
+                        elevation: 5,
+                        right: 20,
+                        gap: 10
+                    }}
+                >
+                    <TouchableOpacity onPress={()=>router.push("/profile/rideHistory")}>
+                        <Ionicons name="car-outline" size={24} />
+                    </TouchableOpacity>
+
+                    <TouchableOpacity onPress={()=>router.push("/homepage/recentNotifications")}>
+                        <Ionicons name="notifications-outline" size={24} />
+                    </TouchableOpacity>
+
                 </Pressable>
             </View>
 
@@ -146,15 +184,17 @@ const Home = () => {
             >
                 <BottomSheetView>
                     <View className="flex flex-col gap-4" style={{ padding: 16 }}>
-                        <SearchBarButton name="Where are you going?" onPress={()=>router.push("../homepage/home")}/>
+                        <SearchBarButton name="Where are you going?" onPress={handleSearchRides}/>
                         <RollingTrips/>
                     </View>
 
 
                 </BottomSheetView>
             </BottomSheet>
+
+
         </View>
     );
 };
 
-export default Home;
+export default Index;

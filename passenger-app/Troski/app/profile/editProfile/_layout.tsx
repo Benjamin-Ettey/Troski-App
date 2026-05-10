@@ -19,7 +19,7 @@ const _Layout = () => {
                             options={()=> ({
                                 headerShadowVisible: false,
                                 headerStyle: {backgroundColor: "#F5F7FA"},
-                                headerTitle: 'Profile',
+                                headerTitle: 'Edit profile',
                                 headerLeft: ()=>(
                                     <TouchableOpacity onPress={()=>router.back()} style={{display: "flex", justifyContent: "center", alignItems: "center"}}>
                                         <Ionicons name="chevron-back" size={30} color="black"/>
@@ -28,53 +28,9 @@ const _Layout = () => {
                             })}
                         />
 
-                        <Stack.Screen
-                            name="editProfile"
-                            options={()=> ({
-                                headerShown: false
-                            })}
-                        />
 
                         <Stack.Screen
-                            name="rideHistory"
-                            options={()=> ({
-                                headerShown: false
-                            })}
-                        />
-
-                        <Stack.Screen
-                            name="paymentMethod"
-                            options={()=> ({
-                                headerShown: false
-                            })}
-                        />
-
-
-
-                        <Stack.Screen
-                            name="myWallet"
-                            options={()=> ({
-                                headerShown: false
-                            })}
-                        />
-
-                        <Stack.Screen
-                            name="settings"
-                            options={()=> ({
-                                headerShown: false
-                            })}
-                        />
-
-
-                        <Stack.Screen
-                            name="information"
-                            options={()=> ({
-                                headerShown: false
-                            })}
-                        />
-
-                        <Stack.Screen
-                            name="recentEmails"
+                            name="changePhoneNumber"
                             options={()=> ({
                                 headerShown: false
                             })}

@@ -5,11 +5,14 @@ import {StatusBar} from "expo-status-bar";
 import {router} from "expo-router";
 import PrimaryButton from "@/components/PrimaryButton";
 import {useAppStore} from "@/utils/store";
+import DisabledPrimaryButton from "@/components/DisabledPrimaryButton";
 
 const PhoneNumberScreen = () => {
 
     const [value, setValue] = useState('');
     const [error, setError] = useState('');
+
+    const isDisabled = value.length !== 10;
 
     const setNumber = useAppStore((state) => state.setNumber);
 
@@ -34,7 +37,7 @@ const PhoneNumberScreen = () => {
 
         setNumber(value);
 
-        router.push("../signup/pinScreen");
+        router.push("/signup/pinScreen");
     };
 
 
@@ -79,7 +82,12 @@ const PhoneNumberScreen = () => {
                             <Text className="text-sm font-GoogleSansRegular">Make sure to enter a valid and active phone number.</Text>
                         </View>}
 
-                        <PrimaryButton name="Next" disabled={value.length !== 10} onPress={handleNext}/>
+                        {isDisabled?
+                            (<DisabledPrimaryButton name="Next" />)
+                            :
+                            (<PrimaryButton name="Next" disabled={isDisabled} onPress={handleNext}/>)
+
+                        }
                     </View>
 
             </KeyboardAwareScrollView>

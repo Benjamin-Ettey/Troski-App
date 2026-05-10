@@ -2,30 +2,29 @@ import {View, Text} from 'react-native'
 import React, {useState} from 'react'
 import {KeyboardAwareScrollView, KeyboardToolbar} from "react-native-keyboard-controller";
 import {StatusBar} from "expo-status-bar";
-import {router, useLocalSearchParams} from "expo-router";
+import {router} from "expo-router";
 import {Ionicons} from "@expo/vector-icons";
 import PrimaryButton from "@/components/PrimaryButton";
 import { OtpInput } from "react-native-otp-entry";
+import {useAppStore} from "@/utils/store";
+import DisabledPrimaryButton from "@/components/DisabledPrimaryButton";
 
 const ConfirmPinScreen = () => {
 
-    const {pin} = useLocalSearchParams();
-    const [disable, setDisable] = useState(true);
-    const [value, setValue] = useState("");
-    const handleNext = ()=>{
+    const pin = useAppStore((state) => state.pin);
 
-        if (value.length !== 6 ) return
-        router.push("../signup/fullNameScreen")
-    }
+    const [value, setValue] = useState("");
+
+    const disable = value.length !== 6 || value !== pin;
+
+    const handleNext = () => {
+        if (disable) return;
+
+        router.push("/signup/fullNameScreen");
+    };
 
     const handleOTP = (text: string) => {
         setValue(text);
-
-        if (text.length === 6 && pin === text) {
-            setDisable(false);
-        } else {
-            setDisable(true);
-        }
     };
 
     return (
@@ -65,7 +64,12 @@ const ConfirmPinScreen = () => {
                         </View>
 
 
-                        <PrimaryButton name="Next" disabled={disable} onPress={handleNext}/>
+                        {disable?
+                            (<DisabledPrimaryButton name="Next" />)
+                            :
+                            (<PrimaryButton name="Next" disabled={disable} onPress={handleNext}/>)
+
+                        }
                     </View>
 
             </KeyboardAwareScrollView>

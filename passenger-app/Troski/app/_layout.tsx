@@ -16,7 +16,7 @@ const _Layout = () => {
     return (
         <Stack>
             <Stack.Screen
-                name="onboarding"
+                name="landingPage"
                 options={{
                     headerShown: false
                 }}
@@ -51,6 +51,8 @@ const _Layout = () => {
                     headerShown: false
                 }}
             />
+
+
 
         </Stack>
 

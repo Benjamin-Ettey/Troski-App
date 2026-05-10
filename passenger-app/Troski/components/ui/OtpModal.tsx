@@ -10,7 +10,7 @@ const OtpModal = () => {
 
     useEffect(() => {
         const timer = setTimeout(()=>{
-            router.replace("../homepage/home")
+            router.replace("/homepage")
         }, 3000)
 
         return () => clearTimeout(timer);

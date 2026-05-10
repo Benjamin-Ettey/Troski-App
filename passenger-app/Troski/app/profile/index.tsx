@@ -9,7 +9,7 @@ import {router} from "expo-router";
 import * as ImagePicker from 'expo-image-picker'
 
 
-const ProfileScreen = () => {
+const Index = () => {
     const email = useAppStore((state)=>state.email);
     const name =  useAppStore((state)=> state.name)
     const image = useAppStore((state) => state.image);
@@ -39,7 +39,7 @@ const ProfileScreen = () => {
                 <StatusBar style='dark' />
 
 
-                <ScrollView>
+                <ScrollView contentContainerStyle={{paddingBottom: 40}}>
                     <View
                         style={{height: 84, paddingHorizontal: 16, marginTop: 24}}
                         className="w-full flex flex-row justify-start items-center gap-4 mb-8">
@@ -87,27 +87,27 @@ const ProfileScreen = () => {
                         <View
                             style={{borderRadius: 24}}
                             className="w-full bg-general">
-                            <NavBar onPress={()=>router.push("/profile/rideHistory")} name="time" title="Ride History" textcolor="#444444" color="black" goforwardcolor="gray"/>
+                            <NavBar onPress={()=>router.push("/profile/rideHistory")} name="car" title="Ride History" textcolor="#444444" color="black" goforwardcolor="gray"/>
                             <View style={{width: "100%", height: 1, backgroundColor: "#e4e4e477"}} />
                             <NavBar onPress={()=> router.push("/profile/paymentMethod")} name="card" title="Payment Methods" textcolor="#444444" color="black" goforwardcolor="gray"/>
                             <View style={{width: "100%", height: 1, backgroundColor: "#e4e4e477"}} />
-                            <NavBar name="wallet" title="My Wallet" textcolor="#444444" color="black" goforwardcolor="gray"/>
+                            <NavBar onPress={()=>router.push("/profile/myWallet")} name="wallet" title="My Wallet" textcolor="#444444" color="black" goforwardcolor="gray"/>
 
                         </View>
 
                         <View
                             style={{borderRadius: 24}}
                             className="w-full bg-general">
-                            <NavBar name="settings" title="Settings" textcolor="#444444" color="black" goforwardcolor="gray"/>
+                            <NavBar onPress={()=> router.push("/profile/settings")} name="settings" title="Settings" textcolor="#444444" color="black" goforwardcolor="gray"/>
                             <View style={{width: "100%", height: 1, backgroundColor: "#e4e4e477"}} />
-                            <NavBar name="information-circle" title="Information" textcolor="#444444" color="black" goforwardcolor="gray"/>
+                            <NavBar onPress={()=>router.push("/profile/information")} name="information-circle" title="Information" textcolor="#444444" color="black" goforwardcolor="gray"/>
 
                         </View>
 
                         <View
                             style={{borderRadius: 24}}
                             className="w-full bg-general">
-                            <NavBar name="mail-unread" textcolor="#444444" color="black" title="Recent emails" goforwardcolor="gray"/>
+                            <NavBar onPress={()=>router.push("/profile/recentEmails")} name="mail-unread" textcolor="#444444" color="black" title="Recent emails" goforwardcolor="gray"/>
                         </View>
 
                         <View
@@ -121,4 +121,4 @@ const ProfileScreen = () => {
         </View>
     )
 }
-export default ProfileScreen
+export default Index
