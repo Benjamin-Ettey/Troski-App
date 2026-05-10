@@ -10,7 +10,7 @@ const Index = () => {
             <Text className="font-DMSansBlack text-2xl tracking-tighter text-center mb-2">Click on the Go to see what shows next. </Text>
             <TouchableOpacity
                 className="px-4 bg-blue-500 rounded-full w-[30%] h-12 flex justify-center items-center"
-                onPress={()=> router.replace("../onboarding/landingPage")}>
+                onPress={()=> router.push("/landingPage")}>
                 <Text className="text-xl font-bold text-white">Go</Text>
             </TouchableOpacity>
         </View>
