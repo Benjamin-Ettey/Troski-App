@@ -2,7 +2,7 @@ import {View, Text, ScrollView, TouchableOpacity} from 'react-native'
 import React from 'react'
 import {Ionicons} from "@expo/vector-icons";
 
-const Information = () => {
+const Index = () => {
     return (
         <View style={{backgroundColor: "#F5F7FA"}} className="flex-1">
             <ScrollView contentContainerStyle={{paddingBottom: 60}}>
@@ -86,4 +86,4 @@ const Information = () => {
         </View>
     )
 }
-export default Information
+export default Index

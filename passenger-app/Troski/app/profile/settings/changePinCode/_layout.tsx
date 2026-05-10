@@ -19,7 +19,7 @@ const _Layout = () => {
                             options={()=> ({
                                 headerShadowVisible: false,
                                 headerStyle: {backgroundColor: "#F5F7FA"},
-                                headerTitle: 'Profile',
+                                headerTitle: 'Change pin code',
                                 headerLeft: ()=>(
                                     <TouchableOpacity onPress={()=>router.back()} style={{display: "flex", justifyContent: "center", alignItems: "center"}}>
                                         <Ionicons name="chevron-back" size={30} color="black"/>
@@ -29,58 +29,33 @@ const _Layout = () => {
                         />
 
                         <Stack.Screen
-                            name="editProfile"
+                            name="newPinCode"
                             options={()=> ({
-                                headerShown: false
-                            })}
-                        />
-
-                        <Stack.Screen
-                            name="rideHistory"
-                            options={()=> ({
-                                headerShown: false
-                            })}
-                        />
-
-                        <Stack.Screen
-                            name="paymentMethod"
-                            options={()=> ({
-                                headerShown: false
-                            })}
-                        />
-
-
-
-                        <Stack.Screen
-                            name="myWallet"
-                            options={()=> ({
-                                headerShown: false
-                            })}
-                        />
-
-                        <Stack.Screen
-                            name="settings"
-                            options={()=> ({
-                                headerShown: false
+                                headerShadowVisible: false,
+                                headerStyle: {backgroundColor: "#F5F7FA"},
+                                headerTitle: 'Change pin code',
+                                headerLeft: ()=>(
+                                    <TouchableOpacity onPress={()=>router.back()} style={{display: "flex", justifyContent: "center", alignItems: "center"}}>
+                                        <Ionicons name="chevron-back" size={30} color="black"/>
+                                    </TouchableOpacity>
+                                )
                             })}
                         />
 
 
                         <Stack.Screen
-                            name="information"
+                            name="confirmNewPinCode"
                             options={()=> ({
-                                headerShown: false
+                                headerShadowVisible: false,
+                                headerStyle: {backgroundColor: "#F5F7FA"},
+                                headerTitle: 'Confirm new pin',
+                                headerLeft: ()=>(
+                                    <TouchableOpacity onPress={()=>router.back()} style={{display: "flex", justifyContent: "center", alignItems: "center"}}>
+                                        <Ionicons name="chevron-back" size={30} color="black"/>
+                                    </TouchableOpacity>
+                                )
                             })}
                         />
-
-                        <Stack.Screen
-                            name="recentEmails"
-                            options={()=> ({
-                                headerShown: false
-                            })}
-                        />
-
-
 
 
                     </Stack>

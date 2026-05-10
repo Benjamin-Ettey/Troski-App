@@ -1,12 +1,11 @@
 import React from 'react'
 import { Stack } from 'expo-router'
-import LandingPage from "@/app/onboarding/landingPage";
 
 const _Layout = () => {
     return (
         <Stack>
             <Stack.Screen
-                name="landingPage"
+                name="index"
                 options={{
                     headerShown: false,
                     gestureEnabled: false

@@ -35,7 +35,7 @@ const ConfirmNewPinCode = () => {
         useAppStore.getState().setTempPin("");
 
 
-        router.replace("/homepage/home");
+        router.replace("/homepage");
     };
 
     const handleOTP = (text: string) => {

@@ -37,7 +37,7 @@ const PhoneNumberScreen = () => {
 
         setNumber(value);
 
-        router.push("../signup/pinScreen");
+        router.push("/signup/pinScreen");
     };
 
 

@@ -4,7 +4,7 @@ import {Ionicons} from "@expo/vector-icons";
 import {router} from "expo-router";
 import {useAppStore} from "@/utils/store";
 
-const Settings = () => {
+const Index = () => {
 
     const deleteAccount = useAppStore((state)=>state.deleteAccount)
 
@@ -19,7 +19,7 @@ const Settings = () => {
                 {
                     text: "Delete",
                     style: "destructive",
-                    onPress: ()=>router.replace("/onboarding/landingPage")
+                    onPress: ()=>router.replace("/landingPage")
                 }
 
 
@@ -34,7 +34,7 @@ const Settings = () => {
                 <View style={{paddingHorizontal: 16, marginBottom: 20}} className="w-full">
                     <Text style={{fontSize: 16, paddingLeft: 10, marginBottom: 5}} className="font-GoogleSansRegular">Manage Notifications</Text>
                     <View style={{borderRadius: 24, height: 48, paddingLeft: 24}} className="bg-general flex justify-center items-center">
-                        <TouchableOpacity style={{ flex:1}} onPress={()=>router.replace("/profile/notifications")} className="w-full flex flex-row justify-between items-center">
+                        <TouchableOpacity style={{ flex:1}} onPress={()=>router.push("/profile/settings/notifications")} className="w-full flex flex-row justify-between items-center">
                             <Text className="font-GoogleSansMedium text-secondaryGray">Notifications</Text>
                             <Ionicons style={{paddingRight: 16}} name="chevron-forward" size={18} color="gray"/>
                         </TouchableOpacity>
@@ -49,7 +49,7 @@ const Settings = () => {
                 <View style={{paddingHorizontal: 16, marginBottom: 20}} className="w-full">
                     <Text style={{fontSize: 16, paddingLeft: 10, marginBottom: 5}} className="font-GoogleSansRegular">PIN Management</Text>
                     <View style={{borderRadius: 24, height: 48, paddingLeft: 24}} className="bg-general flex justify-center items-center">
-                        <TouchableOpacity style={{ flex:1}} onPress={()=> router.replace("/profile/oldPinCode")} className="w-full flex flex-row justify-between items-center">
+                        <TouchableOpacity style={{ flex:1}} onPress={()=> router.push("/profile/settings/changePinCode")} className="w-full flex flex-row justify-between items-center">
                             <Text className="font-GoogleSansMedium text-secondaryGray">Change Pin Code</Text>
                             <Ionicons style={{paddingRight: 16}} name="chevron-forward" size={18} color="gray"/>
                         </TouchableOpacity>
@@ -80,4 +80,4 @@ const Settings = () => {
         </View>
     )
 }
-export default Settings
+export default Index

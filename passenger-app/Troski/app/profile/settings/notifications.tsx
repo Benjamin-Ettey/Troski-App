@@ -57,7 +57,7 @@ const Notifications = () => {
                     <Text style={{fontSize: 16, paddingLeft: 10, marginBottom: 5}} className="font-GoogleSansRegular">Payment Notifications</Text>
                     <View style={{borderRadius: 24, height: 48, paddingLeft: 24}} className="bg-general flex flex-row justify-center items-center">
                         <TouchableOpacity
-                            style={{ flex:1}} onPress={()=> router.replace("/profile/oldPinCode")}
+                            style={{ flex:1}}
                             className="w-full flex flex-row justify-between items-center">
                             <Text className="font-GoogleSansMedium text-secondaryGray">Payment Notifications</Text>
                             <Switch
@@ -77,7 +77,7 @@ const Notifications = () => {
                     <Text style={{fontSize: 16, paddingLeft: 10, marginBottom: 5}} className="font-GoogleSansRegular">Promotions & Announcements</Text>
                     <View style={{borderRadius: 24, height: 48, paddingLeft: 24}} className="bg-general flex flex-row justify-center items-center">
                         <TouchableOpacity
-                            style={{ flex:1}} onPress={()=> router.replace("/profile/oldPinCode")}
+                            style={{ flex:1}}
                             className="w-full flex flex-row justify-between items-center">
                             <Text className="font-GoogleSansMedium text-secondaryGray">Announcements</Text>
                             <Switch

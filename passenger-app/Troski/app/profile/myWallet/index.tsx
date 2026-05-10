@@ -2,7 +2,7 @@ import {View, Text, TouchableOpacity, SectionList, Alert} from 'react-native'
 import React, {useState} from 'react'
 import {Ionicons} from "@expo/vector-icons";
 
-const MyWallet = () => {
+const Index = () => {
     const [showRideHistory, setShowRideHistory] = useState(false);
 
     const DATA = [
@@ -196,4 +196,4 @@ const MyWallet = () => {
         </View>
     )
 }
-export default MyWallet
+export default Index

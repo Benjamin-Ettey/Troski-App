@@ -11,7 +11,7 @@ import BottomSheet, { BottomSheetView } from "@gorhom/bottom-sheet";
 import SearchBarButton from "@/components/SearchBarButton";
 import RollingTrips from "@/components/ui/RollingTrips";
 
-const Home = () => {
+const Index = () => {
     const bottomSheetRef = useRef<BottomSheet>(null);
 
     const snapPoints = useMemo(() => ["35%", "50%", "100%"], []);
@@ -77,7 +77,7 @@ const Home = () => {
 
     const handleSearchRides = ()=>{
         router.push({
-            pathname: "/bookings/searchRides",
+            pathname: "/homepage/bookings",
             params: {
                 latitude: coords?.latitude,
                 longitude: coords?.longitude,
@@ -142,7 +142,7 @@ const Home = () => {
                 }}
             >
                 <Pressable
-                    onPress={() => router.push("../profile/profileScreen")}
+                    onPress={() => router.push("/profile")}
                     style={{
                         backgroundColor: "white",
                         padding: 10,
@@ -168,7 +168,7 @@ const Home = () => {
                         <Ionicons name="car-outline" size={24} />
                     </TouchableOpacity>
 
-                    <TouchableOpacity onPress={()=>router.push("/profile/recentNotifications")}>
+                    <TouchableOpacity onPress={()=>router.push("/homepage/recentNotifications")}>
                         <Ionicons name="notifications-outline" size={24} />
                     </TouchableOpacity>
 
@@ -197,4 +197,4 @@ const Home = () => {
     );
 };
 
-export default Home;
+export default Index;

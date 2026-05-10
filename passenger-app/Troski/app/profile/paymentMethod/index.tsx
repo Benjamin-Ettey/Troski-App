@@ -5,7 +5,7 @@ import {router} from "expo-router";
 import {useAppStore} from "@/utils/store";
 import PrimaryButton from "@/components/PrimaryButton";
 
-const PaymentMethod = () => {
+const Index = () => {
     const paymentMethods = useAppStore((state) => state.paymentMethods);
     const removePaymentMethod = useAppStore((state)=>state.removePaymentMethod);
 
@@ -38,7 +38,7 @@ const PaymentMethod = () => {
                     <Text className="font-GoogleSansMedium">No Payment Method.</Text>
                     <Text style={{marginBottom: 16}} className="font-GoogleSansRegular text-center flex-shrink">Add a payment method to see it here.</Text>
 
-                    <TouchableOpacity onPress={()=>router.push("/profile/setupPaymentMethod")} style={{paddingHorizontal: 12, paddingVertical: 12}} className="bg-primary rounded-full flex justify-center items-center">
+                    <TouchableOpacity onPress={()=>router.push("/profile/paymentMethod/setupPaymentMethod")} style={{paddingHorizontal: 12, paddingVertical: 12}} className="bg-primary rounded-full flex justify-center items-center">
                         <Text className="font-GoogleSansMedium">Setup Payment Method</Text>
                     </TouchableOpacity>
                 </View>
@@ -89,7 +89,7 @@ const PaymentMethod = () => {
 
                     <View className="absolute flex justify-center items-center w-full"
                           style={{bottom: 0, height: 100}}>
-                        <PrimaryButton name="Add payment method" onPress={()=>router.push("/profile/setupPaymentMethod")} disabled={false}/>
+                        <PrimaryButton name="Add payment method" onPress={()=>router.push("/profile/paymentMethod/setupPaymentMethod")} disabled={false}/>
                     </View>
                 </>
             }
@@ -98,4 +98,4 @@ const PaymentMethod = () => {
 
     )
 }
-export default PaymentMethod
+export default Index

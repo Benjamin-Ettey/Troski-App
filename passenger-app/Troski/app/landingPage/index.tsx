@@ -7,7 +7,7 @@ import SecondaryButton from "@/components/SecondaryButton";
 
 
 
-const LandingPage = () => {
+const Index = () => {
     return (
         <View className="flex-1 bg-general relative">
             <StatusBar style="light"/>
@@ -33,8 +33,8 @@ const LandingPage = () => {
 
                 <View className="w-full flex items-center gap-2 mb-4">
 
-                    <PrimaryButton disabled={false}  name="Sign up for free" onPress={()=>router.push("../signup/emailScreen")}/>
-                    <SecondaryButton title="Login" onPress={()=>router.push("../login/phoneNumberScreen")}/>
+                    <PrimaryButton disabled={false}  name="Sign up for free" onPress={()=>router.push("/signup")}/>
+                    <SecondaryButton title="Login" onPress={()=>router.push("/login")}/>
 
                 </View>
 
@@ -44,4 +44,4 @@ const LandingPage = () => {
         </View>
     )
 }
-export default LandingPage
+export default Index

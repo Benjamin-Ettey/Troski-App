@@ -9,7 +9,7 @@ import {router} from "expo-router";
 import * as ImagePicker from 'expo-image-picker'
 
 
-const ProfileScreen = () => {
+const Index = () => {
     const email = useAppStore((state)=>state.email);
     const name =  useAppStore((state)=> state.name)
     const image = useAppStore((state) => state.image);
@@ -121,4 +121,4 @@ const ProfileScreen = () => {
         </View>
     )
 }
-export default ProfileScreen
+export default Index

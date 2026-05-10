@@ -21,7 +21,7 @@ const PinScreen = () => {
         if (value.length !== 6) return;
 
         router.push({
-            pathname: "../signup/confirmPinScreen",
+            pathname: "/signup/confirmPinScreen",
         });
     };
 

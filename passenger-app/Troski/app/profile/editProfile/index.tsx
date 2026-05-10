@@ -7,7 +7,7 @@ import BottomSheet, {BottomSheetBackdrop, BottomSheetView} from "@gorhom/bottom-
 import PrimaryButton from "@/components/PrimaryButton";
 
 
-const EditProfile = () => {
+const Index = () => {
     const email = useAppStore((state)=>state.email);
     const name =  useAppStore((state)=> state.name);
     const number =  useAppStore((state)=> state.number);
@@ -186,7 +186,7 @@ const EditProfile = () => {
         <View style={{paddingHorizontal: 16, marginBottom: 20}} className="w-full">
             <Text style={{fontSize: 16, paddingLeft: 10, marginBottom: 5}} className="font-GoogleSansRegular">Phone Number</Text>
             <View style={{borderRadius: 24, height: 48, paddingLeft: 24}} className="bg-general flex justify-center items-center">
-                <TouchableOpacity style={{ flex:1}} onPress={()=> router.push("/profile/changeNumberInfo")} className="w-full flex flex-row justify-between items-center">
+                <TouchableOpacity style={{ flex:1}} onPress={()=> router.push("/profile/editProfile/changePhoneNumber")} className="w-full flex flex-row justify-between items-center">
                     <Text className="font-GoogleSansMedium text-secondaryGray">{number}</Text>
                     <Ionicons style={{paddingRight: 16}} name="chevron-forward" size={18} color="gray"/>
                 </TouchableOpacity>
@@ -285,4 +285,4 @@ const EditProfile = () => {
         </View>
     )
 }
-export default EditProfile
+export default Index

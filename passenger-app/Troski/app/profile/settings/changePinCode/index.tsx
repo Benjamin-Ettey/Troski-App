@@ -9,7 +9,7 @@ import { OtpInput } from "react-native-otp-entry";
 import {useAppStore} from "@/utils/store";
 import DisabledPrimaryButton from "@/components/DisabledPrimaryButton";
 
-const OldPinCode = () => {
+const Index = () => {
 
     const pin = useAppStore((state)=> state.pin)
     const [disable, setDisable] = useState(true);
@@ -18,7 +18,7 @@ const OldPinCode = () => {
     const handleNext = ()=>{
 
         if (value.length !== 6) return
-        router.push("/profile/newPinCode")
+        router.push("/profile/settings/changePinCode/newPinCode")
     }
 
     const handleOTP = (text: any) => {
@@ -78,4 +78,4 @@ const OldPinCode = () => {
 
     )
 }
-export default OldPinCode
+export default Index

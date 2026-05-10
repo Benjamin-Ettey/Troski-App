@@ -7,7 +7,7 @@ import PrimaryButton from "@/components/PrimaryButton";
 import {useAppStore} from "@/utils/store"
 import DisabledPrimaryButton from "@/components/DisabledPrimaryButton";
 
-const EmailScreen = () => {
+const Index = () => {
     const [emailAddress, setEmailAddress] = useState('')
     const setEmail = useAppStore((state) => state.setEmail);
     const [error, setError] = useState("");
@@ -27,7 +27,7 @@ const EmailScreen = () => {
         }
 
         setEmail(emailAddress.trim());
-        router.push("../signup/phoneNumberScreen");
+        router.push("/signup/phoneNumberScreen");
     }
 
     const handleEmailChange = (text: string) => {
@@ -99,4 +99,4 @@ const EmailScreen = () => {
 
     )
 }
-export default EmailScreen
+export default Index

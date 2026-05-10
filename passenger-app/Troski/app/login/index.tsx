@@ -7,7 +7,7 @@ import PrimaryButton from "@/components/PrimaryButton";
 import {useAppStore} from "@/utils/store";
 import DisabledPrimaryButton from "@/components/DisabledPrimaryButton";
 
-const PhoneNumberScreen = () => {
+const Index = () => {
 
     const [value, setValue] = useState('');
     const [error, setError] = useState('');
@@ -39,7 +39,7 @@ const PhoneNumberScreen = () => {
             return;
         }
 
-        router.replace("../login/otpScreen");
+        router.push("/login/otpScreen");
     };
 
 
@@ -99,4 +99,4 @@ const PhoneNumberScreen = () => {
 
     )
 }
-export default PhoneNumberScreen
+export default Index

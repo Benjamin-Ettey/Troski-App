@@ -22,7 +22,7 @@ const NewPinCode = () => {
 
         setTempPin(value);
 
-        router.push("/profile/confirmNewPinCode");
+        router.push("/profile/settings/changePinCode/confirmNewPinCode");
     };
 
     const handleOTP = (text: string) => {

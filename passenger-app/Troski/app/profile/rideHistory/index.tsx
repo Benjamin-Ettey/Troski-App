@@ -1,8 +1,9 @@
 import {View, Text,TouchableOpacity, Alert, SectionList} from 'react-native'
 import React, {useState} from 'react'
 import {Ionicons} from "@expo/vector-icons";
+import {router} from "expo-router";
 
-const RideHistory = () => {
+const Index = () => {
     const [showRideHistory, setShowRideHistory] = useState(false);
 
     const DATA = [
@@ -73,7 +74,7 @@ const RideHistory = () => {
                     <Text className="font-GoogleSansMedium">No Ride History.</Text>
                     <Text style={{marginBottom: 16}} className="font-GoogleSansRegular text-center flex-shrink">Your ride history will appear here once you book a ride.</Text>
 
-                    <TouchableOpacity style={{paddingHorizontal: 12, paddingVertical: 12}} className="bg-primary rounded-full flex justify-center items-center">
+                    <TouchableOpacity onPress={()=>router.push("/homepage/bookings")} style={{paddingHorizontal: 12, paddingVertical: 12}} className="bg-primary rounded-full flex justify-center items-center">
                         <Text className="font-GoogleSansMedium">Book a ride</Text>
                     </TouchableOpacity>
                 </View>
@@ -162,4 +163,4 @@ const RideHistory = () => {
         </View>
     )
 }
-export default RideHistory
+export default Index

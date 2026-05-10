@@ -9,7 +9,7 @@ const _Layout = () => {
         <KeyboardProvider>
             <Stack>
                 <Stack.Screen
-                    name="phoneNumberScreen"
+                    name="index"
                     options={()=> ({
                         headerShadowVisible: false,
                         headerStyle: {backgroundColor: "#ffffff"},

@@ -10,7 +10,7 @@ const _Layout = () => {
             <Stack>
 
                 <Stack.Screen
-                    name="emailScreen"
+                    name="index"
                     options={()=> ({
                         headerShadowVisible: false,
                         headerStyle: {backgroundColor: "#ffffff"},

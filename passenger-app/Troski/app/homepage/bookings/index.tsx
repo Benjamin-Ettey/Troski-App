@@ -54,7 +54,7 @@ const haversineKm = (lat1: number, lon1: number, lat2: number, lon2: number): st
     return (R * c).toFixed(1);
 };
 
-const SearchRides = () => {
+const Index = () => {
     const router = useRouter();
 
     const [activeField, setActiveField] = useState<"pickup" | "destination" | null>(null);
@@ -86,7 +86,7 @@ const SearchRides = () => {
         const finalDestination = nextDestination ?? destinationPoint;
 
         if (finalPickup && finalDestination) {
-            router.push("/bookings/selectRide");
+            router.push("/homepage/bookings/selectRide");
         }
     };
 
@@ -344,4 +344,4 @@ const SearchRides = () => {
     );
 };
 
-export default SearchRides;
+export default Index;

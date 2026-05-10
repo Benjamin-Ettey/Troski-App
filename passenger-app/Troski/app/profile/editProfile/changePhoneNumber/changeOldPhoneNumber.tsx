@@ -8,7 +8,7 @@ import {router} from "expo-router";
 import {Ionicons} from "@expo/vector-icons";
 import DisabledPrimaryButton from "@/components/DisabledPrimaryButton";
 
-const ChangePhoneNumber = () => {
+const ChangeOldPhoneNumber = () => {
 
     const [value, setValue] = useState('');
     const [newValue, setNewValue] = useState('')
@@ -69,7 +69,7 @@ const ChangePhoneNumber = () => {
         }
 
         setNumber(newValue);
-        router.replace("/profile/otpChangePhoneNumber");
+        router.replace("/profile/editProfile/changePhoneNumber/otpChangePhoneNumber");
     };
 
 
@@ -162,4 +162,4 @@ const ChangePhoneNumber = () => {
         </View>
     )
 }
-export default ChangePhoneNumber
+export default ChangeOldPhoneNumber

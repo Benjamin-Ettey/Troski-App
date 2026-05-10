@@ -2,7 +2,7 @@ import {View, Text,TouchableOpacity, Alert, SectionList} from 'react-native'
 import React, {useState} from 'react'
 import {Ionicons} from "@expo/vector-icons";
 
-const RecentEmails = () => {
+const Index = () => {
     const [showRideHistory, setShowRideHistory] = useState(false);
 
     const DATA = [
@@ -146,4 +146,4 @@ const RecentEmails = () => {
         </View>
     )
 }
-export default RecentEmails
+export default Index
