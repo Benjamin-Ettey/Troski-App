@@ -33,8 +33,8 @@ const Index = () => {
 
                 <View className="w-full flex items-center gap-2 mb-4">
 
-                    <PrimaryButton disabled={false}  name="Sign up for free" onPress={()=>router.push("/signup")}/>
-                    <SecondaryButton title="Login" onPress={()=>router.push("/login")}/>
+                    <PrimaryButton disabled={false}  name="Sign up for free" onPress={()=>router.push("/landingPage/signup")}/>
+                    <SecondaryButton title="Login" onPress={()=>router.push("/landingPage/login")}/>
 
                 </View>
 

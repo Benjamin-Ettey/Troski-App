@@ -20,7 +20,7 @@ const ConfirmPinScreen = () => {
     const handleNext = () => {
         if (disable) return;
 
-        router.push("/signup/fullNameScreen");
+        router.push("/landingPage/signup/fullNameScreen");
     };
 
     const handleOTP = (text: string) => {

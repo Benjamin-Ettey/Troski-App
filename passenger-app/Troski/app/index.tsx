@@ -1,19 +1,46 @@
-import {View, Text, TouchableOpacity} from 'react-native'
-import React from 'react'
-import "../global.css"
-import {router} from "expo-router";
+import { View, StyleSheet } from "react-native";
+import React, { useEffect } from "react";
+import { router } from "expo-router";
+import { useVideoPlayer, VideoView } from "expo-video";
+import {StatusBar} from "expo-status-bar";
+import {useAppStore} from "@/utils/store";
+import OtpModal from "@/components/ui/OtpModal";
 
 const Index = () => {
+    const loggedIn = useAppStore((state)=>state.loggedIn);
+    const setLoggedIn = useAppStore((state)=>state.setLoggedIn);
+    const setSeeProfile = useAppStore((state)=> state.setSeeProfile);
+
+    const player = useVideoPlayer(require("../assets/video/splash.mp4"), (player) => {
+        player.play(); // autoplay
+    });
+
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            if (!loggedIn){
+                router.replace("/landingPage")
+            }else{
+                router.replace("/homepage")
+
+            }
+        }, 4000);
+
+        return () => clearTimeout(timer);
+    }, []);
 
     return (
-        <View className="w-full flex items-center ">
-            <Text className="font-DMSansBlack text-2xl tracking-tighter text-center mb-2">Click on the Go to see what shows next. </Text>
-            <TouchableOpacity
-                className="px-4 bg-blue-500 rounded-full w-[30%] h-12 flex justify-center items-center"
-                onPress={()=> router.push("/landingPage")}>
-                <Text className="text-xl font-bold text-white">Go</Text>
-            </TouchableOpacity>
+        <View style={styles.container}>
+            <StatusBar hidden/>
+            <VideoView player={player} style={StyleSheet.absoluteFill} contentFit="cover" />
         </View>
-    )
-}
-export default Index
+    );
+};
+
+const styles = StyleSheet.create({
+    container: {
+        flex: 1,
+        backgroundColor: "black", // fallback background
+    },
+});
+
+export default Index;

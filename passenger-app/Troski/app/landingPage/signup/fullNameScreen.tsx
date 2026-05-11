@@ -22,7 +22,7 @@ const FullnameScreen = () => {
         if (fullName.trim().length <= 3) return;
 
         setName(fullName)
-        router.push("/signup/otpScreen");
+        router.push("/landingPage/signup/otpScreen");
     };
     return (
 

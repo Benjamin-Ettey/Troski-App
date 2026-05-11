@@ -7,13 +7,14 @@ import PrimaryButton from "@/components/PrimaryButton";
 import {useAppStore} from "@/utils/store";
 import DisabledPrimaryButton from "@/components/DisabledPrimaryButton";
 
-const Index = () => {
+const PhoneNumberScreen = () => {
 
     const [value, setValue] = useState('');
     const [error, setError] = useState('');
+
     const isDisabled = value.length !== 10;
 
-    const number = useAppStore((state)=> state.number);
+    const setNumber = useAppStore((state) => state.setNumber);
 
     const validate = (text: string) => {
         const cleaned = text.replace(/[^0-9]/g, '');
@@ -34,12 +35,9 @@ const Index = () => {
             return;
         }
 
-        if (value !== number){
-            setError('Use your registered number to sign in, or create an account if this is your first time.')
-            return;
-        }
+        setNumber(value);
 
-        router.push("/login/otpScreen");
+        router.push("/landingPage/signup/pinScreen");
     };
 
 
@@ -57,7 +55,7 @@ const Index = () => {
 
                     <View className="w-full flex-1 flex items-center px-6">
                         <View className="w-full">
-                            <Text className="text-xl tracking-tight font-GoogleSansMedium">Enter phone number?</Text>
+                            <Text className="text-xl font-GoogleSansMedium tracking-tight">What&apos;s your phone number?</Text>
                         </View>
 
                         <TextInput
@@ -69,19 +67,19 @@ const Index = () => {
                             keyboardType="phone-pad"
                             autoFocus={true}
                             style={{paddingLeft: 16, }}
-                            className="bg-general mb-1 font-medium text-secondaryGray w-full py-4 border border-tertiaryGray  rounded-xl focus:border focus:border-green-600/40"
+                            className="bg-general mb-1 font-GoogleSansMedium text-secondaryGray w-full py-4 border border-tertiaryGray  rounded-xl focus:border focus:border-green-600/40"
 
                         />
 
 
                         {error ? (
                             <View className="mb-6 w-full items-start">
-                                <Text className="text-sm font-GoogleSansMedium text-red-600">
+                                <Text className="text-sm text-red-600 font-GoogleSansMedium">
                                     {error}
                                 </Text>
                             </View>
                         ) : <View className="mb-6 w-full items-start">
-                            <Text className="text-sm font-GoogleSansRegular">This is the number you provided when you created your account.</Text>
+                            <Text className="text-sm font-GoogleSansRegular">Make sure to enter a valid and active phone number.</Text>
                         </View>}
 
                         {isDisabled?
@@ -90,7 +88,6 @@ const Index = () => {
                             (<PrimaryButton name="Next" disabled={isDisabled} onPress={handleNext}/>)
 
                         }
-
                     </View>
 
             </KeyboardAwareScrollView>
@@ -99,4 +96,4 @@ const Index = () => {
 
     )
 }
-export default Index
+export default PhoneNumberScreen

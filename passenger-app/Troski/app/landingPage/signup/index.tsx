@@ -27,7 +27,7 @@ const Index = () => {
         }
 
         setEmail(emailAddress.trim());
-        router.push("/signup/phoneNumberScreen");
+        router.push("/landingPage/signup/phoneNumberScreen");
     }
 
     const handleEmailChange = (text: string) => {

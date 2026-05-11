@@ -13,6 +13,8 @@ export const useAppStore = create(
         serviceprovider: '',
         pin: '',
         tempPin: '',
+        loggedIn: false,
+        seeProfile: false,
 
 
         setName: (name) => set({ name }),
@@ -22,6 +24,8 @@ export const useAppStore = create(
         setServiceProvider: (serviceprovider)=> set({serviceprovider}),
         setPin: (pin) => set({pin}),
         setTempPin: (tempPin)=> set({tempPin}),
+        setLoggedIn: (loggedIn)=> set({ loggedIn}),
+        setSeeProfile: (seeProfile)=> set({ seeProfile }),
 
         removePaymentMethod: (index) =>
             set((state) => ({

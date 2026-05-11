@@ -5,6 +5,8 @@ import {router} from "expo-router";
 import {useAppStore} from "@/utils/store";
 
 const Index = () => {
+    const setLoggedIn = useAppStore((state)=>state.setLoggedIn);
+    const setSeeProfile = useAppStore((state)=> state.setSeeProfile);
 
     const deleteAccount = useAppStore((state)=>state.deleteAccount)
 
@@ -19,7 +21,11 @@ const Index = () => {
                 {
                     text: "Delete",
                     style: "destructive",
-                    onPress: ()=>router.replace("/landingPage")
+                    onPress: ()=> {
+                        setLoggedIn(false);
+                        setSeeProfile(false);
+                        router.replace("/landingPage");
+                    }
                 }
 
 
