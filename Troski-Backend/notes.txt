@@ -1,1 +1,99 @@
-nothing much, just so git tracks this folder too
+USE THIS IN THE WALLET CONTROLLER. REPLACE THE initializeWalletTopup with this:
+
+// ======================================================
+// INITIALIZE PAYSTACK TOPUP
+// ======================================================
+const initializeWalletTopup = async (req, res) => {
+  // We now expect 'phone' and 'provider' (mtn, tgo, or vdc) from the request
+  const { amount, email, phoneNumber, provider } = req.body;
+
+  if (!amount || !email || !phoneNumber || !provider) {
+    return res.status(StatusCodes.BAD_REQUEST).json({
+      msg: "Amount, email, phone, and provider (mtn, tgo, vdc) are required",
+    });
+  }
+
+  const user = await User.findById(req.user.userId);
+  const reference = crypto.randomBytes(12).toString("hex");
+
+  try {
+    // Paystack Direct Charge Endpoint
+    const response = await axios.post(
+      "https://api.paystack.co/charge",
+      {
+        email,
+        amount: amount * 100,
+        reference,
+        mobile_money: {
+          phone: phoneNumber,
+          provider, // mtn, tgo (for Telecel/AirtelTigo), or vdc (Vodafone)
+        },
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${process.env.PAYSTACK_SECRET_KEY}`,
+          "Content-Type": "application/json",
+        },
+      },
+    );
+
+    // Save the record as 'pending'
+    await Payment.create({
+      passenger: user._id,
+      phoneNumber: user.phoneNumber, // The user's account number
+      amount,
+      paystackReference: reference,
+      paymentType: "wallet_topup",
+      status: "pending",
+      paymentMethod: "mobile_money",
+    });
+
+    // Paystack will return 'send_otp' or 'pending' for MoMo
+    return res.status(StatusCodes.OK).json({
+      msg: "USSD Prompt sent to device",
+      status: response.data.data.status,
+      reference,
+      display_text: response.data.data.display_text, // Instructions for the user
+    });
+  } catch (error) {
+    console.error("MoMo Charge Error:", error.response?.data || error.message);
+    return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
+      msg: "Payment initialization failed",
+      error: error.response?.data?.message || error.message,
+    });
+  }
+};
+
+
+
+
+
+// APP FREEZE FIX AS A RESULT OF BALANCE CHAGE IN THE DATABASE
+
+const repairWallet = async (req, res) => {
+  const { phoneNumber } = req.body; // Target wallet
+
+  // 1. Fetch wallet
+  const wallet = await Wallet.findOne({ phoneNumber });
+  
+  // 2. Calculate the "Actual" balance from Transactions
+  const transactions = await Transaction.find({ phoneNumber, status: 'success' });
+  
+  const calculatedBalance = transactions.reduce((acc, tx) => {
+    return tx.type === 'topup' ? acc + tx.amount : acc - tx.amount;
+  }, 0);
+
+  // 3. Update the wallet with the calculated "Truth"
+  wallet.balance = calculatedBalance;
+  
+  // 4. Reseal the wallet with a fresh, valid hash
+  wallet.balanceHash = generateBalanceHash(
+    wallet.balance, 
+    wallet.escrowBalance, 
+    wallet.phoneNumber
+  );
+
+  await wallet.save();
+  
+  res.status(200).json({ msg: "Wallet integrity restored based on transaction history." });
+};
