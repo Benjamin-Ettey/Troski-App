@@ -2,10 +2,16 @@ import {View, Text, Pressable} from 'react-native'
 import React from 'react'
 import {Ionicons} from "@expo/vector-icons";
 import {router} from "expo-router";
+import {useAppStore} from "@/utils/store";
 
 const LogoutNavBar = ({name, title} : any) => {
+    const setLoggedIn = useAppStore((state)=>state.setLoggedIn);
+    const setSeeProfile = useAppStore((state)=> state.setSeeProfile);
+
     const handleLogout= ()=>{
-        router.replace("../login/phoneNumberScreen")
+        setLoggedIn(false);
+        setSeeProfile(false);
+        router.replace("/landingPage")
     }
 
     return (

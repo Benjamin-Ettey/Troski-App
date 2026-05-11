@@ -3,13 +3,19 @@ import React, {useEffect} from 'react'
 import {router} from "expo-router";
 import {StatusBar} from "expo-status-bar";
 import LottieView from "lottie-react-native";
+import {useAppStore} from "@/utils/store";
 
 
 const OtpModal = () => {
+    const setLoggedIn = useAppStore((state)=>state.setLoggedIn);
+    const setSeeProfile = useAppStore((state)=>state.setSeeProfile);
+
 
 
     useEffect(() => {
         const timer = setTimeout(()=>{
+            setLoggedIn(true);
+            setSeeProfile(true);
             router.replace("/homepage")
         }, 3000)
 
