@@ -1,37 +1,38 @@
-import { View, StyleSheet } from "react-native";
 import React, { useEffect } from "react";
+import { View, StyleSheet } from "react-native";
 import { router } from "expo-router";
-import { useVideoPlayer, VideoView } from "expo-video";
-import {StatusBar} from "expo-status-bar";
-import {useAppStore} from "@/utils/store";
-import OtpModal from "@/components/ui/OtpModal";
+import { StatusBar } from "expo-status-bar";
+import { useAppStore } from "@/utils/store";
+import { VideoView, useVideoPlayer } from "expo-video";
 
-const Index = () => {
-    const loggedIn = useAppStore((state)=>state.loggedIn);
-    const setLoggedIn = useAppStore((state)=>state.setLoggedIn);
-    const setSeeProfile = useAppStore((state)=> state.setSeeProfile);
+const Splash = () => {
+    const loggedIn = useAppStore((s) => s.loggedIn);
 
-    const player = useVideoPlayer(require("../assets/video/splash.mp4"), (player) => {
-        player.play(); // autoplay
+    const player = useVideoPlayer(require("../assets/video/splash.mp4"), (p) => {
+        p.play();
     });
 
     useEffect(() => {
-        const timer = setTimeout(() => {
-            if (!loggedIn){
-                router.replace("/landingPage")
-            }else{
-                router.replace("/homepage")
-
+        const sub = player.addListener("playToEnd", () => {
+            if (!loggedIn) {
+                router.replace("/landingPage");
+            } else {
+                router.replace("/homepage");
             }
-        }, 4000);
+        });
 
-        return () => clearTimeout(timer);
-    }, []);
+        return () => sub.remove();
+    }, [player, loggedIn]);
 
     return (
         <View style={styles.container}>
-            <StatusBar hidden/>
-            <VideoView player={player} style={StyleSheet.absoluteFill} contentFit="cover" />
+            <StatusBar hidden />
+            <VideoView
+                player={player}
+                style={StyleSheet.absoluteFill}
+                contentFit="cover"
+                nativeControls={false}
+            />
         </View>
     );
 };
@@ -39,8 +40,8 @@ const Index = () => {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: "black", // fallback background
+        backgroundColor: "white",
     },
 });
 
-export default Index;
+export default Splash;

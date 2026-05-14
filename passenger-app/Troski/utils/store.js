@@ -15,6 +15,11 @@ export const useAppStore = create(
         tempPin: '',
         loggedIn: false,
         seeProfile: false,
+        tripPrice: "",
+        finalTripPrice: null,
+        driverImage: '',
+
+
 
 
         setName: (name) => set({ name }),
@@ -26,17 +31,28 @@ export const useAppStore = create(
         setTempPin: (tempPin)=> set({tempPin}),
         setLoggedIn: (loggedIn)=> set({ loggedIn}),
         setSeeProfile: (seeProfile)=> set({ seeProfile }),
+        setTripPrice: (price) => set({ tripPrice: price }),
+        setFinalTripPrice: (price) => set({ finalTripPrice: price }),
+        setDriverImage: (driverImage) => set({ driverImage }),
 
-        removePaymentMethod: (index) =>
-            set((state) => ({
-                paymentMethods: state.paymentMethods.filter((_, i) => i !== index),
-        })),
 
-        paymentMethods: [],
-        addPaymentMethod: (method) =>
-            set((state) => ({
-                paymentMethods: [...state.paymentMethods, method],
-            })),
+
+            removePaymentMethod: (index) =>
+                set((state) => ({
+                    paymentMethods: state.paymentMethods.filter((_, i) => i !== index),
+                })),
+
+            paymentMethods: [],
+
+            selectedPaymentMethod: null,
+
+            setSelectedPaymentMethod: (method) =>
+                set({ selectedPaymentMethod: method }),
+
+            addPaymentMethod: (method) =>
+                set((state) => ({
+                    paymentMethods: [...state.paymentMethods, method],
+                })),
 
 
         otpEndTime: null,
@@ -114,6 +130,24 @@ export const useAppStore = create(
 
             setDestinationPoint: (destinationPoint) => set({ destinationPoint }),
             setDestinationCoords: (destinationCoords) => set({ destinationCoords }),
+
+
+            routeCoords: [],
+            setRouteCoords: (coords) =>
+                set({ routeCoords: coords }),
+
+            driverCoords: null,
+            setDriverCoords: (coords) =>
+                set((state) => ({
+                    driverCoords:
+                        typeof coords === "function"
+                            ? coords(state.driverCoords)
+                            : coords,
+                })),
+
+            driverEta: "",
+            setDriverEta: (eta) =>
+                set({ driverEta: eta }),
 
 
     }),

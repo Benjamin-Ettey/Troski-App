@@ -1,6 +1,7 @@
 import {View, Text, TouchableOpacity, SectionList, Alert} from 'react-native'
 import React, {useState} from 'react'
 import {Ionicons} from "@expo/vector-icons";
+import {router} from "expo-router";
 
 const Index = () => {
     const [showRideHistory, setShowRideHistory] = useState(false);
@@ -77,6 +78,7 @@ const Index = () => {
                     className="w-full flex flex-row justify-center items-center">
                     <View>
                         <TouchableOpacity
+                            onPress={()=>router.push("/profile/myWallet/deposit")}
                             className="rounded-full bg-primary flex justify-center items-center"
                             style={{width: 60, height: 60, marginBottom: 10}}>
                             <Ionicons name="add-circle-outline" size={32}/>
@@ -85,6 +87,8 @@ const Index = () => {
                     </View>
                     <View>
                         <TouchableOpacity
+                            onPress={()=>router.push("/profile/myWallet/withdraw")}
+
                             className="rounded-full bg-primary flex justify-center items-center"
                             style={{width: 60, height: 60, marginBottom: 10}}>
                             <Ionicons name="cash-outline" size={32}/>

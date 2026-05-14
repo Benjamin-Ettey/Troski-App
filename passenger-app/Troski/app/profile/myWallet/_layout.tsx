@@ -28,7 +28,34 @@ const _Layout = () => {
                             })}
                         />
 
+                        <Stack.Screen
+                            name="deposit"
+                            options={()=> ({
+                                headerShadowVisible: false,
+                                headerStyle: {backgroundColor: "#FFFFFF"},
+                                headerTitle: 'Deposit',
+                                headerLeft: ()=>(
+                                    <TouchableOpacity onPress={()=>router.back()} style={{display: "flex", justifyContent: "center", alignItems: "center"}}>
+                                        <Ionicons name="chevron-back" size={30} color="black"/>
+                                    </TouchableOpacity>
+                                )
+                            })}
+                        />
 
+
+                        <Stack.Screen
+                            name="withdraw"
+                            options={()=> ({
+                                headerShadowVisible: false,
+                                headerStyle: {backgroundColor: "#FFFFFF"},
+                                headerTitle: 'Withdraw',
+                                headerLeft: ()=>(
+                                    <TouchableOpacity onPress={()=>router.back()} style={{display: "flex", justifyContent: "center", alignItems: "center"}}>
+                                        <Ionicons name="chevron-back" size={30} color="black"/>
+                                    </TouchableOpacity>
+                                )
+                            })}
+                        />
 
                     </Stack>
                 </KeyboardProvider>

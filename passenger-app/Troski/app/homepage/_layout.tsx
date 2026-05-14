@@ -14,7 +14,7 @@ const _Layout = () => {
                     <Stack.Screen
                         name="index"
                         options={{
-                            headerShown: false
+                            headerShown: false,
                         }}
                     />
 

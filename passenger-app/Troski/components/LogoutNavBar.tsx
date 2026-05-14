@@ -1,4 +1,4 @@
-import {View, Text, Pressable} from 'react-native'
+import {View, Text, Pressable, Alert} from 'react-native'
 import React from 'react'
 import {Ionicons} from "@expo/vector-icons";
 import {router} from "expo-router";
@@ -9,9 +9,28 @@ const LogoutNavBar = ({name, title} : any) => {
     const setSeeProfile = useAppStore((state)=> state.setSeeProfile);
 
     const handleLogout= ()=>{
-        setLoggedIn(false);
-        setSeeProfile(false);
-        router.replace("/landingPage")
+        Alert.alert(
+            "Logout?", "You are about to log out of your account. You will need to sign in again to continue.",
+            [
+                {
+                    text: "Cancel",
+                    style: "cancel"
+                },
+                {
+                    text: "Logout",
+                    style: "destructive",
+                    onPress: ()=> {
+                        setLoggedIn(false);
+                        setSeeProfile(false);
+                        router.replace("/landingPage")
+                    }
+                }
+
+
+            ]
+        )
+
+
     }
 
     return (

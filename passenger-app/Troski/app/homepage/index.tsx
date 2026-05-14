@@ -165,7 +165,7 @@ const Index = () => {
                     }}
                 >
                     <TouchableOpacity onPress={()=>router.push("/profile/rideHistory")}>
-                        <Ionicons name="car-outline" size={24} />
+                        <Ionicons name="bus-outline" size={22} />
                     </TouchableOpacity>
 
                     <TouchableOpacity onPress={()=>router.push("/homepage/recentNotifications")}>
