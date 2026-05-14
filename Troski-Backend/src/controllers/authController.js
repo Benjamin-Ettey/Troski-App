@@ -1,206 +1,41 @@
-const Passenger = require("../models/passengers");
-const Driver = require("../models/drivers");
-const Admin = require("../models/admins");
-const Vehicle = require("../models/vehicles");
-const DriverWallet = require("../models/driverWallet");
-const PassengerToken = require("../models/passengerToken");
-const DriverToken = require("../models/driverToken");
-const AdminToken = require("../models/adminToken");
-const OtpVerification = require("../models/otpVerification");
-const { StatusCodes } = require("http-status-codes");
+const User = require("../models/User");
+const Wallet = require("../models/Wallet");
+const Token = require("../models/Token");
+
 const crypto = require("crypto");
-const {
-  attachPassengerCookiesToResponse,
-  attachDriverCookiesToResponse,
-  attachAdminCookiesToResponse,
-} = require("../utils/tokenUtils");
-const { sendOTPSMS } = require("../utils/sendOTPSMS");
-const createHash = require("../utils/createHash");
-const createTokenPassenger = require("../utils/createTokenPassenger");
-const createTokenDriver = require("../utils/createTokenDriver");
-const createTokenAdmin = require("../utils/createTokenAdmin");
 const cloudinary = require("cloudinary");
+
+const { StatusCodes } = require("http-status-codes");
+
+const { attachCookiesToResponse } = require("../utils/tokenUtils");
+
+const createHash = require("../utils/createHash");
+const createTokenUser = require("../utils/createTokenUser");
+
+const { sendOTPEmail } = require("../utils/sendOTPEmail");
+const { sendOTPSMS } = require("../utils/sendOTPSMS");
+
 const { formatImage } = require("../middleware/multerMiddleware");
 
-// ─── PASSENGER AUTH ──────────────────────────────────────────────────────────
+const {
+  generateBalanceHash,
+  verifyWalletIntegrity,
+} = require("../utils/hashUtils");
 
-const requestPassengerOTP = async (req, res) => {
-  const { phoneNumber } = req.body;
+const signUp = async (req, res) => {
+  const { phoneNumber, email, role } = req.body;
 
-  const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
-
-  await OtpVerification.deleteMany({ phoneNumber, role: "passenger" });
-
-  await OtpVerification.create({
-    phoneNumber,
-    role: "passenger",
-    otpCode: createHash(otpCode),
-    expiresAt: new Date(Date.now() + 1000 * 60 * 5),
+  // 1. Check if user exists
+  const existingUser = await User.findOne({
+    $or: [
+      { phoneNumber, role },
+      { email, role },
+    ],
   });
 
-  await sendOTPSMS({ phoneNumber, otpCode });
-
-  res.status(StatusCodes.OK).json({ msg: "OTP sent successfully" });
-};
-
-const verifyPassengerOTP = async (req, res) => {
-  const { phoneNumber, otpCode } = req.body;
-
-  const otpRecord = await OtpVerification.findOne({
-    phoneNumber,
-    role: "passenger",
-  });
-
-  if (!otpRecord) {
-    return res.status(StatusCodes.NOT_FOUND).json({ msg: "No OTP request found" });
-  }
-
-  if (otpRecord.expiresAt < new Date()) {
-    await OtpVerification.deleteOne({ _id: otpRecord._id });
-    return res.status(StatusCodes.BAD_REQUEST).json({ msg: "OTP has expired" });
-  }
-
-  if (createHash(otpCode) !== otpRecord.otpCode) {
-    return res.status(StatusCodes.UNAUTHORIZED).json({ msg: "Invalid OTP" });
-  }
-
-  await OtpVerification.deleteOne({ _id: otpRecord._id });
-
-  let passenger = await Passenger.findOne({ phoneNumber });
-
-  const isNewUser = !passenger;
-
-  if (!passenger) {
-    passenger = await Passenger.create({
-      phoneNumber,
-      isPhoneVerified: true,
-    });
-  } else {
-    passenger.isPhoneVerified = true;
-    await passenger.save();
-  }
-
-  const tokenPassenger = createTokenPassenger(passenger);
-
-  let existingToken = await PassengerToken.findOne({ passenger: passenger._id });
-
-  let refreshToken;
-
-  if (existingToken) {
-    if (!existingToken.isValid) {
-      return res.status(StatusCodes.UNAUTHORIZED).json({ msg: "Invalid credentials" });
-    }
-    refreshToken = crypto.randomBytes(40).toString("hex");
-    existingToken.refreshToken = refreshToken;
-    existingToken.ip = req.ip;
-    existingToken.userAgent = req.headers["user-agent"];
-    await existingToken.save();
-  } else {
-    refreshToken = crypto.randomBytes(40).toString("hex");
-    await PassengerToken.create({
-      refreshToken,
-      ip: req.ip,
-      userAgent: req.headers["user-agent"],
-      passenger: passenger._id,
-    });
-  }
-
-  attachPassengerCookiesToResponse({ res, passenger: tokenPassenger, refreshToken });
-
-  res.status(StatusCodes.OK).json({
-    msg: "Authentication successful",
-    passenger: tokenPassenger,
-    isNewUser,
-    isProfileComplete: passenger.isProfileComplete,
-  });
-};
-
-const passengerLogout = async (req, res) => {
-  await PassengerToken.findOneAndDelete({ passenger: req.user.passengerId });
-
-  res.cookie("accessToken", "logout", { httpOnly: true, expires: new Date(Date.now()) });
-  res.cookie("refreshToken", "logout", { httpOnly: true, expires: new Date(Date.now()) });
-
-  res.status(StatusCodes.OK).json({ msg: "Logged out successfully" });
-};
-
-// ─── DRIVER AUTH ─────────────────────────────────────────────────────────────
-
-const requestDriverOTP = async (req, res) => {
-  const { phoneNumber } = req.body;
-
-  const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
-
-  await OtpVerification.deleteMany({ phoneNumber, role: "driver" });
-
-  await OtpVerification.create({
-    phoneNumber,
-    role: "driver",
-    otpCode: createHash(otpCode),
-    expiresAt: new Date(Date.now() + 1000 * 60 * 5),
-  });
-
-  await sendOTPSMS({ phoneNumber, otpCode });
-
-  res.status(StatusCodes.OK).json({ msg: "OTP sent successfully" });
-};
-
-const verifyDriverOTP = async (req, res) => {
-  const { phoneNumber, otpCode } = req.body;
-
-  const otpRecord = await OtpVerification.findOne({
-    phoneNumber,
-    role: "driver",
-  });
-
-  if (!otpRecord) {
-    return res.status(StatusCodes.NOT_FOUND).json({ msg: "No OTP request found" });
-  }
-
-  if (otpRecord.expiresAt < new Date()) {
-    await OtpVerification.deleteOne({ _id: otpRecord._id });
-    return res.status(StatusCodes.BAD_REQUEST).json({ msg: "OTP has expired" });
-  }
-
-  if (createHash(otpCode) !== otpRecord.otpCode) {
-    return res.status(StatusCodes.UNAUTHORIZED).json({ msg: "Invalid OTP" });
-  }
-
-  await OtpVerification.deleteOne({ _id: otpRecord._id });
-
-  let driver = await Driver.findOne({ phoneNumber });
-
-  const isNewDriver = !driver;
-
-  if (!driver) {
-    driver = await Driver.create({ phoneNumber });
-
-    // create wallet for new drivers
-    await DriverWallet.create({ driver: driver._id });
-  }
-
-  const tokenDriver = createTokenDriver(driver);
-
-  let existingToken = await DriverToken.findOne({ driver: driver._id });
-
-  let refreshToken;
-
-  if (existingToken) {
-    if (!existingToken.isValid) {
-      return res.status(StatusCodes.UNAUTHORIZED).json({ msg: "Invalid credentials" });
-    }
-    refreshToken = crypto.randomBytes(40).toString("hex");
-    existingToken.refreshToken = refreshToken;
-    existingToken.ip = req.ip;
-    existingToken.userAgent = req.headers["user-agent"];
-    await existingToken.save();
-  } else {
-    refreshToken = crypto.randomBytes(40).toString("hex");
-    await DriverToken.create({
-      refreshToken,
-      ip: req.ip,
-      userAgent: req.headers["user-agent"],
-      driver: driver._id,
+  if (existingUser) {
+    return res.status(StatusCodes.BAD_REQUEST).json({
+      msg: `A ${role} account with this phone number or email already exists.`,
     });
   }
 
@@ -229,281 +64,170 @@ const completeDriverProfile = async (req, res) => {
     licenseImage: "Driver's License",
   };
 
-  const missingFields = Object.keys(uploadFields).filter((field) => {
-    return !(req.files && req.files[field] && req.files[field][0]);
-  });
-
-  if (missingFields.length > 0) {
-    return res.status(StatusCodes.BAD_REQUEST).json({
-      msg: `Please upload photo of: ${missingFields.map((f) => uploadFields[f]).join(", ")}`,
+  if (role === "driver") {
+    const missingFields = Object.keys(uploadFields).filter((field) => {
+      return !(req.files && req.files[field] && req.files[field][0]);
     });
+
+    if (missingFields.length > 0) {
+      return res.status(StatusCodes.BAD_REQUEST).json({
+        msg: `Please upload photo of ${missingFields.map((f) => uploadFields[f]).join(", ")}`,
+      });
+    }
   }
 
   const uploadedPublicIds = [];
-
-  // Delete old images from Cloudinary if re-uploading
-  const oldPublicIds = [driver.ghanaCardImagePublicId, driver.licenseImagePublicId].filter(Boolean);
-
   try {
-    // Upload new images concurrently
-    await Promise.all(
-      Object.keys(uploadFields).map(async (field) => {
-        const file = formatImage(req.files[field][0]);
-
-        const response = await cloudinary.v2.uploader.upload(file, {
-          use_filename: true,
-          folder: `/Troski/Troski-Driver-${field}s`,
-        });
-
-        req.body[field] = response.secure_url;
-        req.body[`${field}PublicId`] = response.public_id;
-        uploadedPublicIds.push(response.public_id);
-      })
-    );
-
-    const { name, email, city, licenseID, ghanaCardNumber, pinCode } = req.body;
-
-    Object.assign(driver, {
-      name,
-      email,
-      city,
-      licenseID,
-      ghanaCardNumber,
-      ...(pinCode && { pinCode }),
-      ghanaCardImage: req.body.ghanaCardImage,
-      ghanaCardImagePublicId: req.body.ghanaCardImagePublicId,
-      licenseImage: req.body.licenseImage,
-      licenseImagePublicId: req.body.licenseImagePublicId,
-    });
-
-    await driver.save();
-
-    // Clean up old images after successful save
-    if (oldPublicIds.length > 0) {
+    if (role === "driver") {
       await Promise.all(
-        oldPublicIds.map((id) => cloudinary.v2.uploader.destroy(id).catch(() => {}))
+        Object.keys(uploadFields).map(async (field) => {
+          if (req.files && req.files[field]) {
+            const file = formatImage(req.files[field][0]);
+            const response = await cloudinary.v2.uploader.upload(file, {
+              use_filename: true,
+              folder: `/Troski/Troski-Driver-${field}s`,
+            });
+            req.body[field] = response.secure_url;
+            req.body[`${field}PublicId`] = response.public_id;
+            uploadedPublicIds.push(response.public_id);
+          }
+        }),
       );
     }
 
-    res.status(StatusCodes.OK).json({
-      msg: "Profile completed successfully. Please register your vehicle.",
-      driver: driver.toJSON(),
-    });
-  } catch (error) {
-    if (uploadedPublicIds.length > 0) {
-      await Promise.all(
-        uploadedPublicIds.map((id) => cloudinary.v2.uploader.destroy(id).catch(() => {}))
-      );
+    // 2. Create the User
+    const user = await User.create(req.body);
+
+    // 3. SHARED WALLET LOGIC WITH INTEGRITY CHECK
+    const existingWallet = await Wallet.findOne({ phoneNumber });
+
+    if (!existingWallet) {
+      // Create a brand new wallet with a fresh seal
+      const initialHash = generateBalanceHash(0, 0, user.phoneNumber);
+
+      await Wallet.create({
+        user: user._id,
+        phoneNumber: user.phoneNumber,
+        balance: 0,
+        escrowBalance: 0,
+        balanceHash: initialHash,
+      });
+    } else {
+      // VALIDATE SHARED WALLET: Ensure the existing wallet hasn't been tampered with
+      if (!verifyWalletIntegrity(existingWallet)) {
+        // If the wallet is corrupted, we throw an error to trigger the catch block.
+        // This will clean up any uploaded Cloudinary images.
+        throw new Error(
+          "Security Alert: The existing wallet associated with this number is compromised. Contact support.",
+        );
+      }
+
+      console.log(`Verified integrity for shared wallet: ${phoneNumber}`);
     }
-
-    console.error(error);
-
-    return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
-      msg: "Profile update failed. Please try again.",
-    });
-  }
-};
-
-const driverLogout = async (req, res) => {
-  await DriverToken.findOneAndDelete({ driver: req.user.driverId });
-
-  res.cookie("accessToken", "logout", { httpOnly: true, expires: new Date(Date.now()) });
-  res.cookie("refreshToken", "logout", { httpOnly: true, expires: new Date(Date.now()) });
-
-  res.status(StatusCodes.OK).json({ msg: "Logged out successfully" });
-};
-
-// ─── VEHICLE ─────────────────────────────────────────────────────────────────
-
-const vehicleRegistration = async (req, res) => {
-  const driverId = req.user.driverId;
-
-  // Ensure driver has completed their profile before registering a vehicle
-  const driver = await Driver.findById(driverId);
-
-  if (!driver || !driver.name || !driver.licenseID || !driver.ghanaCardNumber) {
-    return res.status(StatusCodes.BAD_REQUEST).json({
-      msg: "Please complete your driver profile before registering a vehicle",
-    });
-  }
-
-  let { plateNumber, routePreferences } = req.body;
-
-  const vehicleAlreadyExists = await Vehicle.findOne({ plateNumber });
-
-  if (vehicleAlreadyExists) {
-    return res.status(StatusCodes.BAD_REQUEST).json({ msg: "Vehicle with this plate number already exists" });
-  }
-
-  if (routePreferences) {
-    try {
-      routePreferences = JSON.parse(routePreferences);
-      req.body.routePreferences = routePreferences;
-    } catch {
-      return res.status(StatusCodes.BAD_REQUEST).json({ msg: "Invalid route preferences format" });
-    }
-  }
-
-  if (!routePreferences || routePreferences.length < 1) {
-    return res.status(StatusCodes.BAD_REQUEST).json({
-      msg: "At least one route preference is required",
-    });
-  }
-
-  const uploadFields = {
-    vehicleImage: "vehicle photo",
-    insuranceCertImage: "insurance certificate",
-    vehicleRegDocImage: "vehicle registration document",
-    DVLARoadworthyImage: "DVLA roadworthy document",
-  };
-
-  const missingFields = Object.keys(uploadFields).filter((field) => {
-    return !(req.files && req.files[field] && req.files[field][0]);
-  });
-
-  if (missingFields.length > 0) {
-    return res.status(StatusCodes.BAD_REQUEST).json({
-      msg: `Please upload: ${missingFields.map((f) => uploadFields[f]).join(", ")}`,
-    });
-  }
-
-  const uploadedPublicIds = [];
-
-  try {
-    await Promise.all(
-      Object.keys(uploadFields).map(async (field) => {
-        const file = formatImage(req.files[field][0]);
-
-        const response = await cloudinary.v2.uploader.upload(file, {
-          use_filename: true,
-          folder: `/Troski/Troski-${field}s`,
-        });
-
-        req.body[field] = response.secure_url;
-        req.body[`${field}PublicId`] = response.public_id;
-        uploadedPublicIds.push(response.public_id);
-      })
-    );
-
-    const vehicle = await Vehicle.create({ ...req.body, driver: driverId });
-
-    driver.vehicle = vehicle._id;
-    await driver.save();
 
     res.status(StatusCodes.CREATED).json({
-      msg: "Vehicle registered successfully. Pending admin approval.",
-      vehicle,
+      msg: "User created successfully",
+      user,
     });
   } catch (error) {
+    // 4. CLEANUP: If anything fails (including the integrity check), delete uploaded images
     if (uploadedPublicIds.length > 0) {
       await Promise.all(
-        uploadedPublicIds.map((id) => cloudinary.v2.uploader.destroy(id).catch(() => {}))
+        uploadedPublicIds.map((id) =>
+          cloudinary.v2.uploader.destroy(id).catch(() => {}),
+        ),
       );
     }
 
-    console.error(error);
+    // Determine the status code based on the error type
+    const statusCode = error.message.includes("Security Alert")
+      ? StatusCodes.FORBIDDEN
+      : StatusCodes.INTERNAL_SERVER_ERROR;
 
-    return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
-      msg: "Vehicle registration failed. Please try again.",
-    });
+    return res
+      .status(statusCode)
+      .json({ msg: "Signup failed", error: error.message });
   }
 };
 
-const checkPlateNumber = async (req, res) => {
-  const { plateNumber } = req.body;
+const requestOTP = async (req, res) => {
+  const { phoneNumber, role, method = "sms" } = req.body;
 
-  const vehicleAlreadyExists = await Vehicle.findOne({ plateNumber });
+  const user = await User.findOne({ phoneNumber, role });
 
-  if (vehicleAlreadyExists) {
-    return res.status(StatusCodes.BAD_REQUEST).json({ msg: "Vehicle with this plate number already exists" });
+  if (!user) {
+    return res.status(StatusCodes.NOT_FOUND).json({ msg: "User not found" });
   }
 
-  return res.status(StatusCodes.OK).json({ msg: "Plate number is available" });
+  const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
+  user.otpCode = createHash(otpCode);
+  user.otpExpiresAt = new Date(Date.now() + 1000 * 60 * 5);
+  await user.save();
+
+  if (method === "email") {
+    await sendOTPEmail({ email: user.email, otpCode });
+  } else {
+    await sendOTPSMS({ phoneNumber: user.phoneNumber, otpCode });
+  }
+
+  res.status(StatusCodes.OK).json({ msg: "OTP sent successfully" });
 };
 
-// ─── ADMIN AUTH ───────────────────────────────────────────────────────────────
+const verifyOTP = async (req, res) => {
+  const { phoneNumber, role, otpCode } = req.body;
 
-const adminSignUp = async (req, res) => {
-  const { username } = req.body;
+  const user = await User.findOne({ phoneNumber, role });
 
-  const adminAlreadyExists = await Admin.findOne({ username, role: "admin" });
-
-  if (adminAlreadyExists) {
-    return res.status(StatusCodes.BAD_REQUEST).json({ msg: "Admin already exists" });
+  if (!user || !user.otpCode || user.otpCode !== createHash(otpCode)) {
+    return res.status(StatusCodes.UNAUTHORIZED).json({ msg: "Invalid OTP" });
   }
 
-  await Admin.create(req.body);
-
-  res.status(StatusCodes.CREATED).json({ msg: "Admin created successfully" });
-};
-
-const adminLogin = async (req, res) => {
-  const { username, password } = req.body;
-
-  if (!username || !password) {
-    return res.status(StatusCodes.BAD_REQUEST).json({ msg: "Please provide username and password" });
+  if (user.otpExpiresAt < new Date()) {
+    return res.status(StatusCodes.BAD_REQUEST).json({ msg: "OTP expired" });
   }
 
-  const admin = await Admin.findOne({ username, role: "admin" });
+  user.otpCode = null;
+  user.otpExpiresAt = null;
+  await user.save();
 
-  if (!admin) {
-    return res.status(StatusCodes.UNAUTHORIZED).json({ msg: "Invalid credentials" });
-  }
-
-  const isPasswordCorrect = await admin.comparePassword(password);
-
-  if (!isPasswordCorrect) {
-    return res.status(StatusCodes.UNAUTHORIZED).json({ msg: "Invalid credentials" });
-  }
-
-  const tokenAdmin = createTokenAdmin(admin);
-
-  let existingToken = await AdminToken.findOne({ admin: admin._id });
-
-  let refreshToken;
+  const tokenUser = createTokenUser(user);
+  let refreshToken = "";
+  const existingToken = await Token.findOne({ user: user._id });
 
   if (existingToken) {
-    if (!existingToken.isValid) {
-      return res.status(StatusCodes.UNAUTHORIZED).json({ msg: "Invalid credentials" });
-    }
-    refreshToken = crypto.randomBytes(40).toString("hex");
-    existingToken.refreshToken = refreshToken;
-    await existingToken.save();
-  } else {
-    refreshToken = crypto.randomBytes(40).toString("hex");
-    await AdminToken.create({
-      refreshToken,
-      ip: req.ip,
-      userAgent: req.headers["user-agent"],
-      admin: admin._id,
-    });
+    refreshToken = existingToken.refreshToken;
+    attachCookiesToResponse({ res, user: tokenUser, refreshToken });
+    return res
+      .status(StatusCodes.OK)
+      .json({ msg: "Login successful", user: tokenUser });
   }
 
-  attachAdminCookiesToResponse({ res, admin: tokenAdmin, refreshToken });
+  refreshToken = crypto.randomBytes(40).toString("hex");
+  await Token.create({
+    refreshToken,
+    ip: req.ip,
+    userAgent: req.headers["user-agent"],
+    user: user._id,
+  });
+  attachCookiesToResponse({ res, user: tokenUser, refreshToken });
 
-  res.status(StatusCodes.OK).json({ msg: "Login successful", admin: tokenAdmin });
+  res.status(StatusCodes.OK).json({ msg: "Login successful", user: tokenUser });
 };
 
-const adminLogout = async (req, res) => {
-  await AdminToken.findOneAndDelete({ admin: req.user.adminId });
+const logout = async (req, res) => {
+  await Token.findOneAndDelete({ user: req.user.userId });
 
-  res.cookie("accessToken", "logout", { httpOnly: true, expires: new Date(Date.now()) });
-  res.cookie("refreshToken", "logout", { httpOnly: true, expires: new Date(Date.now()) });
+  res.cookie("accessToken", "logout", {
+    httpOnly: true,
+    expires: new Date(Date.now()),
+  });
+
+  res.cookie("refreshToken", "logout", {
+    httpOnly: true,
+    expires: new Date(Date.now()),
+  });
 
   res.status(StatusCodes.OK).json({ msg: "Logged out successfully" });
 };
 
-module.exports = {
-  requestPassengerOTP,
-  verifyPassengerOTP,
-  passengerLogout,
-  requestDriverOTP,
-  verifyDriverOTP,
-  completeDriverProfile,
-  driverLogout,
-  vehicleRegistration,
-  checkPlateNumber,
-  adminSignUp,
-  adminLogin,
-  adminLogout,
-};
+module.exports = { signUp, requestOTP, verifyOTP, logout };
