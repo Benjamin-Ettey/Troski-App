@@ -63,10 +63,11 @@ const decodePolyline = (t: string) => {
     return points;
 };
 
-const SelectRide = () => {
+const NumberOfPassengers = () => {
     const bottomSheetRef = useRef<BottomSheet>(null);
     const mapRef = useRef<MapView>(null);
 
+    const paymentMethods = useAppStore((s) => s.paymentMethods);
     const snapPoints = useMemo(() => ["50%", "80%"], []);
 
     const pickupCoordsRaw = useAppStore((s) => s.pickupCoords);
@@ -75,7 +76,10 @@ const SelectRide = () => {
     const pickupPoint = useAppStore((s) => s.pickupPoint);
     const destinationPoint = useAppStore((s) => s.destinationPoint);
 
-    // clamp coords to Ghana bounds to avoid map jumping outside country
+
+    const maxPassengersFromStore = useAppStore((s: any) => s.selectedRideMaxPassengers ?? null);
+
+
     const pickupCoords = pickupCoordsRaw
         ? clampToGhana(pickupCoordsRaw.latitude, pickupCoordsRaw.longitude)
         : null;
@@ -86,6 +90,76 @@ const SelectRide = () => {
     const [routeCoords, setRouteCoords] = useState<any[]>([]);
     const [durationText, setDurationText] = useState<string>("");
     const [durationMinutes, setDurationMinutes] = useState<number | null>(null);
+
+
+    const [passengerCount, setPassengerCount] = useState<number>(1);
+    const [isProcessingPassengers, setIsProcessingPassengers] = useState(false);
+
+
+    const maxPassengers = typeof maxPassengersFromStore === "number" ? maxPassengersFromStore : 5;
+
+
+    const extractNumericFromString = (s: any): { value: number; decimals: number } | null => {
+        if (typeof s === "number" && !isNaN(s)) return { value: s, decimals: 0 };
+        if (typeof s !== "string") return null;
+        const match = s.match(/-?\d+(\.\d+)?/);
+        if (!match) return null;
+        const numStr = match[0];
+        const value = parseFloat(numStr);
+        const decimals = (numStr.split(".")[1] || "").length;
+        if (isNaN(value)) return null;
+        return { value, decimals };
+    };
+
+    const formatLikeOriginal = (original: any, numericValue: number, decimalsFallback = 0) => {
+        if (typeof original === "number") {
+
+            return String(Number(numericValue.toFixed(decimalsFallback)));
+        }
+        if (typeof original === "string") {
+            const match = original.match(/-?\d+(\.\d+)?/);
+            const decimals = match && match[1] ? match[1].length - 1 : decimalsFallback;
+            const formatted = numericValue.toFixed(decimals);
+            if (match) {
+                return original.replace(match[0], formatted);
+            }
+
+            return formatted;
+        }
+        return String(numericValue);
+    };
+
+
+    const parsed = extractNumericFromString(tripPrice);
+    const baseFareNumeric = parsed ? parsed.value : (typeof tripPrice === "number" ? tripPrice : 0);
+    const baseFareDecimals = parsed ? parsed.decimals : 0;
+
+
+    const [formattedPrice, setFormattedPrice] = useState<string>(() =>
+        formatLikeOriginal(tripPrice, baseFareNumeric * passengerCount, baseFareDecimals)
+    );
+
+
+    useEffect(() => {
+        const numericTotal = baseFareNumeric * passengerCount;
+        const next = formatLikeOriginal(tripPrice, numericTotal, baseFareDecimals);
+        setFormattedPrice(next);
+
+
+    }, [passengerCount, tripPrice, baseFareNumeric]);
+
+    const changePassengerCount = (delta: number) => {
+        if (isProcessingPassengers) return;
+        setIsProcessingPassengers(true);
+
+        setPassengerCount((prev) => {
+            const next = Math.max(1, Math.min(maxPassengers, prev + delta));
+            return next;
+        });
+
+
+        setTimeout(() => setIsProcessingPassengers(false), 80);
+    };
 
     const animateToBounds = () => {
         if (!mapRef.current || !pickupCoords || !destinationCoords) return;
@@ -192,7 +266,6 @@ const SelectRide = () => {
         getRoute();
     }, [pickupCoordsRaw, destinationCoordsRaw]);
 
-
     return (
         <View style={{ flex: 1 }} className="w-full bg-general">
             <MapView
@@ -237,21 +310,87 @@ const SelectRide = () => {
                         bottomSheetRef.current?.snapToIndex(1);
                     }
                 }}
-
             >
                 <BottomSheetView>
                     <View>
                         <View style={{ paddingBottom: 16, gap: 12 }} className="w-full flex flex-col justify-center items-center">
-                            <Text className="font-GoogleSansMedium">Choose a ride</Text>
+                            <Text className="font-GoogleSansMedium">Number of passengers</Text>
                             <View style={{height: 1}} className="w-full bg-tertiaryWhite"/>
                         </View>
-                        <SelectRideType duration={durationMinutes ? `${durationMinutes} min` : durationText} price={tripPrice} />
+                        <SelectRideType duration={durationMinutes ? `${durationMinutes} min` : durationText} price={formattedPrice} />
                     </View>
                 </BottomSheetView>
             </BottomSheet>
 
+
             <View style={{ bottom: 30 }} className="w-full absolute flex items-center justify-center">
-                <PrimaryButton name="Select Troski" disabled={false} onPress={() => router.push("/homepage/bookings/numberOfPassengers")} />
+                <View style={{ height: 100 }} className="w-full">
+
+                    <View style={{bottom: 32, flex: 1, flexDirection: "row", alignItems: "center", justifyContent: "center", paddingHorizontal: 16 }}>
+
+
+                        <Pressable
+                            onPress={() => changePassengerCount(-1)}
+                            disabled={passengerCount <= 1 || isProcessingPassengers}
+                            style={{
+                                width: 48,
+                                height: 48,
+                                backgroundColor: passengerCount <= 1 ? "#ddd" : "#e4e4e4",
+                                alignItems: "center",
+                                justifyContent: "center",
+                                marginRight: 16,
+                                elevation: 3,
+                            }}
+                            className="rounded-full"
+                            accessibilityLabel="Decrease passengers"
+                            accessibilityState={{ disabled: passengerCount <= 1 }}
+                        >
+                            <Ionicons name="remove" size={16} style={{ fontSize: 24, color: passengerCount <= 1 ? "#999" : "#000" }}/>
+                        </Pressable>
+
+
+                        <View className="rounded-full bg-primary" style={{ minWidth: 80, minHeight: 80, alignItems: "center", justifyContent: "center" }}>
+                            <Text className="text-secondaryBlack font-GoogleSansBold" style={{ fontSize: 28, fontWeight: "700"}}>{passengerCount}</Text>
+
+                        </View>
+
+
+                        <Pressable
+                            onPress={() => changePassengerCount(1)}
+                            disabled={passengerCount >= maxPassengers || isProcessingPassengers}
+                            style={{
+                                width: 48,
+                                height: 48,
+                                backgroundColor: passengerCount >= maxPassengers ? "#ddd" : "#e4e4e4",
+                                alignItems: "center",
+                                justifyContent: "center",
+                                marginLeft: 16,
+                                elevation: 3,
+                            }}
+                            className="rounded-full"
+                            accessibilityLabel="Increase passengers"
+                            accessibilityState={{ disabled: passengerCount >= maxPassengers }}
+                        >
+                            <Ionicons name="add" size={16} style={{ fontSize: 24, color: passengerCount >= maxPassengers ? "#999" : "#000" }}/>
+                        </Pressable>
+                    </View>
+                </View>
+
+                <PrimaryButton
+                    name="Continue"
+                    disabled={false}
+                    onPress={() => {
+                        const totalPrice = baseFareNumeric * passengerCount;
+
+                        useAppStore.getState().setFinalTripPrice(totalPrice);
+
+                        if (paymentMethods.length === 0) {
+                            router.push("/profile/paymentMethod/setupPaymentMethod");
+                        } else {
+                            router.push("/homepage/bookings/selectPaymentMethod");
+                        }
+                    }}
+                />
             </View>
 
             <View
@@ -276,7 +415,6 @@ const SelectRide = () => {
                         borderRadius: 999,
                         elevation: 5,
                         marginRight: 12,
-
                     }}
                 >
                     <Ionicons name="chevron-back" size={28} color="black" />
@@ -330,4 +468,4 @@ const SelectRide = () => {
     );
 };
 
-export default SelectRide;
+export default NumberOfPassengers;

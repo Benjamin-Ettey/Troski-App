@@ -21,19 +21,39 @@ const haversineKm = (lat1: number, lon1: number, lat2: number, lon2: number) => 
 interface SelectRideTypeProps {
     routeCoords?: any[];
     duration?: string;
+    price?: string; // NEW: allow price to be passed in
 }
 
-const SelectRideType = ({ routeCoords, duration }: SelectRideTypeProps) => {
+const SelectRideType = ({ routeCoords, duration, price }: SelectRideTypeProps) => {
     const pickup = useAppStore((s) => s.pickupPoint);
     const destination = useAppStore((s) => s.destinationPoint);
     const pickupCoords = useAppStore((s) => s.pickupCoords);
     const destinationCoords = useAppStore((s) => s.destinationCoords);
 
     const [localDuration, setLocalDuration] = useState<string>(duration ?? "...");
+    const [computedPrice, setComputedPrice] = useState<string>(price ?? "");
 
     useEffect(() => {
         if (duration) setLocalDuration(duration);
     }, [duration]);
+
+    useEffect(() => {
+        if (price) {
+            setComputedPrice(price);
+            return;
+        }
+
+        if (!pickupCoords || !destinationCoords) return;
+
+        const km = haversineKm(
+            pickupCoords.latitude,
+            pickupCoords.longitude,
+            destinationCoords.latitude,
+            destinationCoords.longitude
+        );
+
+        setComputedPrice(`GH₵${(Number(km) * 3).toFixed(2)}`);
+    }, [pickupCoords, destinationCoords, price]);
 
     useEffect(() => {
         const getDuration = async () => {
@@ -70,7 +90,7 @@ const SelectRideType = ({ routeCoords, duration }: SelectRideTypeProps) => {
             id: 1,
             pickup: pickup || "Pickup",
             destination: destination || "Destination",
-            price: `GH₵${(Number(km) * 3).toFixed(2)}`,
+            price: computedPrice,
             speed: "FASTER",
             passengercount: 8,
             duration: localDuration,
@@ -84,43 +104,50 @@ const SelectRideType = ({ routeCoords, duration }: SelectRideTypeProps) => {
             renderItem={({ item }) => {
                 return (
                     <Pressable
-                        style={{height: 72, borderRadius: 24, marginBottom: 12, paddingLeft: 20, paddingRight: 20, gap: 24}}
-                        className="w-full bg-tertiaryWhite border border-secondaryBlack flex flex-row justify-between items-center">
-                        <View>
+                        style={{
+                            paddingLeft: 16,
+                            paddingRight: 16,
+                            gap: 24,
+
+
+                        }}
+                        className="w-full flex-1 flex flex-row justify-between items-center"
+                    >
+
+                        <View style={{padding: 16, borderRadius: 12}} className="w-full bg-tertiaryWhite border border-secondaryGray flex flex-row justify-between items-center">
+                        <View >
                             <Image
                                 source={require("../../assets/images/minibus.png")}
-                                style={{width: 32, height: 32}}
+                                style={{ width: 36, height: 36 }}
                             />
                         </View>
 
-
                         <View
-                            style={{width: "50%", gap: 2}}
-                            className="flex flex-col justify-center items-center ">
+                            style={{ width: "50%" }}
+                            className="flex flex-col justify-center items-center "
+                        >
                             <View className="flex flex-row justify-start items-center w-full gap-2">
-
-
-
-
-                                <Text className="text-xl font-GoogleSansRegular">
-                                    Troski
-                                </Text>
+                                <Text className="text-xl font-GoogleSansMedium">Troski</Text>
                             </View>
 
                             <View className="w-full flex flex-row gap-2 items-center ">
                                 <Text
-                                    style={{paddingHorizontal: 4, paddingVertical: 1, fontSize: 10}}
-                                    className=" text-white bg-black font-GoogleSansRegular rounded-full">FASTER</Text>
-
-
-
+                                    style={{ paddingHorizontal: 6, paddingVertical: 2, fontSize: 10 }}
+                                    className="text-white bg-black font-GoogleSansRegular rounded-full"
+                                >
+                                    {item.speed}
+                                </Text>
                             </View>
                         </View>
 
                         <View
-                            style={{width: 84, height: 32, paddingHorizontal: 2}}
-                            className="rounded-full bg-primary flex justify-center items-center">
-                            <Text numberOfLines={1} className="font-GoogleSansBold text-sm">{item.price}</Text>
+                            style={{ width: 84, height: 32, paddingHorizontal: 2 }}
+                            className="rounded-full bg-secondaryBlack flex justify-center items-center"
+                        >
+                            <Text numberOfLines={1} className="font-GoogleSansBold text-general text-sm">
+                                {item.price}
+                            </Text>
+                        </View>
                         </View>
                     </Pressable>
                 );

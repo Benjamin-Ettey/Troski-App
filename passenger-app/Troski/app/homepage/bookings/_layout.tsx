@@ -40,6 +40,46 @@ const _Layout = () => {
                             })}
                         />
 
+                        <Stack.Screen
+                            name="numberOfPassengers"
+                            options={()=> ({
+                                headerShown: false
+                            })}
+                        />
+
+                        <Stack.Screen
+                            name="selectPaymentMethod"
+                            options={()=> ({
+                                headerShadowVisible: false,
+                                headerStyle: {backgroundColor: "#F5F7FA"},
+                                headerTitle: 'Select payment method',
+                                headerLeft: ()=>(
+                                    <TouchableOpacity onPress={()=>router.back()} style={{display: "flex", justifyContent: "center", alignItems: "center"}}>
+                                        <Ionicons name="chevron-back" size={30} color="black"/>
+                                    </TouchableOpacity>
+                                )
+                            })}
+                        />
+
+
+
+                        <Stack.Screen
+                            name="searchDriver"
+                            options={()=> ({
+                                headerShown: false,
+                                gestureEnabled: false,
+                                headerBackVisible: false
+                            })}
+                        />
+
+                        <Stack.Screen
+                            name="whyCancelRide"
+                            options={()=> ({
+                                headerShown: false,
+                                gestureEnabled: false,
+                                headerBackVisible: false
+                            })}
+                        />
 
 
                     </Stack>
