@@ -1,6 +1,6 @@
 // @ts-ignore
 
-import {View, Image, Pressable, Modal, Text, TouchableOpacity} from "react-native";
+import {View, Pressable, TouchableOpacity} from "react-native";
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { StatusBar } from "expo-status-bar";
 import MapView, { Marker, Circle } from "react-native-maps";
@@ -10,9 +10,14 @@ import { Ionicons } from "@expo/vector-icons";
 import BottomSheet, { BottomSheetView } from "@gorhom/bottom-sheet";
 import SearchBarButton from "@/components/SearchBarButton";
 import RollingTrips from "@/components/ui/RollingTrips";
+import {useColorScheme} from "nativewind";
+
 
 const Index = () => {
+
     const bottomSheetRef = useRef<BottomSheet>(null);
+    const { colorScheme } = useColorScheme();
+
 
     const snapPoints = useMemo(() => ["35%", "50%", "100%"], []);
     const [showIndex, setShowIndex] = useState(0)
@@ -24,7 +29,6 @@ const Index = () => {
         longitude: number;
     } | null>(null);
 
-    const carColor = "#ffcc00";
 
     useEffect(() => {
         const timer = setTimeout(() => {
@@ -85,9 +89,11 @@ const Index = () => {
         })
     }
 
+
+
     return (
         <View style={{ flex: 1 }}>
-            <StatusBar style="dark" />
+            <StatusBar style="auto" />
 
             <MapView
                 ref={mapRef}
@@ -98,29 +104,8 @@ const Index = () => {
                 {coords && (
 
                     <>
-                    <Marker coordinate={coords}>
-                        <View
-                            style={{
-                                width: 40,
-                                height: 40,
-                                borderRadius: 20,
-                                backgroundColor: carColor,
-                                justifyContent: "center",
-                                alignItems: "center",
-                                borderWidth: 2,
-                                borderColor: "black",
-                            }}
-                        >
-                            <Image
-                                source={require("../../assets/images/minibus.png")}
-                                style={{
-                                    width: 22,
-                                    height: 22,
-                                    tintColor: "black",
-                                }}
-                            />
-                        </View>
-                    </Marker>
+                    <Marker coordinate={coords} pinColor="#ffcc00"/>
+
 
                     <Circle
                         center={coords}
@@ -141,23 +126,22 @@ const Index = () => {
 
                 }}
             >
-                <Pressable
+                <TouchableOpacity
                     onPress={() => router.push("/profile")}
+                    className="bg-white dark:bg-secondaryBlack"
                     style={{
-                        backgroundColor: "white",
                         padding: 10,
                         borderRadius: 20,
                         elevation: 5,
                         left: 20,
                     }}
                 >
-                    <Ionicons name="menu" size={24} />
-                </Pressable>
+                    <Ionicons name="menu" size={24} color={colorScheme === "dark"? "#ffffff" : "#000000"} />
+                </TouchableOpacity>
 
                 <Pressable
-                    className="flex flex-row justify-between items-center rounded-full"
+                    className="flex flex-row bg-white dark:bg-secondaryBlack justify-between items-center rounded-full"
                     style={{
-                        backgroundColor: "white",
                         padding: 10,
                         elevation: 5,
                         right: 20,
@@ -165,11 +149,11 @@ const Index = () => {
                     }}
                 >
                     <TouchableOpacity onPress={()=>router.push("/profile/rideHistory")}>
-                        <Ionicons name="bus-outline" size={22} />
+                        <Ionicons name="bus-outline" size={22} color={colorScheme === "dark"? "#ffffff" : "#000000"}/>
                     </TouchableOpacity>
 
                     <TouchableOpacity onPress={()=>router.push("/homepage/recentNotifications")}>
-                        <Ionicons name="notifications-outline" size={24} />
+                        <Ionicons name="notifications-outline" size={24} color={colorScheme === "dark"? "#ffffff" : "#000000"}/>
                     </TouchableOpacity>
 
                 </Pressable>
@@ -180,10 +164,16 @@ const Index = () => {
                 index={showIndex}
                 snapPoints={snapPoints}
                 enablePanDownToClose={false}
-                backgroundStyle={{ backgroundColor: "white" }}
+                backgroundStyle={{
+                    backgroundColor: colorScheme === "dark"? "#000000" : "#ffffff",
+                }}
+                handleIndicatorStyle={{
+                    backgroundColor: colorScheme === "dark"? "gray": "gray",
+                }}
+
             >
                 <BottomSheetView>
-                    <View className="flex flex-col gap-4" style={{ padding: 16 }}>
+                    <View className="flex flex-col gap-4" style={{ paddingHorizontal: 16, paddingVertical: 8 }}>
                         <SearchBarButton name="Where are you going?" onPress={handleSearchRides}/>
                         <RollingTrips/>
                     </View>

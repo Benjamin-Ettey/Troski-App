@@ -2,9 +2,12 @@ import {View, Text, TouchableOpacity, SectionList, Alert} from 'react-native'
 import React, {useState} from 'react'
 import {Ionicons} from "@expo/vector-icons";
 import {router} from "expo-router";
+import {useColorScheme} from "nativewind";
 
 const Index = () => {
     const [showRideHistory, setShowRideHistory] = useState(false);
+    const { colorScheme } = useColorScheme();
+
 
     const DATA = [
         {date: "Jan 2026",
@@ -62,7 +65,7 @@ const Index = () => {
     }
 
     return (
-        <View style={{backgroundColor: "#F5F7FA", flex: 1}} className="w-full">
+        <View style={{backgroundColor: colorScheme === "dark"? "#000000" : "#F5F7FA", flex: 1}} className="w-full">
             <View style={{height: "30%", marginBottom: 16 }} className="w-full flex flex-col justify-center items-center">
                 <View style={{ marginBottom: 10, paddingHorizontal: 10, paddingVertical: 5}} className="rounded-full bg-secondaryBlack flex flex-row justify-center items-center">
                     <Ionicons style={{marginRight: 8}} name="wallet-outline" size={16} color="white"/>
@@ -71,7 +74,7 @@ const Index = () => {
 
                 <Text
                     style={{fontSize: 40, marginBottom: 30}}
-                    className=" font-GoogleSansMedium text-center flex-shrink">GH₵10.50
+                    className=" font-GoogleSansMedium text-center flex-shrink dark:text-general">GH₵10.50
                 </Text>
                 <View
                     style={{gap: 48}}
@@ -83,7 +86,7 @@ const Index = () => {
                             style={{width: 60, height: 60, marginBottom: 10}}>
                             <Ionicons name="add-circle-outline" size={32}/>
                         </TouchableOpacity>
-                        <Text className="font-GoogleSansMedium text-center flex-shrink">Deposit</Text>
+                        <Text className="font-GoogleSansMedium text-center flex-shrink dark:text-tertiaryGray">Deposit</Text>
                     </View>
                     <View>
                         <TouchableOpacity
@@ -93,7 +96,7 @@ const Index = () => {
                             style={{width: 60, height: 60, marginBottom: 10}}>
                             <Ionicons name="cash-outline" size={32}/>
                         </TouchableOpacity>
-                        <Text className="font-GoogleSansMedium text-center flex-shrink">Withdraw</Text>
+                        <Text className="font-GoogleSansMedium text-center flex-shrink dark:text-tertiaryGray">Withdraw</Text>
 
                     </View>
                 </View>
@@ -101,16 +104,16 @@ const Index = () => {
 
 
             <View style={{paddingLeft: 20}} className="w-full flex flex-row items-center">
-                <Text style={{fontSize: 16, paddingRight: 20}} className="font-GoogleSansMedium">Transaction History</Text>
-                <View style={{height: 1, width: "50%"}} className="bg-tertiaryGray"/>
+                <Text style={{fontSize: 16, paddingRight: 20}} className="font-GoogleSansMedium dark:text-general">Transaction History</Text>
+                <View style={{height: 1, width: "50%"}} className="bg-tertiaryGray dark:bg-secondaryGray"/>
             </View>
 
             <View style={{flex: 1}} className="w-full items-center">
                 {showRideHistory?
                     <View style={{flex: 1}} className="w-full flex justify-center items-center">
                         <Ionicons style={{marginBottom: 10}} name="list-outline" size={100} color="gray"/>
-                        <Text className="font-GoogleSansMedium">No Transaction History.</Text>
-                        <Text style={{marginBottom: 16}} className="font-GoogleSansRegular text-center flex-shrink">Your transaction history will appear here.</Text>
+                        <Text className="font-GoogleSansMedium dark:text-general">No Transaction History</Text>
+                        <Text style={{marginBottom: 16}} className="font-GoogleSansRegular text-center flex-shrink dark:text-tertiaryGray">Your transaction history will appear here.</Text>
 
 
                     </View>
@@ -118,13 +121,14 @@ const Index = () => {
                     <View style={{paddingLeft: 16}} className="w-full flex items-center">
                         <View style={{borderRadius: 32, marginTop: 4}} >
                             <SectionList
+                                contentContainerStyle={{paddingBottom: 100}}
                                 sections={DATA}
                                 keyExtractor={(item)=>item.id.toString()}
 
                                 renderSectionHeader={({section})=>{
                                     return(
                                         <View style={{paddingHorizontal: 16, marginTop: 24}}>
-                                            <Text className="font-GoogleSansMedium text-xl">{section.date}</Text>
+                                            <Text className="font-GoogleSansMedium text-xl dark:text-general">{section.date}</Text>
                                         </View>
                                     )
                                 }}
@@ -137,7 +141,7 @@ const Index = () => {
                                                 style={{height: 72, borderRadius: 24, paddingLeft: 20, paddingRight: 20,}}
                                                 className="w-full  flex flex-row justify-between items-center">
                                                 <View>
-                                                    <Ionicons name="receipt-outline" size={32} color="black"/>
+                                                    <Ionicons name="receipt-outline" size={32} color={colorScheme === "dark"? "#ffffff":"black"}/>
 
                                                 </View>
 
@@ -146,13 +150,13 @@ const Index = () => {
                                                     style={{width: "50%", gap: 2, }}
                                                     className="flex  flex-col justify-center items-center ">
                                                     <View className="flex flex-row justify-start items-center w-full gap-2">
-                                                        <Text className="text-xl font-GoogleSansRegular">
+                                                        <Text className="text-xl font-GoogleSansRegular dark:text-general">
                                                             {item.from}
                                                         </Text>
 
-                                                        <Ionicons name="arrow-forward" size={12} color="black"/>
+                                                        <Ionicons name="arrow-forward" size={12} color= {colorScheme === "dark"? "#e4e4e4":"black"}/>
 
-                                                        <Text className="text-xl font-GoogleSansRegular">
+                                                        <Text className="text-xl font-GoogleSansRegular dark:text-general">
                                                             {item.to}
                                                         </Text>
                                                     </View>
@@ -160,7 +164,7 @@ const Index = () => {
                                                     <View className="w-full flex flex-row gap-2 items-center ">
                                                         <Text
                                                             style={{paddingHorizontal: 4, fontSize: 12}}
-                                                            className=" text-secondaryBlack font-GoogleSansRegular rounded-full">{item.date}</Text>
+                                                            className=" text-secondaryBlack font-GoogleSansRegular dark:text-tertiaryWhite rounded-full">{item.date}</Text>
 
 
                                                     </View>
@@ -175,7 +179,7 @@ const Index = () => {
                                             </View>
 
                                             <View className="w-full flex justify-end items-end">
-                                                <View style={{height: 1, backgroundColor: "#44444422"}} className="w-[80%] "/>
+                                                <View style={{height: 1, backgroundColor: colorScheme === "dark"? "#e4e4e422":"#44444422"}} className="w-[80%] "/>
                                             </View>
 
 
@@ -187,7 +191,7 @@ const Index = () => {
                         <View style={{ bottom: 0, height: "15%"}} className="absolute w-full flex justify-center items-center">
                             <TouchableOpacity onPress={handleClearRideHistory}
                                 style={{paddingHorizontal: 12, paddingVertical: 12, backgroundColor: "#ff0000"}}
-                                className=" rounded-full shadow-2xl shadow-white flex justify-center items-center">
+                                className=" rounded-full flex justify-center items-center">
                                 <Text style={{color: "white"}} className="font-GoogleSansMedium">Clear Ride History</Text>
                             </TouchableOpacity>
                         </View>

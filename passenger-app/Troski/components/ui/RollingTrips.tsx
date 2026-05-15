@@ -5,6 +5,7 @@ import { FlashList } from "@shopify/flash-list";
 import * as Location from "expo-location";
 import { useAppStore } from "@/utils/store";
 import { router } from "expo-router";
+import {useColorScheme} from "nativewind";
 
 type TripItem = {
     id: number;
@@ -25,6 +26,8 @@ const GHANA_BBOX = {
 };
 
 const TripRow = ({ item, onPress }: { item: TripItem; onPress: () => void }) => {
+    const { colorScheme } = useColorScheme();
+
     return (
         <Pressable
             onPress={onPress}
@@ -36,7 +39,7 @@ const TripRow = ({ item, onPress }: { item: TripItem; onPress: () => void }) => 
                 paddingRight: 20,
                 gap: 24,
             }}
-            className="w-full bg-tertiaryWhite flex flex-row justify-between items-center"
+            className="w-full bg-tertiaryWhite dark:bg-secondaryGray/40 flex flex-row justify-between items-center"
         >
             <View>
                 <Image
@@ -53,18 +56,18 @@ const TripRow = ({ item, onPress }: { item: TripItem; onPress: () => void }) => 
                     <Text
                         numberOfLines={1}
                         ellipsizeMode="tail"
-                        className="text-xl font-GoogleSansRegular"
+                        className="text-xl font-GoogleSansRegular text-secondaryBlack dark:text-tertiaryGray"
                         style={{ maxWidth: "45%" }}
                     >
                         {item.pickup}
                     </Text>
 
-                    <Ionicons name="arrow-forward" size={12} color="black" />
+                    <Ionicons name="arrow-forward" size={12} color={colorScheme === "dark"? "#f0f0f0": "#444444"} />
 
                     <Text
                         numberOfLines={1}
                         ellipsizeMode="tail"
-                        className="text-xl font-GoogleSansRegular"
+                        className="text-xl font-GoogleSansRegular text-secondaryBlack dark:text-tertiaryGray"
                         style={{ maxWidth: "45%" }}
                     >
                         {item.destination}
@@ -74,14 +77,14 @@ const TripRow = ({ item, onPress }: { item: TripItem; onPress: () => void }) => 
                 <View className="w-full flex flex-row gap-2 items-center mt-1">
                     <Text
                         style={{ paddingHorizontal: 6, paddingVertical: 2, fontSize: 10 }}
-                        className="text-white bg-black font-GoogleSansRegular rounded-full"
+                        className="text-white bg-secondaryBlack font-GoogleSansRegular rounded-full"
                     >
                         {item.minutes}
                     </Text>
 
                     <View style={{ gap: 2 }} className="flex flex-row items-center ml-2">
-                        <Ionicons name="person" size={10} color="gray" />
-                        <Text className="font-GoogleSansRegular" style={{ fontSize: 12 }}>
+                        <Ionicons name="person" size={10} color={colorScheme === "dark"? "#f0f0f0": "gray"} />
+                        <Text className="font-GoogleSansRegular text-secondaryGray dark:text-tertiaryWhite" style={{ fontSize: 12 }}>
                             {item.passengercount}
                         </Text>
                     </View>
@@ -90,9 +93,9 @@ const TripRow = ({ item, onPress }: { item: TripItem; onPress: () => void }) => 
 
             <View
                 style={{ width: 84, height: 32, paddingHorizontal: 2 }}
-                className="rounded-full bg-primary flex justify-center items-center"
+                className="rounded-full bg-primary dark:bg-secondaryBlack flex justify-center items-center"
             >
-                <Text numberOfLines={1} className="font-GoogleSansBold text-sm text-secondaryBlack">
+                <Text numberOfLines={1} className="font-GoogleSansBold text-sm dark:text-primary text-secondaryBlack">
                     {item.price}
                 </Text>
             </View>
@@ -210,7 +213,7 @@ const RollingTrips = () => {
             showsVerticalScrollIndicator={true}
             ListHeaderComponent={
                 <View style={{ marginTop: 6, paddingHorizontal: 8, marginBottom: 12 }}>
-                    <Text style={{ fontSize: 20, fontWeight: "600" }} className="font-GoogleSansMedium">
+                    <Text style={{ fontSize: 20, fontWeight: "600" }} className="font-GoogleSansMedium text-secondaryBlack dark:text-white">
                         Rolling Trips
                     </Text>
                 </View>

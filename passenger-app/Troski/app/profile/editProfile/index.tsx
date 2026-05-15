@@ -5,6 +5,7 @@ import {useAppStore} from "@/utils/store";
 import {router} from "expo-router";
 import BottomSheet, {BottomSheetBackdrop, BottomSheetView} from "@gorhom/bottom-sheet";
 import PrimaryButton from "@/components/PrimaryButton";
+import {useColorScheme} from "nativewind";
 
 
 const Index = () => {
@@ -14,6 +15,8 @@ const Index = () => {
     const myimage = useAppStore((state) => state.image);
     const setName = useAppStore((state)=>state.setName);
     const setImage = useAppStore((state) => state.setImage);
+    const { colorScheme } = useColorScheme();
+
 
 
     const handleDeleteImage = ()=>{
@@ -123,7 +126,7 @@ const Index = () => {
 
 
     return (
-        <View style={{backgroundColor: "#F5F7FA", flex: 1}}>
+        <View style={{backgroundColor: colorScheme === "dark"? "#000000" : "#F5F7FA", flex: 1}}>
 
                 <>
                     <View style={{height: "30%", marginBottom: 10}} className="w-full flex justify-center items-center">
@@ -154,47 +157,47 @@ const Index = () => {
                     </View>
 
                  <View style={{paddingHorizontal: 16, marginBottom: 20}} className="w-full">
-                    <Text style={{fontSize: 16, paddingLeft: 10, marginBottom: 5}} className="font-GoogleSansRegular">Name</Text>
-                    <View style={{borderRadius: 24, height: 48, paddingLeft: 24}} className="bg-general flex justify-center items-center">
+                    <Text style={{fontSize: 16, paddingLeft: 10, marginBottom: 5}} className="font-GoogleSansRegular text-secondaryBlack dark:text-general">Name</Text>
+                    <View style={{borderRadius: 24, height: 48, paddingLeft: 24, backgroundColor: colorScheme === "dark"? "#0a0a0a":"#ffffff"}} className="flex justify-center items-center">
                         <TouchableOpacity style={{ flex:1}} onPress={()=>openSheet("name")} className="w-full flex flex-row justify-between items-center">
-                            <Text className="font-GoogleSansMedium text-secondaryGray">{name}</Text>
-                            <Ionicons style={{paddingRight: 16}} name="create-outline" size={18} color="gray"/>
+                            <Text className="font-GoogleSansMedium text-secondaryGray  dark:text-general">{name}</Text>
+                            <Ionicons style={{paddingRight: 16}} name="create-outline" size={18} color={colorScheme === "dark"? "#ffffff":"gray"}/>
                         </TouchableOpacity>
                  </View>
                 <Text
                     style={{paddingLeft: 10, marginTop: 5}}
-                    className="text-xs font-GoogleSansRegular"
+                    className="text-xs font-GoogleSansRegular text-secondaryGray  dark:text-tertiaryGray"
                 >Change the full name linked to your account.</Text>
             </View>
 
 
         <View style={{paddingHorizontal: 16, marginBottom: 20}} className="w-full">
-            <Text style={{fontSize: 16, paddingLeft: 10, marginBottom: 5}} className="font-GoogleSansRegular">Email</Text>
-            <View style={{borderRadius: 24, height: 48, paddingLeft: 24}} className="bg-general flex justify-center items-center">
+            <Text style={{fontSize: 16, paddingLeft: 10, marginBottom: 5}} className="font-GoogleSansRegular text-secondaryBlack dark:text-general">Email</Text>
+            <View style={{borderRadius: 24, height: 48, paddingLeft: 24, backgroundColor: colorScheme === "dark"? "#0a0a0a":"#ffffff"}} className="flex justify-center items-center">
                 <TouchableOpacity style={{ flex:1}} onPress={()=> openSheet("email")} className="w-full flex flex-row justify-between items-center">
-                    <Text className="font-GoogleSansMedium text-secondaryGray">{email}</Text>
-                    <Ionicons style={{paddingRight: 16}} name="create-outline" size={18} color="gray"/>
+                    <Text className="font-GoogleSansMedium text-secondaryGray  dark:text-general">{email}</Text>
+                    <Ionicons style={{paddingRight: 16}} name="create-outline" size={18} color={colorScheme === "dark"? "#ffffff":"gray"}/>
                 </TouchableOpacity>
             </View>
             <Text
                 style={{paddingLeft: 10, marginTop: 5}}
-                className="text-xs font-GoogleSansRegular">Edit the email address associated with your account.
+                className="text-xs font-GoogleSansRegular text-secondaryGray  dark:text-tertiaryGray">Edit the email address associated with your account.
             </Text>
         </View>
 
 
         <View style={{paddingHorizontal: 16, marginBottom: 20}} className="w-full">
-            <Text style={{fontSize: 16, paddingLeft: 10, marginBottom: 5}} className="font-GoogleSansRegular">Phone Number</Text>
-            <View style={{borderRadius: 24, height: 48, paddingLeft: 24}} className="bg-general flex justify-center items-center">
+            <Text style={{fontSize: 16, paddingLeft: 10, marginBottom: 5}} className="font-GoogleSansRegular text-secondaryBlack dark:text-general">Phone Number</Text>
+            <View style={{borderRadius: 24, height: 48, paddingLeft: 24, backgroundColor: colorScheme === "dark"? "#0a0a0a":"#ffffff"}} className="flex justify-center items-center">
                 <TouchableOpacity style={{ flex:1}} onPress={()=> router.push("/profile/editProfile/changePhoneNumber")} className="w-full flex flex-row justify-between items-center">
-                    <Text className="font-GoogleSansMedium text-secondaryGray">{number}</Text>
-                    <Ionicons style={{paddingRight: 16}} name="chevron-forward" size={18} color="gray"/>
+                    <Text className="font-GoogleSansMedium text-secondaryGray dark:text-general">{number}</Text>
+                    <Ionicons style={{paddingRight: 16}} name="chevron-forward" size={18} color={colorScheme === "dark"? "#ffffff":"gray"}/>
                 </TouchableOpacity>
             </View>
 
             <Text
                 style={{paddingLeft: 10, marginTop: 5}}
-                className="text-xs font-GoogleSansRegular">Update the phone number linked to your account.</Text>
+                className="text-xs font-GoogleSansRegular text-secondaryGray  dark:text-tertiaryGray">Update the phone number linked to your account.</Text>
         </View>
     </>
 
@@ -209,13 +212,20 @@ const Index = () => {
                 snapPoints={snapPoints}
                 enablePanDownToClose={true}
                 backdropComponent={renderBackdrop}
+                backgroundStyle={{
+                    backgroundColor: colorScheme === "dark"? "#000000" : "#ffffff",
+
+                }}
+                handleIndicatorStyle={{
+                    backgroundColor: colorScheme === "dark"? "gray": "gray",
+                }}
             >
                 <BottomSheetView style={{ padding: 16, flex: 1 }}>
 
                     {editType === "name" && (
                         <View className="w-full flex-1 flex items-center">
-                            <View className="w-full">
-                                <Text className="text-xl font-GoogleSansMedium tracking-tight">Change full name</Text>
+                            <View className="w-full py-2">
+                                <Text className="text-xl font-GoogleSansMedium tracking-tight text-secondaryBlack dark:text-general">Change full name</Text>
                             </View>
 
                             <TextInput
@@ -228,12 +238,12 @@ const Index = () => {
                                 keyboardType="default"
                                 autoFocus={true}
                                 style={{paddingLeft: 16}}
-                                className="mb-1 font-GoogleSansMedium text-secondaryBlack w-full py-4 border border-tertiaryGray  rounded-xl focus:border focus:border-green-600/40"
+                                className="bg-general mb-1 dark:bg-secondaryBlack dark:text-general dark:focus:border-tertiaryGray font-GoogleSansMedium text-secondaryBlack w-full py-4 border border-tertiaryGray  rounded-xl focus:border focus:border-green-600/40"
 
                             />
 
                             <View className="mb-8 w-full items-start">
-                                <Text className="text-sm font-GoogleSansRegular">Your full name should be at least 3 characters.</Text>
+                                <Text className="text-sm font-GoogleSansRegular text-secondaryBlack dark:text-tertiaryGray">Your full name should be at least 3 characters.</Text>
 
                             </View>
 
@@ -244,8 +254,8 @@ const Index = () => {
 
                     {editType === "email" && (
                         <>
-                        <View className="w-full">
-                            <Text className="text-xl font-GoogleSansMedium tracking-tight">What&apos;s your email?</Text>
+                        <View className="w-full py-2">
+                            <Text className="text-xl font-GoogleSansMedium tracking-tight text-secondaryBlack dark:text-general">What&apos;s your email?</Text>
                         </View>
 
                         <TextInput
@@ -258,7 +268,7 @@ const Index = () => {
                         keyboardType="email-address"
                         autoFocus={true}
                         style={{paddingLeft: 16}}
-                        className="bg-general mb-1 font-GoogleSansMedium text-secondaryBlack w-full py-4 border border-tertiaryGray  rounded-xl focus:border focus:border-green-600/40"
+                        className="bg-general mb-1 dark:bg-secondaryBlack dark:text-general dark:focus:border-tertiaryGray font-GoogleSansMedium text-secondaryBlack w-full py-4 border border-tertiaryGray  rounded-xl focus:border focus:border-green-600/40"
 
                 />
                 <View className="mb-6 w-full items-start">
@@ -268,7 +278,7 @@ const Index = () => {
                                 {error}
                             </Text>
                         ) :
-                        <Text className="text-sm font-GoogleSansRegular">You&apos;ll need to verify this email later.</Text>
+                        <Text className="text-sm font-GoogleSansRegular text-secondaryBlack dark:text-tertiaryGray">You&apos;ll need to verify this email later.</Text>
                     }
                 </View>
 

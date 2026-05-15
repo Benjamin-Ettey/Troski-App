@@ -44,18 +44,18 @@ const PhoneNumberScreen = () => {
 
 
     return (
-        <View className="flex-1 bg-general">
+        <View className="flex-1 dark:bg-secondaryBlack bg-general">
             <KeyboardAwareScrollView
                 keyboardShouldPersistTaps="handled"
                 className="flex-1">
-                    <StatusBar style="dark"/>
+                    <StatusBar style="auto"/>
 
 
 
 
                     <View className="w-full flex-1 flex items-center px-6">
-                        <View className="w-full">
-                            <Text className="text-xl font-GoogleSansMedium tracking-tight">What&apos;s your phone number?</Text>
+                        <View className="w-full py-2">
+                            <Text className="text-xl dark:text-general font-GoogleSansMedium tracking-tight">What&apos;s your phone number?</Text>
                         </View>
 
                         <TextInput
@@ -67,7 +67,7 @@ const PhoneNumberScreen = () => {
                             keyboardType="phone-pad"
                             autoFocus={true}
                             style={{paddingLeft: 16, }}
-                            className="bg-general mb-1 font-GoogleSansMedium text-secondaryGray w-full py-4 border border-tertiaryGray  rounded-xl focus:border focus:border-green-600/40"
+                            className="bg-general dark:bg-secondaryBlack dark:text-general dark:focus:border-tertiaryGray mb-1 font-GoogleSansMedium text-secondaryGray w-full py-4 border border-tertiaryGray  rounded-xl focus:border focus:border-green-600/40"
 
                         />
 
@@ -79,7 +79,7 @@ const PhoneNumberScreen = () => {
                                 </Text>
                             </View>
                         ) : <View className="mb-6 w-full items-start">
-                            <Text className="text-sm font-GoogleSansRegular">Make sure to enter a valid and active phone number.</Text>
+                            <Text className="text-sm font-GoogleSansRegular dark:text-tertiaryGray">Make sure to enter a valid and active phone number.</Text>
                         </View>}
 
                         {isDisabled?

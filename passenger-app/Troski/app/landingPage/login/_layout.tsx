@@ -1,42 +1,56 @@
 import {router, Stack} from 'expo-router'
 import React from 'react'
 import {KeyboardProvider} from "react-native-keyboard-controller";
-import {TouchableOpacity} from "react-native";
+import {TouchableOpacity, View} from "react-native";
 import {Ionicons} from "@expo/vector-icons";
+import {useColorScheme} from "nativewind";
 
-const _Layout = () => {
+const LoginRoute = () => {
+    const {colorScheme} = useColorScheme();
     return (
         <KeyboardProvider>
-            <Stack>
-                <Stack.Screen
-                    name="index"
-                    options={()=> ({
-                        headerShadowVisible: false,
-                        headerStyle: {backgroundColor: "#ffffff"},
-                        headerTitle: 'Login',
-                        headerLeft: ()=>(
-                            <TouchableOpacity onPress={()=>router.back()} style={{display: "flex", justifyContent: "center", alignItems: "center"}}>
-                                <Ionicons name="chevron-back" size={30} color="black"/>
-                            </TouchableOpacity>
-                        )
-                    })}
-                />
+            <View style={{flex:1 , backgroundColor: colorScheme === "dark"? "#000000": "#ffffff"}}>
 
-                <Stack.Screen
-                    name="otpScreen"
-                    options={()=> ({
-                        headerShadowVisible: false,
-                        headerStyle: {backgroundColor: "#ffffff"},
-                        headerTitle: 'Login',
-                        headerLeft: ()=>(
-                            <TouchableOpacity onPress={()=>router.back()} style={{display: "flex", justifyContent: "center", alignItems: "center"}}>
-                                <Ionicons name="chevron-back" size={30} color="black"/>
-                            </TouchableOpacity>
-                        )
-                    })}
-                />
-            </Stack>
+                <Stack>
+                    <Stack.Screen
+                        name="index"
+                        options={()=> ({
+                            headerShadowVisible: false,
+                            headerStyle: {
+                                backgroundColor:
+                                    colorScheme === "dark" ? "#000000" : "#FFFFFF",
+                            },
+                            headerTintColor:
+                                colorScheme === "dark" ? "#FFFFFF" : "#000000",
+                            headerTitle: 'Login',
+                            headerLeft: ()=>(
+                                <TouchableOpacity onPress={()=>router.back()} style={{display: "flex", justifyContent: "center", alignItems: "center"}}>
+                                    <Ionicons name="chevron-back" size={30} color={colorScheme==="dark"? "white": "black"}/>
+                                </TouchableOpacity>
+                            )
+                        })}
+                    />
+
+                    <Stack.Screen
+                        name="otpScreen"
+                        options={()=> ({
+                            headerShadowVisible: false,
+                            headerStyle: {
+                                backgroundColor:
+                                    colorScheme === "dark" ? "#000000" : "#FFFFFF",
+                            },
+                            headerTintColor:
+                                colorScheme === "dark" ? "#FFFFFF" : "#000000",                        headerTitle: 'Login',
+                            headerLeft: ()=>(
+                                <TouchableOpacity onPress={()=>router.back()} style={{display: "flex", justifyContent: "center", alignItems: "center"}}>
+                                    <Ionicons name="chevron-back" size={30} color={colorScheme==="dark"? "white": "black"}/>
+                                </TouchableOpacity>
+                            )
+                        })}
+                    />
+                </Stack>
+            </View>
         </KeyboardProvider>
     )
 }
-export default _Layout
+export default LoginRoute

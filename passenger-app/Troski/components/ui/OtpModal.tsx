@@ -11,7 +11,6 @@ const OtpModal = () => {
     const setSeeProfile = useAppStore((state)=>state.setSeeProfile);
 
 
-
     useEffect(() => {
         const timer = setTimeout(()=>{
             setLoggedIn(true);
@@ -26,12 +25,12 @@ const OtpModal = () => {
         <Modal
             visible={true}
             animationType="fade"
-            className="relative flex-1 w-full"
+            className="relative flex-1 w-full dark:bg-secondaryBlack"
         >
-            <StatusBar style="dark" />
+            <StatusBar style="auto" />
             <View
-                style={{height: "95%", bottom: 0, borderTopRightRadius: 32, borderTopLeftRadius: 32}}
-                className="bg-general w-full absolute shadow-xl shadow-tertiaryGray">
+                style={{height: "100%", bottom: 0, borderTopRightRadius: 32, borderTopLeftRadius: 32}}
+                className="bg-general dark:bg-secondaryBlack w-full absolute ">
                 <View
                     className="flex-1 flex justify-center items-center w-full relative">
 
@@ -47,9 +46,9 @@ const OtpModal = () => {
                         <View
                             style={{marginTop: "50%"}}
                             className="w-full flex justify-center items-center absolute">
-                            <Text className="text-xl font-GoogleSansMedium mb-2">Verification Successful!</Text>
-                            <Text className="text-sm font-GoogleSansRegular">Please be patient...</Text>
-                            <Text className="text-sm font-GoogleSansRegular">You will be redirected to the homepage.</Text>
+                            <Text className="text-xl font-GoogleSansMedium mb-2 dark:text-general">Verification Successful!</Text>
+                            <Text className="text-sm font-GoogleSansRegular dark:text-tertiaryWhite">Please be patient...</Text>
+                            <Text className="text-sm font-GoogleSansRegular dark:text-tertiaryWhite">You will be redirected to the homepage.</Text>
                         </View>
 
 

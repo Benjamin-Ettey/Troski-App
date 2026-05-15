@@ -1,4 +1,4 @@
-import {View, Text, Pressable, Alert} from 'react-native'
+import {View, Text, Alert, TouchableOpacity} from 'react-native'
 import React from 'react'
 import {Ionicons} from "@expo/vector-icons";
 import {router} from "expo-router";
@@ -34,7 +34,7 @@ const LogoutNavBar = ({name, title} : any) => {
     }
 
     return (
-        <Pressable
+        <TouchableOpacity
             onPress={handleLogout}
             style={{paddingHorizontal: 16, paddingVertical: 16,}}
             className="flex flex-row justify-between items-center">
@@ -46,7 +46,7 @@ const LogoutNavBar = ({name, title} : any) => {
             </View>
 
             <Ionicons name="chevron-forward" size={20} color="red"/>
-        </Pressable>
+        </TouchableOpacity>
     )
 }
 export default LogoutNavBar

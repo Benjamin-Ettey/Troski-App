@@ -28,6 +28,9 @@ import call from 'react-native-phone-call'
 
 
 import {KeyboardAwareScrollView} from "react-native-keyboard-controller";
+import {useAudioPlayer} from "expo-audio";
+import {useColorScheme} from "nativewind";
+import LottieView from "lottie-react-native";
 
 type Message = {
     id: string;
@@ -35,6 +38,9 @@ type Message = {
     from: "user" | "driver";
     time: number;
 };
+
+const audioSource = require("../../../assets/audio/driverarrived.mp3")
+
 
 const SearchDriver = () => {
     const snapPoints = useMemo(() => ["50%"], []);
@@ -72,6 +78,11 @@ const SearchDriver = () => {
     const driverEta = useAppStore((s) => s.driverEta);
     const setDriverEta = useAppStore((s) => s.setDriverEta);
     const [showArrivedMessage, setShowArrivedMessage] = useState(false);
+    const player = useAudioPlayer(audioSource);
+    const { colorScheme } = useColorScheme();
+    const [bookingCode] = useState(
+        () => Math.floor(100000 + Math.random() * 900000)
+    );
 
     const handleDriverCall= ()=>{
         const args = {
@@ -127,12 +138,18 @@ const SearchDriver = () => {
                     setDriverArrived(true);
                     setDriverEta(null);
                     setShowArrivedMessage(true);
+                    
+                    const timer = setTimeout(()=>{
+                        player.play();
+                        return()=>clearTimeout(timer);
+                    }, 2000)
 
 
                     if (arrivalTimeoutRef.current) {
                         clearTimeout(arrivalTimeoutRef.current);
                     }
                     arrivalTimeoutRef.current = setTimeout(() => {
+
                         setShowArrivedMessage(false);
                     }, 5000);
 
@@ -334,8 +351,17 @@ const SearchDriver = () => {
                     isUser ? styles.messageRowUser : styles.messageRowDriver,
                 ]}
             >
-                <View style={[styles.bubble, isUser ? styles.bubbleUser : styles.bubbleDriver]}>
-                    <Text style={isUser ? styles.textUser : styles.textDriver}>{item.text}</Text>
+                <View style={[styles.bubble,
+                    isUser ?
+                    {backgroundColor: colorScheme === "dark"? "#ffcc00": "#0165FC",
+                    borderBottomRightRadius: 4} :
+                    styles.bubbleDriver]}>
+                    <Text style={isUser ?
+                        {
+                            color: colorScheme ==="dark"? "black":"white",
+                        }
+
+                        : styles.textDriver} className="font-GoogleSansRegular">{item.text}</Text>
                 </View>
             </View>
         );
@@ -427,12 +453,12 @@ const SearchDriver = () => {
                             paddingHorizontal: 10,
                             paddingVertical: 12,
                         }}
-                        className="rounded-full bg-general"
+                        className="rounded-full bg-general dark:bg-secondaryBlack"
                     >
                         <Text
                             numberOfLines={1}
                             style={{
-                                color: "black",
+                                color: colorScheme === "dark"? "white":"black",
                                 fontWeight: "600",
                                 fontSize: 14,
                                 maxWidth: "40%",
@@ -445,7 +471,7 @@ const SearchDriver = () => {
                         <Ionicons
                             name="arrow-forward"
                             size={14}
-                            color="black"
+                            color= {colorScheme === "dark"? "gray":"black"}
                             style={{
                                 marginHorizontal: 8,
                             }}
@@ -454,7 +480,7 @@ const SearchDriver = () => {
                         <Text
                             numberOfLines={1}
                             style={{
-                                color: "black",
+                                color: colorScheme === "dark"? "#ffcc00":"black",
                                 fontWeight: "600",
                                 fontSize: 14,
                                 maxWidth: "40%",
@@ -472,6 +498,14 @@ const SearchDriver = () => {
                     ref={bottomSheetRef}
                     snapPoints={snapPoints}
                     index={0}
+                    backgroundStyle={{
+                        backgroundColor: colorScheme === "dark"? "#000000" : "#ffffff",
+                        borderTopLeftRadius: 24,
+                        borderTopRightRadius: 24,
+                    }}
+                    handleIndicatorStyle={{
+                        backgroundColor: colorScheme === "dark"? "gray": "gray",
+                    }}
                     onChange={(index) => {
                         if (index < 1) {
                             bottomSheetRef.current?.snapToIndex(1);
@@ -500,16 +534,16 @@ const SearchDriver = () => {
 
 
                                         <View  className="flex-1 flex flex-col justify-start">
-                                            <Text numberOfLines={1} className="font-GoogleSansMedium">Kelvin Agyeman</Text>
+                                            <Text numberOfLines={1} className="font-GoogleSansMedium dark:text-general">Kelvin Agyeman</Text>
 
                                             <View style={{gap: 4}} className="flex flex-row justify-start items-center">
                                                 <>
                                                     <Ionicons name="star" size={12} color="#ffcc00"/>
-                                                    <Text className="font-GoogleSansRegular text-xs">4.9</Text>
+                                                    <Text className="font-GoogleSansRegular text-xs dark:text-tertiaryGray">4.9</Text>
                                                 </>
-                                                <Text className="font-GoogleSansRegular text-xs">{'\u2022'}</Text>
+                                                <Text className="font-GoogleSansRegular text-xs dark:text-tertiaryGray">{'\u2022'}</Text>
                                                 <>
-                                                    <Text className="font-GoogleSansRegular text-xs">(100trips)</Text>
+                                                    <Text className="font-GoogleSansRegular text-xs dark:text-tertiaryGray">(100trips)</Text>
                                                 </>
                                             </View>
 
@@ -517,10 +551,10 @@ const SearchDriver = () => {
 
                                         <View className="flex flex-row justify-center items-center" style={{gap: 10}}>
                                             <TouchableOpacity
-                                                className="rounded-full bg-tertiaryWhite" style={{padding: 10}}
+                                                className="rounded-full bg-tertiaryWhite  dark:bg-secondaryBlack" style={{padding: 10}}
                                                 onPress={openChat}
                                             >
-                                                <Ionicons name="chatbubbles-outline" size={24} color="black"/>
+                                                <Ionicons name="chatbubbles-outline" size={24} color={colorScheme === "dark"? "white":"black"}/>
 
                                             </TouchableOpacity>
 
@@ -568,23 +602,23 @@ const SearchDriver = () => {
 
                                         <View style={{marginBottom: 16}} className="w-full flex flex-row justify-between items-center">
                                             <View style={{gap: 5}} className="flex flex-row justify-start items-center">
-                                                <Ionicons name="bus-outline" size={12} color="black"/>
-                                                <Text numberOfLines={1} className="font-GoogleSansMedium text-sm">Sprinter Benz - White</Text>
+                                                <Ionicons name="bus-outline" size={12} color={colorScheme === "dark"? "white" : "black"}/>
+                                                <Text numberOfLines={1} className="font-GoogleSansMedium text-sm dark:text-tertiaryGray">Sprinter Benz - White</Text>
                                             </View>
 
                                             <View style={{gap: 5}} className="flex flex-row justify-start items-center">
-                                                <Ionicons name="reader-outline" size={12} color="black"/>
-                                                <Text numberOfLines={1} className="font-GoogleSansRegular text-sm">Plate:</Text>
-                                                <Text numberOfLines={1} className="font-GoogleSansMedium text-sm">XYZ 123 ZZ</Text>
+                                                <Ionicons name="reader-outline" size={12} color={colorScheme === "dark"? "white" : "black"}/>
+                                                <Text numberOfLines={1} className="font-GoogleSansRegular text-sm dark:text-general">Plate:</Text>
+                                                <Text numberOfLines={1} className="font-GoogleSansMedium text-sm dark:text-tertiaryGray">XYZ 123 ZZ</Text>
                                             </View>
                                         </View>
 
-                                        <View style={{height: 1, marginBottom: 16}} className="bg-tertiaryWhite w-full"/>
+                                        <View style={{height: 1, marginBottom: 16}} className="bg-tertiaryWhite w-full dark:bg-tertiaryGray"/>
                                         <>
-                                            <Text  className="font-GoogleSansMedium flex-shrink">
+                                            <Text  className="font-GoogleSansMedium flex-shrink dark:text-general">
                                                 Booking code
                                             </Text>
-                                            <Text style={{ marginBottom: 12 }} className="font-GoogleSansRegular text-xs flex-shrink">
+                                            <Text style={{ marginBottom: 12 }} className="font-GoogleSansRegular text-xs flex-shrink dark:text-tertiaryGray">
                                                 Share this code with the driver for verification
                                             </Text>
 
@@ -594,21 +628,37 @@ const SearchDriver = () => {
                                                 }}
                                                 className="rounded-xl gap-4 border-2 border-dashed border-primary flex justify-center items-center bg-primary/20 w-full"
                                             >
-                                                <Text className="font-GoogleSansBold" style={{ fontSize: 32, letterSpacing: 4 }}>
-                                                    123-456
+                                                <Text className="font-GoogleSansBold dark:text-general" style={{ fontSize: 32, letterSpacing: 4 }}>
+                                                    {bookingCode}
                                                 </Text>
                                             </TouchableOpacity>
                                         </>
                                     </View>
                                 </View>
                             ) : (
-                                <>
-                                    <ActivityIndicator style={{ marginBottom: 16 }} size="large" color="#ffcc00" />
+                                <View className="flex-1 justify-center items-center">
 
-                                    <Text className="font-GoogleSansRegular flex-shrink">
-                                        Searching for a driver. Please be patient...
-                                    </Text>
-                                </>
+                                    <View className="justify-center items-center">
+
+                                        <LottieView
+                                            source={require("../../../assets/video/loadingdots.json")}
+                                            autoPlay
+                                            loop
+                                            style={{
+                                                width: 300,
+                                                height: 300,
+                                            }}
+                                        />
+
+                                        <View className="absolute bottom-10">
+                                            <Text className="font-GoogleSansRegular dark:text-tertiaryGray text-center">
+                                                Searching for a driver. Please be patient...
+                                            </Text>
+                                        </View>
+
+                                    </View>
+
+                                </View>
                             )}
                         </View>
                     </BottomSheetView>
@@ -630,6 +680,13 @@ const SearchDriver = () => {
                         index={0}
                         snapPoints={chatSnapPoints}
                         enablePanDownToClose
+                        backgroundStyle={{
+                            backgroundColor: colorScheme === "dark"? "#000000" : "#ffffff",
+
+                        }}
+                        handleIndicatorStyle={{
+                            backgroundColor: colorScheme === "dark"? "gray": "gray",
+                        }}
                         onClose={() => setChatOpen(false)}
                     >
                         <BottomSheetView style={{ flex: 1 }}>
@@ -652,12 +709,12 @@ const SearchDriver = () => {
                                             </View>
 
                                             <View  className="flex-1 flex flex-col justify-start">
-                                                <Text numberOfLines={1} className="font-GoogleSansMedium">Kelvin Agyeman</Text>
+                                                <Text numberOfLines={1} className="font-GoogleSansMedium dark:text-general">Kelvin Agyeman</Text>
 
                                             </View>
 
-                                            <TouchableOpacity style={{padding: 5}} className="rounded-full bg-tertiaryWhite" onPress={closeChat}>
-                                                <Ionicons name="close" size={24} color="#333" />
+                                            <TouchableOpacity style={{padding: 5}} className="rounded-full bg-tertiaryWhite dark:bg-secondaryBlack" onPress={closeChat}>
+                                                <Ionicons name="close" size={24} color={colorScheme === "dark"? "#ffffff":"#333"} />
                                             </TouchableOpacity>
                                         </View>
 
@@ -675,12 +732,30 @@ const SearchDriver = () => {
                                             />
                                         </View>
 
-                                        <View style={styles.inputRow}>
+                                        <View style={{
+                                            flexDirection: "row",
+                                            alignItems: "flex-end",
+                                            paddingTop: 8,
+                                            borderTopWidth: 1,
+                                            borderTopColor: colorScheme === "dark"? "#0a0a0a":"#eee",
+                                        }}>
                                             <TextInput
+                                                className="font-GoogleSansRegular dark:text-general"
                                                 value={inputText}
                                                 onChangeText={setInputText}
+                                                placeholderTextColor={colorScheme === "dark"? "#f0f0f0":"#e4e4e4"}
                                                 placeholder="Type a message..."
-                                                style={styles.input}
+                                                style={{
+                                                    flex: 1,
+                                                    minHeight: 40,
+                                                    maxHeight: 120,
+                                                    paddingHorizontal: 12,
+                                                    paddingVertical: 8,
+                                                    backgroundColor: colorScheme === "dark"? "black":"white",
+                                                    borderRadius: 24,
+                                                    marginRight: 8,
+                                                    borderWidth: 1,
+                                                    borderColor: "#e6e6e6",}}
                                                 multiline
                                                 returnKeyType="send"
                                                 onSubmitEditing={() => {
@@ -691,7 +766,7 @@ const SearchDriver = () => {
                                             />
 
                                             <TouchableOpacity style={styles.sendButton} onPress={sendMessage}>
-                                                <Ionicons name="send" size={20} color="white" />
+                                                <Ionicons name="send" size={20} color={colorScheme === "dark"? "black":"white"} />
                                             </TouchableOpacity>
                                         </View>
                                     </View>
@@ -723,41 +798,20 @@ const styles = StyleSheet.create({
         paddingHorizontal: 12,
         borderRadius: 16,
     },
-    bubbleUser: {
-        backgroundColor: "#0165FC",
-        borderBottomRightRadius: 4,
-    },
+
     bubbleDriver: {
         backgroundColor: "#f1f1f1",
         borderBottomLeftRadius: 4,
     },
     textUser: {
-        color: "white",
         fontSize: 14,
     },
     textDriver: {
         color: "#111",
         fontSize: 14,
     },
-    inputRow: {
-        flexDirection: "row",
-        alignItems: "flex-end",
-        paddingTop: 8,
-        borderTopWidth: 1,
-        borderTopColor: "#eee",
-    },
-    input: {
-        flex: 1,
-        minHeight: 40,
-        maxHeight: 120,
-        paddingHorizontal: 12,
-        paddingVertical: 8,
-        backgroundColor: "white",
-        borderRadius: 24,
-        marginRight: 8,
-        borderWidth: 1,
-        borderColor: "#e6e6e6",
-    },
+
+
     sendButton: {
         backgroundColor: "#ffcc00",
         width: 40,

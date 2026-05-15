@@ -1,4 +1,4 @@
-import { View, Text, Pressable } from "react-native";
+import {View, Text, TouchableOpacity} from "react-native";
 import React, { useMemo, useRef, useEffect, useState } from "react";
 import BottomSheet, { BottomSheetView } from "@gorhom/bottom-sheet";
 import PrimaryButton from "@/components/PrimaryButton";
@@ -8,6 +8,7 @@ import SelectRideType from "@/components/ui/SelectRideType";
 import MapView, { Marker, Polyline } from "react-native-maps";
 import { useAppStore } from "@/utils/store";
 import { Ionicons } from "@expo/vector-icons";
+import {useColorScheme} from "nativewind";
 
 const GHANA_BOUNDS = {
     minLat: 4.5,
@@ -75,14 +76,14 @@ const NumberOfPassengers = () => {
     const tripPrice = useAppStore((s) => s.tripPrice);
     const pickupPoint = useAppStore((s) => s.pickupPoint);
     const destinationPoint = useAppStore((s) => s.destinationPoint);
-
+    const { colorScheme } = useColorScheme();
 
     const maxPassengersFromStore = useAppStore((s: any) => s.selectedRideMaxPassengers ?? null);
-
 
     const pickupCoords = pickupCoordsRaw
         ? clampToGhana(pickupCoordsRaw.latitude, pickupCoordsRaw.longitude)
         : null;
+
     const destinationCoords = destinationCoordsRaw
         ? clampToGhana(destinationCoordsRaw.latitude, destinationCoordsRaw.longitude)
         : null;
@@ -91,13 +92,10 @@ const NumberOfPassengers = () => {
     const [durationText, setDurationText] = useState<string>("");
     const [durationMinutes, setDurationMinutes] = useState<number | null>(null);
 
-
     const [passengerCount, setPassengerCount] = useState<number>(1);
     const [isProcessingPassengers, setIsProcessingPassengers] = useState(false);
 
-
     const maxPassengers = typeof maxPassengersFromStore === "number" ? maxPassengersFromStore : 5;
-
 
     const extractNumericFromString = (s: any): { value: number; decimals: number } | null => {
         if (typeof s === "number" && !isNaN(s)) return { value: s, decimals: 0 };
@@ -113,7 +111,6 @@ const NumberOfPassengers = () => {
 
     const formatLikeOriginal = (original: any, numericValue: number, decimalsFallback = 0) => {
         if (typeof original === "number") {
-
             return String(Number(numericValue.toFixed(decimalsFallback)));
         }
         if (typeof original === "string") {
@@ -123,29 +120,23 @@ const NumberOfPassengers = () => {
             if (match) {
                 return original.replace(match[0], formatted);
             }
-
             return formatted;
         }
         return String(numericValue);
     };
 
-
     const parsed = extractNumericFromString(tripPrice);
     const baseFareNumeric = parsed ? parsed.value : (typeof tripPrice === "number" ? tripPrice : 0);
     const baseFareDecimals = parsed ? parsed.decimals : 0;
-
 
     const [formattedPrice, setFormattedPrice] = useState<string>(() =>
         formatLikeOriginal(tripPrice, baseFareNumeric * passengerCount, baseFareDecimals)
     );
 
-
     useEffect(() => {
         const numericTotal = baseFareNumeric * passengerCount;
         const next = formatLikeOriginal(tripPrice, numericTotal, baseFareDecimals);
         setFormattedPrice(next);
-
-
     }, [passengerCount, tripPrice, baseFareNumeric]);
 
     const changePassengerCount = (delta: number) => {
@@ -157,27 +148,23 @@ const NumberOfPassengers = () => {
             return next;
         });
 
-
         setTimeout(() => setIsProcessingPassengers(false), 80);
     };
 
     const animateToBounds = () => {
         if (!mapRef.current || !pickupCoords || !destinationCoords) return;
 
-        const midLat = (pickupCoords.latitude + destinationCoords.latitude) / 2;
-        const midLng = (pickupCoords.longitude + destinationCoords.longitude) / 2;
-
-        const latDelta = Math.max(Math.abs(pickupCoords.latitude - destinationCoords.latitude) * 1.6, 0.01);
-        const lngDelta = Math.max(Math.abs(pickupCoords.longitude - destinationCoords.longitude) * 1.6, 0.01);
-
-        mapRef.current.animateToRegion(
+        mapRef.current.fitToCoordinates(
+            [pickupCoords, destinationCoords],
             {
-                latitude: midLat,
-                longitude: midLng,
-                latitudeDelta: latDelta,
-                longitudeDelta: lngDelta,
-            },
-            600
+                edgePadding: {
+                    top: 80,
+                    right: 80,
+                    bottom: 380,
+                    left: 80,
+                },
+                animated: true,
+            }
         );
     };
 
@@ -192,19 +179,23 @@ const NumberOfPassengers = () => {
 
             try {
                 const GOOGLE_KEY = process.env.GOOGLE_MAPS_API_KEY || "";
+
                 if (GOOGLE_KEY && GOOGLE_KEY.length > 0) {
                     const url = `https://maps.googleapis.com/maps/api/directions/json?origin=${pickupCoords.latitude},${pickupCoords.longitude}&destination=${destinationCoords.latitude},${destinationCoords.longitude}&key=${GOOGLE_KEY}`;
                     const res = await fetch(url);
                     const data = await res.json();
+
                     if (!data.routes || data.routes.length === 0) {
                         setRouteCoords([]);
                         setDurationMinutes(null);
                         setDurationText("");
                         return;
                     }
+
                     const route = data.routes[0];
                     const encoded = route?.overview_polyline?.points;
                     const legs = route?.legs?.[0];
+
                     if (encoded) {
                         const decoded = decodePolyline(encoded);
                         const safeCoords = decoded.filter((p) => p && typeof p.latitude === "number" && typeof p.longitude === "number");
@@ -212,6 +203,7 @@ const NumberOfPassengers = () => {
                     } else {
                         setRouteCoords([]);
                     }
+
                     const durationSeconds = legs?.duration?.value;
                     if (typeof durationSeconds === "number") {
                         setDurationMinutes(Math.max(1, Math.round(durationSeconds / 60)));
@@ -225,15 +217,19 @@ const NumberOfPassengers = () => {
                     }
                 } else {
                     const osrmUrl = `https://router.project-osrm.org/route/v1/driving/${pickupCoords.longitude},${pickupCoords.latitude};${destinationCoords.longitude},${destinationCoords.latitude}?overview=full&geometries=polyline&steps=false`;
+
                     const res = await fetch(osrmUrl);
                     const data = await res.json();
+
                     if (!data.routes || data.routes.length === 0) {
                         setRouteCoords([]);
                         setDurationMinutes(null);
                         setDurationText("");
                         return;
                     }
+
                     const route = data.routes[0];
+
                     const durationSeconds = route?.duration;
                     if (typeof durationSeconds === "number") {
                         setDurationMinutes(Math.max(1, Math.round(durationSeconds / 60)));
@@ -242,6 +238,7 @@ const NumberOfPassengers = () => {
                         setDurationMinutes(null);
                         setDurationText("");
                     }
+
                     const encoded = route?.geometry;
                     if (encoded) {
                         const decoded = decodePolyline(encoded);
@@ -252,9 +249,10 @@ const NumberOfPassengers = () => {
                     }
                 }
 
-                setTimeout(() => {
+                requestAnimationFrame(() => {
                     animateToBounds();
-                }, 300);
+                });
+
             } catch (err) {
                 console.log("Route error:", err);
                 setRouteCoords([]);
@@ -280,12 +278,10 @@ const NumberOfPassengers = () => {
             >
                 {pickupCoords && (
                     <Marker coordinate={pickupCoords} pinColor="#0165FC"/>
-
                 )}
 
                 {destinationCoords && (
                     <Marker coordinate={destinationCoords} pinColor="#ffcc00"/>
-
                 )}
 
                 {routeCoords.length > 1 && (
@@ -304,7 +300,12 @@ const NumberOfPassengers = () => {
                 index={1}
                 snapPoints={snapPoints}
                 enablePanDownToClose={false}
-                backgroundStyle={{ backgroundColor: "white" }}
+                backgroundStyle={{
+                    backgroundColor: colorScheme === "dark"? "#000000" : "#ffffff",
+                }}
+                handleIndicatorStyle={{
+                    backgroundColor: colorScheme === "dark"? "gray": "gray",
+                }}
                 onChange={(index) => {
                     if (index < 1) {
                         bottomSheetRef.current?.snapToIndex(1);
@@ -314,22 +315,18 @@ const NumberOfPassengers = () => {
                 <BottomSheetView>
                     <View>
                         <View style={{ paddingBottom: 16, gap: 12 }} className="w-full flex flex-col justify-center items-center">
-                            <Text className="font-GoogleSansMedium">Number of passengers</Text>
-                            <View style={{height: 1}} className="w-full bg-tertiaryWhite"/>
+                            <Text className="font-GoogleSansMedium dark:text-general">Number of passengers</Text>
+                            <View style={{height: 1}} className="w-full bg-tertiaryWhite dark:bg-secondaryGray"/>
                         </View>
                         <SelectRideType duration={durationMinutes ? `${durationMinutes} min` : durationText} price={formattedPrice} />
                     </View>
                 </BottomSheetView>
             </BottomSheet>
 
-
             <View style={{ bottom: 30 }} className="w-full absolute flex items-center justify-center">
                 <View style={{ height: 100 }} className="w-full">
-
                     <View style={{bottom: 32, flex: 1, flexDirection: "row", alignItems: "center", justifyContent: "center", paddingHorizontal: 16 }}>
-
-
-                        <Pressable
+                        <TouchableOpacity
                             onPress={() => changePassengerCount(-1)}
                             disabled={passengerCount <= 1 || isProcessingPassengers}
                             style={{
@@ -342,20 +339,15 @@ const NumberOfPassengers = () => {
                                 elevation: 3,
                             }}
                             className="rounded-full"
-                            accessibilityLabel="Decrease passengers"
-                            accessibilityState={{ disabled: passengerCount <= 1 }}
                         >
                             <Ionicons name="remove" size={16} style={{ fontSize: 24, color: passengerCount <= 1 ? "#999" : "#000" }}/>
-                        </Pressable>
-
+                        </TouchableOpacity>
 
                         <View className="rounded-full bg-primary" style={{ minWidth: 80, minHeight: 80, alignItems: "center", justifyContent: "center" }}>
                             <Text className="text-secondaryBlack font-GoogleSansBold" style={{ fontSize: 28, fontWeight: "700"}}>{passengerCount}</Text>
-
                         </View>
 
-
-                        <Pressable
+                        <TouchableOpacity
                             onPress={() => changePassengerCount(1)}
                             disabled={passengerCount >= maxPassengers || isProcessingPassengers}
                             style={{
@@ -368,11 +360,9 @@ const NumberOfPassengers = () => {
                                 elevation: 3,
                             }}
                             className="rounded-full"
-                            accessibilityLabel="Increase passengers"
-                            accessibilityState={{ disabled: passengerCount >= maxPassengers }}
                         >
                             <Ionicons name="add" size={16} style={{ fontSize: 24, color: passengerCount >= maxPassengers ? "#999" : "#000" }}/>
-                        </Pressable>
+                        </TouchableOpacity>
                     </View>
                 </View>
 
@@ -381,7 +371,6 @@ const NumberOfPassengers = () => {
                     disabled={false}
                     onPress={() => {
                         const totalPrice = baseFareNumeric * passengerCount;
-
                         useAppStore.getState().setFinalTripPrice(totalPrice);
 
                         if (paymentMethods.length === 0) {
@@ -406,19 +395,19 @@ const NumberOfPassengers = () => {
                 }}
                 className="w-full flex-row items-center"
             >
-                <Pressable
+                <TouchableOpacity
                     onPress={() => router.back()}
                     className="flex justify-center items-center"
                     style={{
-                        backgroundColor: "white",
+                        backgroundColor: colorScheme === "dark"? "black":"white",
                         padding: 8,
                         borderRadius: 999,
                         elevation: 5,
                         marginRight: 12,
                     }}
                 >
-                    <Ionicons name="chevron-back" size={28} color="black" />
-                </Pressable>
+                    <Ionicons name="chevron-back" size={28} color={colorScheme === "dark"? "white":"black"} />
+                </TouchableOpacity>
 
                 <View style={{ flex: 1, alignItems: "center", justifyContent: "center", paddingHorizontal: 8 }} pointerEvents="none">
                     <View
@@ -430,12 +419,12 @@ const NumberOfPassengers = () => {
                             paddingHorizontal: 10,
                             paddingVertical: 12
                         }}
-                        className="rounded-full bg-general"
+                        className="rounded-full bg-general dark:bg-secondaryBlack"
                     >
                         <Text
                             numberOfLines={1}
                             style={{
-                                color: "black",
+                                color: colorScheme === "dark"? "white":"black",
                                 fontWeight: "600",
                                 fontSize: 14,
                                 maxWidth: "40%",
@@ -445,12 +434,12 @@ const NumberOfPassengers = () => {
                             {pickupPoint || "Pickup"}
                         </Text>
 
-                        <Ionicons name="arrow-forward" size={14} color="black" style={{ marginHorizontal: 8 }} />
+                        <Ionicons name="arrow-forward" size={14} color={colorScheme === "dark"? "white":"black"} style={{ marginHorizontal: 8 }} />
 
                         <Text
                             numberOfLines={1}
                             style={{
-                                color: "black",
+                                color: colorScheme === "dark"? "#ffcc00":"black",
                                 fontWeight: "600",
                                 fontSize: 14,
                                 maxWidth: "40%",

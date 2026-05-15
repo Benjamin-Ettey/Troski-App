@@ -13,6 +13,7 @@ import { useAppStore } from "@/utils/store";
 import PrimaryButton from "@/components/PrimaryButton";
 import DisabledPrimaryButton from "@/components/DisabledPrimaryButton";
 import { Ionicons } from "@expo/vector-icons";
+import {useColorScheme} from "nativewind";
 
 const SelectPaymentMethod = () => {
     const paymentMethods = useAppStore((s) => s.paymentMethods);
@@ -20,6 +21,8 @@ const SelectPaymentMethod = () => {
 
     const selectedPaymentMethod = useAppStore((s) => s.selectedPaymentMethod);
     const setSelectedPaymentMethod = useAppStore((s) => s.setSelectedPaymentMethod);
+
+    const { colorScheme } = useColorScheme();
 
     const [showSuccessModal, setShowSuccessModal] = useState(false);
 
@@ -101,7 +104,7 @@ const SelectPaymentMethod = () => {
     };
 
     return (
-        <View style={{ flex: 1, backgroundColor: "#F5F7FA" }}>
+        <View style={{ flex: 1, backgroundColor: colorScheme === "dark"? "#000000" : "#F5F7FA" }}>
             <ScrollView
                 className="flex-1 w-full"
                 showsHorizontalScrollIndicator={false}
@@ -113,7 +116,7 @@ const SelectPaymentMethod = () => {
                 >
                     <TouchableOpacity
                         onPress={handleSelectWallet}
-                        className="bg-general flex flex-row justify-between items-center"
+                        className="flex flex-row justify-between items-center"
                         style={{
                             padding: 16,
                         }}
@@ -122,14 +125,14 @@ const SelectPaymentMethod = () => {
                             style={{ gap: 32 }}
                             className="flex flex-row justify-center items-center"
                         >
-                            <Ionicons name="wallet" size={32} color="black" />
+                            <Ionicons name="wallet" size={32} color={colorScheme === "dark"? "white":"black"} />
 
                             <View>
-                                <Text className="font-GoogleSansBold">
+                                <Text className="font-GoogleSansBold dark:text-general">
                                     Pay with wallet
                                 </Text>
 
-                                <Text className="font-GoogleSansRegular">
+                                <Text className="font-GoogleSansRegular dark:text-tertiaryGray">
                                     {`GH₵ ` + tripPrice}
                                 </Text>
                             </View>
@@ -139,27 +142,26 @@ const SelectPaymentMethod = () => {
                             <Ionicons
                                 name="radio-button-on"
                                 size={24}
-                                color="black"
+                                color= { colorScheme ==="dark"? "white":"black"}
                             />
                         ) : (
                             <Ionicons
                                 name="radio-button-off"
                                 size={24}
-                                color="black"
+                                color= { colorScheme ==="dark"? "white":"black"}
                             />
                         )}
                     </TouchableOpacity>
                 </View>
 
-                <View style={{ padding: 24 }} className="w-full flex justify-center">
+                <View style={{ paddingHorizontal: 24 }} className="w-full flex justify-center">
                     {paymentMethods.map((item: any, index: number) => (
                         <View
                             key={index}
                             style={{
-                                marginBottom: 24,
                                 padding: 16,
                             }}
-                            className="w-full bg-general flex flex-row justify-between items-center"
+                            className="w-full flex flex-row justify-between items-center"
                         >
                             <View style={{ flex: 1 }}>
                                 <TouchableOpacity
@@ -186,11 +188,11 @@ const SelectPaymentMethod = () => {
                                     </View>
 
                                     <View className="flex flex-col justify-start items-start">
-                                        <Text className="font-GoogleSansBold">
+                                        <Text className="font-GoogleSansBold dark:text-general">
                                             {item.provider}
                                         </Text>
 
-                                        <Text className="font-GoogleSansRegular">
+                                        <Text className="font-GoogleSansRegular dark:text-tertiaryGray">
                                             {item.number}
                                         </Text>
                                     </View>
@@ -202,19 +204,19 @@ const SelectPaymentMethod = () => {
                                 <Ionicons
                                     name="radio-button-on"
                                     size={24}
-                                    color="black"
+                                    color= { colorScheme ==="dark"? "white":"black"}
                                 />
                             ) : (
                                 <Ionicons
                                     name="radio-button-off"
                                     size={24}
-                                    color="black"
+                                    color= { colorScheme ==="dark"? "white":"black"}
                                 />
                             )}
                         </View>
                     ))}
 
-                    <View className="w-full flex justify-center items-center">
+                    <View style={{marginTop: 16}} className="w-full flex justify-center items-center">
                         <TouchableOpacity
                             onPress={() =>
                                 router.navigate(
@@ -224,7 +226,7 @@ const SelectPaymentMethod = () => {
                             className="bg-secondaryBlack flex justify-center items-center rounded-full"
                             style={{ width: "50%", padding: 10 }}
                         >
-                            <Text className="text-general font-GoogleSansRegular">
+                            <Text className="text-general  font-GoogleSansRegular">
                                 Add another method
                             </Text>
                         </TouchableOpacity>
@@ -237,10 +239,10 @@ const SelectPaymentMethod = () => {
                 className="w-full flex justify-center items-center absolute"
             >
                 {!canContinue ? (
-                    <DisabledPrimaryButton name="Continue" />
+                    <DisabledPrimaryButton name="Pay" />
                 ) : (
                     <PrimaryButton
-                        name="Continue"
+                        name="Pay"
                         disabled={processing}
                         onPress={handleContinue}
                     />
@@ -267,41 +269,41 @@ const SelectPaymentMethod = () => {
                 </View>
             </Modal>
 
-            <Modal style={{flex: 1}} className="w-full flex justify-center items-center" animationType="fade" visible={showSuccessModal} transparent>
-
+            <Modal animationType="fade" visible={showSuccessModal} transparent>
                 <View
                     style={{
-                    flex: 1,
-                    backgroundColor: "rgba(0,0,0,0.5)",
-                    justifyContent: "center",
-                    alignItems: "center",
-                }}>
-                    <View className="w-full absolute flex-1 bg-general flex flex-col justify-center items-center"
-                          style={{bottom: 0, gap: 10, height: "40%", borderTopRightRadius: 32, borderTopLeftRadius: 32}}>
-                        <View  className="w-full flex-1 flex justify-center items-center" style={{gap: 16}} >
+                        flex: 1,
+                        backgroundColor: "rgba(0,0,0,0.5)",
+                        justifyContent: "center",
+                        alignItems: "center",
+                    }}
+                >
+                    <View className="w-full flex-1 bg-general dark:bg-secondaryBlack justify-center items-center">
+
+                        <View className="justify-center items-center">
+
                             <Image
                                 source={require("../../../assets/images/check.png")}
-                                style={{width: "30%", height: "30%"}}
+                                style={{
+                                    width: 120,
+                                    height: 120,
+                                    marginBottom: 12,
+                                }}
                                 resizeMode="contain"
                             />
-                            <View>
-                                <Text
-                                    className="font-GoogleSansMedium flex-shrink text-center text-secondaryBlack ">
-                                    Payment successfully
-                                </Text>
-                                <Text
 
-                                    className="font-GoogleSansRegular flex-shrink text-center text-secondaryBlack ">
-                                    You will be redirect shortly.
-                                </Text>
-                            </View>
+                            <Text className="font-GoogleSansMedium text-center text-secondaryBlack dark:text-general">
+                                Payment successful
+                            </Text>
 
+                            <Text className="font-GoogleSansRegular text-center text-secondaryBlack dark:text-tertiaryGray mt-1">
+                                You will be redirected shortly.
+                            </Text>
 
                         </View>
 
                     </View>
                 </View>
-
             </Modal>
         </View>
     );

@@ -7,6 +7,7 @@ import LogoutNavBar from "@/components/LogoutNavBar";
 import {useAppStore} from "@/utils/store";
 import {router} from "expo-router";
 import * as ImagePicker from 'expo-image-picker'
+import {useColorScheme} from "nativewind";
 
 
 const Index = () => {
@@ -14,6 +15,7 @@ const Index = () => {
     const name =  useAppStore((state)=> state.name)
     const image = useAppStore((state) => state.image);
     const setImage = useAppStore((state) => state.setImage);
+    const { colorScheme } = useColorScheme();
 
     const handleImagePicker = async () => {
 
@@ -34,9 +36,9 @@ const Index = () => {
     }
 
     return (
-        <View style={{backgroundColor: "#F5F7FA"}} className="flex-1">
+        <View style={{backgroundColor: colorScheme === "dark"? "#000000" : "#F5F7FA"}} className="flex-1">
 
-                <StatusBar style='dark' />
+                <StatusBar style='auto' />
 
 
                 <ScrollView contentContainerStyle={{paddingBottom: 40}}>
@@ -63,8 +65,8 @@ const Index = () => {
 
 
                         <View className="w-full justify-start flex flex-col">
-                            <Text className="font-GoogleSansMedium">{name}</Text>
-                            <Text className="text-sm font-GoogleSansRegular">{email}</Text>
+                            <Text className="font-GoogleSansMedium text-secondaryBlack dark:text-general">{name}</Text>
+                            <Text className="text-sm font-GoogleSansRegular text-secondaryBlack dark:text-tertiaryWhite">{email}</Text>
                         </View>
                     </View>
 
@@ -73,52 +75,52 @@ const Index = () => {
                         className="w-full flex-1 ">
 
                         <View
-                            style={{borderRadius: 24}}
-                            className="w-full bg-general">
-                            <NavBar onPress={handleImagePicker} name="camera-outline" textcolor="#007BFF" color="#007BFF" title="Change Profile Photo" goforwardcolor="#007BFF"/>
+                            style={{borderRadius: 24, backgroundColor: colorScheme === "dark"? "#0a0a0a":"#ffffff"}}
+                            className="w-full ">
+                            <NavBar onPress={handleImagePicker} name="camera-outline" textcolor="#007BFF" color="#007BFF" title="Change profile photo" goforwardcolor="#007BFF"/>
                         </View>
 
                         <View
-                            style={{borderRadius: 24}}
-                            className="w-full bg-general">
-                            <NavBar onPress={()=> router.push("/profile/editProfile")} name="person" textcolor="#444444" color="black" goforwardcolor="gray" title="Edit Profile"/>
+                            style={{borderRadius: 24, backgroundColor: colorScheme === "dark"? "#0a0a0a":"#ffffff"}}
+                            className="w-full ">
+                            <NavBar onPress={()=> router.push("/profile/editProfile")} name="person" textcolor={colorScheme === "dark"? "#f0f0f0" : "#444444"} color={colorScheme === "dark"? "#f0f0f0" : "#444444"} goforwardcolor={colorScheme === "dark"? "#f0f0f0" : "gray"} title="Edit profile"/>
                         </View>
 
                         <View
-                            style={{borderRadius: 24}}
-                            className="w-full bg-general">
-                            <NavBar onPress={()=>router.push("/profile/rideHistory")} name="bus" title="Ride History" textcolor="#444444" color="black" goforwardcolor="gray"/>
-                            <View style={{width: "100%", height: 1, backgroundColor: "#e4e4e477"}} />
-                            <NavBar onPress={()=> router.push("/profile/paymentMethod")} name="card" title="Payment methods" textcolor="#444444" color="black" goforwardcolor="gray"/>
-                            <View style={{width: "100%", height: 1, backgroundColor: "#e4e4e477"}} />
-                            <NavBar onPress={()=>router.push("/profile/myWallet")} name="wallet" title="My Wallet" textcolor="#444444" color="black" goforwardcolor="gray"/>
-
-                        </View>
-
-                        <View
-                            style={{borderRadius: 24}}
-                            className="w-full bg-general">
-                            <NavBar onPress={()=> router.push("/profile/settings")} name="settings" title="Settings" textcolor="#444444" color="black" goforwardcolor="gray"/>
-                            <View style={{width: "100%", height: 1, backgroundColor: "#e4e4e477"}} />
-                            <NavBar onPress={()=>router.push("/profile/information")} name="information-circle" title="Information" textcolor="#444444" color="black" goforwardcolor="gray"/>
+                            style={{borderRadius: 24, backgroundColor: colorScheme === "dark"? "#0a0a0a":"#ffffff"}}
+                            className="w-full ">
+                            <NavBar onPress={()=>router.push("/profile/rideHistory")} name="bus" title="Ride history" textcolor={colorScheme === "dark"? "#f0f0f0" : "#444444"} color={colorScheme === "dark"? "#f0f0f0" : "#444444"} goforwardcolor={colorScheme === "dark"? "#f0f0f0" : "gray"}/>
+                            <View style={{width: "100%", height: 1, backgroundColor: colorScheme === "dark"? "#e4e4e411" : "#e4e4e477"}} />
+                            <NavBar onPress={()=> router.push("/profile/paymentMethod")} name="card" title="Payment methods" textcolor={colorScheme === "dark"? "#f0f0f0" : "#444444"} color={colorScheme === "dark"? "#f0f0f0" : "#444444"} goforwardcolor={colorScheme === "dark"? "#f0f0f0" : "gray"}/>
+                            <View style={{width: "100%", height: 1, backgroundColor: colorScheme === "dark"? "#e4e4e411" : "#e4e4e477"}} />
+                            <NavBar onPress={()=>router.push("/profile/myWallet")} name="wallet" title="My wallet" textcolor={colorScheme === "dark"? "#f0f0f0" : "#444444"} color={colorScheme === "dark"? "#f0f0f0" : "#444444"} goforwardcolor={colorScheme === "dark"? "#f0f0f0" : "gray"}/>
 
                         </View>
 
                         <View
-                            style={{borderRadius: 24}}
-                            className="w-full bg-general">
-                            <NavBar onPress={()=>router.push("/profile/recentEmails")} name="mail-unread" textcolor="#444444" color="black" title="Recent emails" goforwardcolor="gray"/>
+                            style={{borderRadius: 24, backgroundColor: colorScheme === "dark"? "#0a0a0a":"#ffffff"}}
+                            className="w-full ">
+                            <NavBar onPress={()=> router.push("/profile/settings")} name="settings" title="Settings" textcolor={colorScheme === "dark"? "#f0f0f0" : "#444444"} color={colorScheme === "dark"? "#f0f0f0" : "#444444"} goforwardcolor={colorScheme === "dark"? "#f0f0f0" : "gray"}/>
+                            <View style={{width: "100%", height: 1, backgroundColor: colorScheme === "dark"? "#e4e4e411" : "#e4e4e477"}} />
+                            <NavBar onPress={()=>router.push("/profile/information")} name="information-circle" title="Information" textcolor={colorScheme === "dark"? "#f0f0f0" : "#444444"} color={colorScheme === "dark"? "#f0f0f0" : "#444444"} goforwardcolor={colorScheme === "dark"? "#f0f0f0" : "gray"}/>
+
                         </View>
 
                         <View
-                            style={{borderRadius: 24}}
-                            className="w-full bg-general">
-                            <NavBar onPress={()=>router.push("/profile/requestRefund")} name="swap-horizontal" textcolor="#444444" color="black" title="Request refund" goforwardcolor="gray"/>
+                            style={{borderRadius: 24, backgroundColor: colorScheme === "dark"? "#0a0a0a":"#ffffff"}}
+                            className="w-full ">
+                            <NavBar onPress={()=>router.push("/profile/recentEmails")} name="mail-unread" textcolor={colorScheme === "dark"? "#f0f0f0" : "#444444"} color={colorScheme === "dark"? "#f0f0f0" : "#444444"} title="Recent emails" goforwardcolor={colorScheme === "dark"? "#f0f0f0" : "gray"}/>
                         </View>
 
                         <View
-                            style={{borderRadius: 24}}
-                            className="w-full bg-general">
+                            style={{borderRadius: 24, backgroundColor: colorScheme === "dark"? "#0a0a0a":"#ffffff"}}
+                            className="w-full ">
+                            <NavBar onPress={()=>router.push("/profile/requestRefund")} name="swap-horizontal" textcolor={colorScheme === "dark"? "#f0f0f0" : "#444444"} color={colorScheme === "dark"? "#f0f0f0" : "#444444"} title="Request refund" goforwardcolor={colorScheme === "dark"? "#f0f0f0" : "gray"}/>
+                        </View>
+
+                        <View
+                            style={{borderRadius: 24, backgroundColor: colorScheme === "dark"? "#0a0a0a":"#ffffff"}}
+                            className="w-full ">
                             <LogoutNavBar name="log-out" title="Logout" textcolor="red" color="red"/>
                         </View>
                     </View>

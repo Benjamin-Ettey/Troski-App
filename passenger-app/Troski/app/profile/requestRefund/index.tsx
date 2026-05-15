@@ -13,12 +13,14 @@ import { router } from "expo-router";
 import PrimaryButton from "@/components/PrimaryButton";
 import DisabledPrimaryButton from "@/components/DisabledPrimaryButton";
 import { StatusBar } from "expo-status-bar";
+import {useColorScheme} from "nativewind";
 
 const RequestRefund = () => {
     const [description, setDescription] = useState("");
     const [processing, setProcessing] = useState(false);
     const [submitted, setSubmitted] = useState(false);
 
+    const { colorScheme } = useColorScheme();
 
 
     const isDisabled = description.trim().length === 0;
@@ -39,14 +41,14 @@ const RequestRefund = () => {
 
             setTimeout(() => {
                 router.back();
-            }, 1500);
+            }, 3000);
         }, 1000);
     };
 
     if (submitted) {
         return (
             <Modal visible>
-                <View className="flex-1 w-full bg-general px-6 items-center justify-center">
+                <View className="flex-1 w-full bg-general dark:bg-secondaryBlack px-6 items-center justify-center">
                     <StatusBar style="dark" />
 
                     <View className="items-center gap-4 justify-center">
@@ -62,11 +64,11 @@ const RequestRefund = () => {
                             <Ionicons name="checkmark-circle" size={48} color="#22C55E" />
                         </View>
 
-                        <Text className="font-GoogleSansMedium text-xl text-center">
+                        <Text className="font-GoogleSansMedium text-xl text-center dark:text-general">
                             Refund request submitted
                         </Text>
 
-                        <Text className="font-GoogleSansRegular text-center text-gray-600 text-sm">
+                        <Text className="font-GoogleSansRegular text-center text-gray-600 text-sm dark:text-tertiaryGray">
                             Our support team will review your request and respond within 24-48 hours
                         </Text>
                     </View>
@@ -76,7 +78,7 @@ const RequestRefund = () => {
     }
 
     return (
-        <View className="flex-1 bg-general">
+        <View style={{backgroundColor: colorScheme === "dark"? "#000000" : "#F5F7FA"}} className="flex-1 ">
             <StatusBar style="dark" />
 
             <ScrollView
@@ -86,11 +88,11 @@ const RequestRefund = () => {
             >
 
 
-                <View className="px-6 gap-6">
+                <View className="px-6 gap-6 py-2">
 
 
                     <View>
-                        <Text className="font-GoogleSansMedium text-base mb-3">
+                        <Text className="font-GoogleSansMedium mb-2 dark:text-general">
                             Provide more details
                         </Text>
 
@@ -107,32 +109,45 @@ const RequestRefund = () => {
                                 paddingVertical: 12,
                                 textAlignVertical: "top",
                             }}
-                            className="bg-white border border-gray-200 rounded-xl font-GoogleSansRegular text-sm"
+                            className="bg-general dark:bg-secondaryBlack dark:text-general border border-gray-200 rounded-xl font-GoogleSansRegular text-sm"
                         />
 
                         <View className="flex flex-row justify-between items-center mt-2">
-                            <Text className="text-xs text-gray-500 font-GoogleSansRegular">
+                            <Text className="text-xs text-secondaryGray font-GoogleSansRegular">
                                 {description.length}/500 characters
                             </Text>
                         </View>
+
                     </View>
 
 
+                    <View style={{height: 1, }} className="w-full bg-tertiaryWhite dark:bg-secondaryGray/20"/>
+
                     <View
-                        className="bg-blue-50 border border-blue-200 rounded-xl p-4 flex flex-row gap-3"
+                        className=" flex flex-row gap-3"
                     >
-                        <Ionicons name="information-circle" size={20} color="#0165FC" />
-                        <Text
-                            className="font-GoogleSansRegular text-xs text-gray-700 flex-1"
-                            style={{ lineHeight: 18 }}
-                        >
-                            Refund requests are reviewed within 24-48 hours. Once approved, the
-                            amount will be credited to your wallet.
-                        </Text>
+                        <Ionicons name="information-circle" size={24} color="#EF4444FF" />
+
+                        <View className="flex-1 flex justify-start items-start flex-col">
+                            <Text
+                                className="font-GoogleSansMedium flex-1 flex-shrink dark:text-tertiaryWhite"
+                                style={{ lineHeight: 18 }}
+                            >
+                                Refund Notice
+                            </Text>
+                            <Text
+                                className="font-GoogleSansRegular text-xs text-secondaryGray flex-1 dark:text-tertiaryGray"
+                                style={{ lineHeight: 18 }}
+                            >
+                                Refund requests are reviewed within 24-48 hours. Once approved, the
+                                amount will be credited to your wallet.
+                            </Text>
+                        </View>
+
                     </View>
 
                     <View
-                        className="flex justify-center items-center px-6 py-4 bg-general"
+                        className="flex justify-center items-center px-6 py-4 "
                         style={{ elevation: 10 }}
                     >
                         {isDisabled ? (
