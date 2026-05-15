@@ -8,12 +8,15 @@ import PrimaryButton from "@/components/PrimaryButton";
 import { OtpInput } from "react-native-otp-entry";
 import {useAppStore} from "@/utils/store";
 import DisabledPrimaryButton from "@/components/DisabledPrimaryButton";
+import {useColorScheme} from "nativewind";
 
 const ConfirmNewPinCode = () => {
 
     const tempPin = useAppStore((state) => state.tempPin);
     const setPin = useAppStore((state) => state.setPin);
-    const setTempPin = useAppStore((state)=> state.setTempPin)
+    const setTempPin = useAppStore((state)=> state.setTempPin);
+    const { colorScheme } = useColorScheme();
+
 
     const [value, setValue] = useState("");
 
@@ -44,7 +47,7 @@ const ConfirmNewPinCode = () => {
     };
 
     return (
-        <View style={{backgroundColor: "#F5F7FA"}} className="flex-1">
+        <View style={{backgroundColor: colorScheme === "dark"? "#000000" : "#F5F7FA"}} className="flex-1">
             <KeyboardAwareScrollView
                 keyboardShouldPersistTaps="handled"
                 className="flex-1">
@@ -53,8 +56,8 @@ const ConfirmNewPinCode = () => {
 
                 <View className="w-full flex-1 flex items-center px-6">
                     <View className="w-full mb-4">
-                        <Text className="text-2xl font-GoogleSansMedium tracking-tight">Confirm new 6-digit PIN</Text>
-                        <Text className="text-sm font-GoogleSansRegular">Verify your new pin code.</Text>
+                        <Text className="text-2xl font-GoogleSansMedium tracking-tight dark:text-general">Confirm new 6-digit PIN</Text>
+                        <Text className="text-sm font-GoogleSansRegular dark:text-tertiaryWhite">Verify your new pin code.</Text>
 
                     </View>
 
@@ -70,12 +73,12 @@ const ConfirmNewPinCode = () => {
                     <View className="mt-6 mb-8 w-full flex flex-col justify-center items-start">
                         <View className="flex flex-row justify-start w-full ">
                             <Ionicons name="lock-closed" size={10} color="gray" style={{marginRight: "2%"}} className="mt-1"/>
-                            <Text style={{flexShrink: 1}}  className="text-sm mb-1 font-GoogleSansRegular">Keep your PIN confidential. Do not share it with anyone.</Text>
+                            <Text style={{flexShrink: 1}}  className="text-sm mb-1 font-GoogleSansRegular dark:text-tertiaryGray">Keep your PIN confidential. Do not share it with anyone.</Text>
                         </View>
 
                         <View className="flex flex-row justify-start w-full ">
                             <Ionicons name="shield-checkmark" size={10} color="gray" style={{marginRight: "2%"}} className="mt-1"/>
-                            <Text style={{flexShrink: 1}}  className="text-sm mb-1 font-GoogleSansRegular">You will use this PIN to access your wallet and confirm transactions.</Text>
+                            <Text style={{flexShrink: 1}}  className="text-sm mb-1 font-GoogleSansRegular dark:text-tertiaryGray">You will use this PIN to access your wallet and confirm transactions.</Text>
                         </View>
 
 

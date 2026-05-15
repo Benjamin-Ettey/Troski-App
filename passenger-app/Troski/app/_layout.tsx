@@ -1,12 +1,18 @@
-import React from 'react'
+import React, {Suspense} from 'react'
 import {Stack} from "expo-router";
 import {useFonts} from "expo-font";
 import "../global.css"
 import {useAppStore} from "@/utils/store";
+import {ErrorBoundary} from "@/components/ui/ErrorBoundary";
+import SuspenseFallback from "@/components/ui/SuspenseFallback";
+import {View} from "react-native";
+import {useColorScheme} from "nativewind";
 
 const RootLayout = () => {
     const loggedIn = useAppStore((state)=>state.loggedIn);
     const seeProfile = useAppStore((state)=>state.seeProfile);
+
+    const {colorScheme} = useColorScheme();
 
 
     // eslint-disable-next-line react-hooks/rules-of-hooks
@@ -18,52 +24,70 @@ const RootLayout = () => {
     });
     if (!loaded) return null;
 
+
+
+
     return (
-        <Stack>
-            <Stack.Screen
-                name="index"
-                options={{
-                    headerShown: false
-                }}
-            />
-
-            <Stack.Protected guard={!loggedIn}>
-                <Stack.Screen
-                    name="landingPage"
-                    options={{
-                        headerShown: false
-                    }}
-                />
+        <ErrorBoundary>
+            <Suspense fallback={<SuspenseFallback/>} >
+                <View style={{flex:1 , backgroundColor: colorScheme === "dark"? "#000000": "#ffffff"}} >
 
 
-            </Stack.Protected>
+                    <Stack>
+                        <Stack.Screen
+                            name="index"
+                            options={{
+                                headerShown: false
+                            }}
+                        />
 
-            <Stack.Protected guard={loggedIn && seeProfile}>
+                        <Stack.Protected guard={!loggedIn}>
+                            <Stack.Screen
+                                name="landingPage"
+                                options={{
+                                    headerShown: false
+                                }}
+                            />
 
 
-                <Stack.Screen
-                    name="homepage"
-                    options={{
-                        headerShown: false,
-                        gestureEnabled: false
+                        </Stack.Protected>
 
-                    }}
-                />
+                        <Stack.Protected guard={loggedIn && seeProfile}>
 
 
-            </Stack.Protected>
+                            <Stack.Screen
+                                name="homepage"
+                                options={{
+                                    headerShown: false,
+                                    gestureEnabled: false
 
-            <Stack.Protected guard={seeProfile}>
-                <Stack.Screen
-                    name="profile"
-                    options={{
-                        headerShown: false
-                    }}
-                />
-            </Stack.Protected>
+                                }}
+                            />
 
-        </Stack>
 
+                        </Stack.Protected>
+
+                        <Stack.Protected guard={seeProfile}>
+                            <Stack.Screen
+                                name="profile"
+                                options={{
+                                    headerShown: false
+                                }}
+                            />
+                        </Stack.Protected>
+
+
+                        <Stack.Screen
+                            name="+not-found"
+                            options={{
+                                headerShown: false,
+                                gestureEnabled: false,
+                            }}
+                        />
+                    </Stack>
+                </View>
+            </Suspense>
+        </ErrorBoundary>
     )
 }
 export default RootLayout

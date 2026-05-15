@@ -1,22 +1,39 @@
-import {View, Text, TextInput, TouchableOpacity} from 'react-native'
-import React, {useState} from 'react'
-import {KeyboardAwareScrollView, KeyboardToolbar} from "react-native-keyboard-controller";
-import {StatusBar} from "expo-status-bar";
-import {router} from "expo-router";
+import {
+    View,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    Image,
+} from 'react-native'
+import React, { useState } from 'react'
+import {
+    KeyboardAwareScrollView,
+    KeyboardToolbar
+} from "react-native-keyboard-controller";
+import { StatusBar } from "expo-status-bar";
+import { router } from "expo-router";
 import PrimaryButton from "@/components/PrimaryButton";
-import {useAppStore} from "@/utils/store";
-import {Ionicons} from "@expo/vector-icons";
+import { useAppStore } from "@/utils/store";
+import { Ionicons } from "@expo/vector-icons";
+import {useColorScheme} from "nativewind";
 
 const SetupPaymentMethod = () => {
-    const [selectedValue, setSelectedValue] = useState("Select service provider");
+
+    const [selectedValue, setSelectedValue] =
+        useState("Select service provider");
+
     const [open, setOpen] = useState(false);
 
     const [value, setValue] = useState('');
     const [error, setError] = useState('');
     const [providerError, setProviderError] = useState('');
+    const { colorScheme } = useColorScheme();
+
 
     const setNumber = useAppStore((state) => state.setNumber);
-    const setServiceProvider = useAppStore((state)=> state.setServiceProvider);
+    const setServiceProvider = useAppStore((state) => state.setServiceProvider);
+
+    const addPaymentMethod = useAppStore((state) => state.addPaymentMethod);
 
     const validate = (text: string) => {
         const cleaned = text.replace(/[^0-9]/g, '');
@@ -31,7 +48,24 @@ const SetupPaymentMethod = () => {
         }
     };
 
-    const addPaymentMethod = useAppStore((state) => state.addPaymentMethod);
+    const getProviderLogo = (provider: string) => {
+        switch (provider?.toLowerCase()) {
+
+            case "mtn":
+                return require("../../../assets/images/mtnlogo.png");
+
+            case "telecel":
+                return require("../../../assets/images/telecellogo.png");
+
+            case "airtel/tigo":
+            case "airteltigo":
+            case "airtel tigo":
+                return require("../../../assets/images/airteltigologo.png");
+
+            default:
+                return require("../../../assets/images/mtnlogo.png");
+        }
+    };
 
     const handleSetup = () => {
 
@@ -54,17 +88,22 @@ const SetupPaymentMethod = () => {
     };
 
     return (
-        <View style={{backgroundColor: "#F5F7FA", flex: 1}} className="w-full">
+        <View
+            style={{ backgroundColor: colorScheme === "dark"? "#000000" : "#F5F7FA", flex: 1 }}
+            className="w-full"
+        >
             <KeyboardAwareScrollView
                 keyboardShouldPersistTaps="handled"
-                className="flex-1">
+                className="flex-1"
+            >
 
-                <StatusBar style="dark"/>
+                <StatusBar style="dark" />
 
                 <View className="w-full flex-1 flex items-center px-6">
 
-                    <View className="w-full">
-                        <Text className="text-xl tracking-tight font-GoogleSansMedium">
+                    {/* SERVICE PROVIDER */}
+                    <View className="w-full py-2">
+                        <Text className="text-xl tracking-tight font-GoogleSansMedium dark:text-general">
                             Select Service Provider
                         </Text>
                     </View>
@@ -72,20 +111,55 @@ const SetupPaymentMethod = () => {
                     <TouchableOpacity
                         onPress={() => setOpen(!open)}
                         style={{
-                            paddingLeft: 16,
-                            height: 48,
-                            marginBottom: 6
+                            paddingHorizontal: 16,
+                            height: 56,
+                            marginBottom: 6,
                         }}
-                        className=" mb-1 flex flex-row justify-between font-GoogleSansRegular text-secondaryGray w-full py-4 border border-green-600/40 rounded-xl "
+                        className="mb-1 flex flex-row justify-between items-center font-GoogleSansRegular text-secondaryGray w-full dark:border-tertiaryGray border border-green-600/40 rounded-xl"
                     >
-                        <Text>{selectedValue}</Text>
 
-                        <Ionicons
-                            style={{paddingRight: 16}}
-                            name="chevron-down"
-                            size={16}
-                            color="black"
-                        />
+                        <View
+                            className="flex flex-row items-center"
+                            style={{ gap: 12 }}
+                        >
+
+                            {selectedValue !== "Select service provider" && (
+                                <View
+                                    style={{
+                                        width: 32,
+                                        height: 32,
+                                        overflow: "hidden",
+                                    }}
+                                    className="rounded-full"
+                                >
+                                    <Image
+                                        source={getProviderLogo(selectedValue)}
+                                        style={{
+                                            width: "100%",
+                                            height: "100%",
+                                        }}
+                                        resizeMode="cover"
+                                    />
+                                </View>
+                            )}
+
+                            <Text className="font-GoogleSansMedium dark:text-tertiaryGray">{selectedValue}</Text>
+                        </View>
+
+                        {open?
+                            <Ionicons
+                                name="chevron-up"
+                                size={16}
+                                color={colorScheme === "dark"?"#ffffff":"black"}
+                            />
+                            :
+                            <Ionicons
+                                name="chevron-down"
+                                size={16}
+                                color={colorScheme === "dark"?"#ffffff":"black"}
+                            />
+                        }
+
                     </TouchableOpacity>
 
                     {providerError ? (
@@ -101,33 +175,60 @@ const SetupPaymentMethod = () => {
                             style={{
                                 marginBottom: 10,
                                 paddingVertical: 8,
-                                paddingHorizontal: 10,
-                                borderRadius: 16,
+                                paddingHorizontal: 16,
                                 backgroundColor: "#a9a9a922"
                             }}
-                            className="w-full gap-2 font-GoogleSansMedium border border-tertiaryGray"
+                            className="w-full gap-2 border-tertiaryGray border font-GoogleSansMedium rounded-xl"
                         >
+
                             {["MTN", "Telecel", "Airtel/Tigo"].map((item) => (
 
-                                <Text
-                                    style={{ height: 32 }}
-                                    className="w-full font-GoogleSansRegular flex text-xl"
+                                <TouchableOpacity
                                     key={item}
                                     onPress={() => {
                                         setSelectedValue(item);
                                         setProviderError('');
                                         setOpen(false);
                                     }}
+                                    style={{
+                                        padding: 6,
+                                    }}
+                                    className="w-full flex flex-row items-center rounded-xl"
                                 >
-                                    {item}
-                                </Text>
+
+                                    <View
+                                        style={{
+                                            width: 32,
+                                            height: 32,
+                                            overflow: "hidden",
+                                            marginRight: 12,
+                                        }}
+                                        className="rounded-full"
+                                    >
+                                        <Image
+                                            source={getProviderLogo(item)}
+                                            style={{
+                                                width: "100%",
+                                                height: "100%",
+                                            }}
+                                            resizeMode="cover"
+                                        />
+                                    </View>
+
+                                    <Text className="font-GoogleSansRegular text-xl dark:text-tertiaryGray">
+                                        {item}
+                                    </Text>
+
+                                </TouchableOpacity>
 
                             ))}
+
                         </View>
                     )}
 
-                    <View className="w-full">
-                        <Text className="text-xl tracking-tight font-GoogleSansMedium">
+                    {/* PHONE NUMBER */}
+                    <View className="w-full py-2">
+                        <Text className="text-xl tracking-tight font-GoogleSansMedium dark:text-general">
                             Phone number
                         </Text>
                     </View>
@@ -140,8 +241,8 @@ const SetupPaymentMethod = () => {
                         autoCapitalize="none"
                         keyboardType="phone-pad"
                         autoFocus={true}
-                        style={{paddingLeft: 16}}
-                        className="mb-1 font-medium text-secondaryGray w-full py-4 border border-tertiaryGray rounded-xl focus:border focus:border-green-600/40"
+                        style={{ paddingLeft: 16 }}
+                        className="mb-1 font-medium dark:text-general text-secondaryGray w-full py-4 border border-tertiaryGray rounded-xl dark:focus:border-tertiaryGray focus:border focus:border-green-600/40"
                     />
 
                     {error ? (
@@ -152,7 +253,7 @@ const SetupPaymentMethod = () => {
                         </View>
                     ) : (
                         <View className="mb-6 w-full items-start">
-                            <Text className="text-sm font-GoogleSansRegular">
+                            <Text className="text-sm font-GoogleSansRegular dark:text-tertiaryGray">
                                 This number will be used for payment transactions.
                             </Text>
                         </View>
@@ -166,13 +267,14 @@ const SetupPaymentMethod = () => {
                         }
                         onPress={handleSetup}
                     />
+
                 </View>
 
             </KeyboardAwareScrollView>
 
-            <KeyboardToolbar/>
+            <KeyboardToolbar />
         </View>
     )
 }
 
-export default SetupPaymentMethod
+export default SetupPaymentMethod;

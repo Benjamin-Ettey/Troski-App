@@ -1,6 +1,7 @@
 import { View, Text, FlatList, Pressable, Image } from "react-native";
 import React, { useEffect, useState } from "react";
 import { useAppStore } from "@/utils/store";
+import {useColorScheme} from "nativewind";
 
 const haversineKm = (lat1: number, lon1: number, lat2: number, lon2: number) => {
     const R = 6371;
@@ -29,6 +30,8 @@ const SelectRideType = ({ routeCoords, duration, price }: SelectRideTypeProps) =
     const destination = useAppStore((s) => s.destinationPoint);
     const pickupCoords = useAppStore((s) => s.pickupCoords);
     const destinationCoords = useAppStore((s) => s.destinationCoords);
+    const { colorScheme } = useColorScheme();
+
 
     const [localDuration, setLocalDuration] = useState<string>(duration ?? "...");
     const [computedPrice, setComputedPrice] = useState<string>(price ?? "");
@@ -114,7 +117,7 @@ const SelectRideType = ({ routeCoords, duration, price }: SelectRideTypeProps) =
                         className="w-full flex-1 flex flex-row justify-between items-center"
                     >
 
-                        <View style={{padding: 16, borderRadius: 12}} className="w-full bg-tertiaryWhite border border-secondaryGray flex flex-row justify-between items-center">
+                        <View style={{padding: 16, borderRadius: 12}} className="w-full bg-tertiaryWhite dark:bg-secondaryGray/20 border border-secondaryGray flex flex-row justify-between items-center">
                         <View >
                             <Image
                                 source={require("../../assets/images/minibus.png")}
@@ -127,7 +130,7 @@ const SelectRideType = ({ routeCoords, duration, price }: SelectRideTypeProps) =
                             className="flex flex-col justify-center items-center "
                         >
                             <View className="flex flex-row justify-start items-center w-full gap-2">
-                                <Text className="text-xl font-GoogleSansMedium">Troski</Text>
+                                <Text className="text-xl font-GoogleSansMedium dark:text-general">Troski</Text>
                             </View>
 
                             <View className="w-full flex flex-row gap-2 items-center ">
@@ -144,7 +147,7 @@ const SelectRideType = ({ routeCoords, duration, price }: SelectRideTypeProps) =
                             style={{ width: 84, height: 32, paddingHorizontal: 2 }}
                             className="rounded-full bg-secondaryBlack flex justify-center items-center"
                         >
-                            <Text numberOfLines={1} className="font-GoogleSansBold text-general text-sm">
+                            <Text numberOfLines={1} className="font-GoogleSansBold text-general dark:text-primary text-sm">
                                 {item.price}
                             </Text>
                         </View>
