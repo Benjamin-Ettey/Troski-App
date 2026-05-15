@@ -7,6 +7,7 @@ import {useAppStore} from "@/utils/store";
 import {router} from "expo-router";
 import {Ionicons} from "@expo/vector-icons";
 import DisabledPrimaryButton from "@/components/DisabledPrimaryButton";
+import {useColorScheme} from "nativewind";
 
 const ChangeOldPhoneNumber = () => {
 
@@ -14,6 +15,8 @@ const ChangeOldPhoneNumber = () => {
     const [newValue, setNewValue] = useState('')
     const [error, setError] = useState('');
     const [newError, setNewError] = useState('')
+    const { colorScheme } = useColorScheme();
+
 
 
     const number = useAppStore((state)=>state.number)
@@ -79,7 +82,7 @@ const ChangeOldPhoneNumber = () => {
 
 
     return (
-        <View style={{backgroundColor: "#F5F7FA", flex: 1}}>
+        <View style={{backgroundColor: colorScheme === "dark"? "#000000" : "#F5F7FA", flex: 1}}>
 
             <KeyboardAwareScrollView
                 keyboardShouldPersistTaps="handled"
@@ -90,8 +93,8 @@ const ChangeOldPhoneNumber = () => {
 
 
                 <View className="w-full flex-1 flex items-center px-6">
-                    <View className="w-full">
-                        <Text className="text-xl tracking-tight font-GoogleSansMedium">Enter old phone number?</Text>
+                    <View className="w-full py-2">
+                        <Text className="text-xl tracking-tight font-GoogleSansMedium dark:text-general">Enter old phone number?</Text>
                     </View>
 
                     <TextInput
@@ -103,7 +106,7 @@ const ChangeOldPhoneNumber = () => {
                         keyboardType="phone-pad"
                         autoFocus={true}
                         style={{paddingLeft: 16}}
-                        className=" mb-1 font-medium text-secondaryGray w-full py-4 border border-tertiaryGray  rounded-xl focus:border focus:border-green-600/40"
+                        className="bg-general dark:bg-secondaryBlack mb-1 font-medium dark:text-general text-secondaryGray w-full py-4 border border-tertiaryGray   rounded-xl focus:border dark:focus:border-tertiaryGray focus:border-green-600/40"
 
                     />
 
@@ -114,12 +117,12 @@ const ChangeOldPhoneNumber = () => {
                             </Text>
                         </View>
                     ) : <View className="mb-6 w-full items-start">
-                        <Text className="text-sm font-GoogleSansRegular">This is the number that is currently logged in.</Text>
+                        <Text className="text-sm font-GoogleSansRegular dark:text-tertiaryGray">This is the number that is currently logged in.</Text>
                     </View>}
 
 
-                    <View className="w-full">
-                        <Text className="text-xl tracking-tight font-GoogleSansMedium">Enter new phone number?</Text>
+                    <View className="w-full py-2">
+                        <Text className="text-xl  tracking-tight font-GoogleSansMedium dark:text-general">Enter new phone number?</Text>
                     </View>
 
                     <TextInput
@@ -130,7 +133,7 @@ const ChangeOldPhoneNumber = () => {
                         autoCapitalize="none"
                         keyboardType="phone-pad"
                         style={{paddingLeft: 16, }}
-                        className=" mb-1 font-medium text-secondaryGray w-full py-4 border border-tertiaryGray  rounded-xl focus:border focus:border-green-600/40"
+                        className="bg-general dark:bg-secondaryBlack mb-1 font-medium dark:text-general text-secondaryGray w-full py-4 border border-tertiaryGray   rounded-xl focus:border dark:focus:border-tertiaryGray focus:border-green-600/40"
 
                     />
 
@@ -144,7 +147,7 @@ const ChangeOldPhoneNumber = () => {
                     ) :
                         <View className="mb-6 w-full flex flex-row  items-center">
                             <Ionicons style={{paddingRight: 5, }} name="checkmark-circle-sharp" size={16} color="green"/>
-                            <Text className="text-sm font-GoogleSansRegula flex-shrink">To proceed, confirm that your new phone number can receive SMS or calls.</Text>
+                            <Text className="text-sm font-GoogleSansRegula flex-shrink dark:text-tertiaryGray">To proceed, confirm that your new phone number can receive SMS or calls.</Text>
                     </View>}
 
 

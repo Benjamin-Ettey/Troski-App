@@ -26,8 +26,8 @@ const OtpChangePhoneNumber = () => {
         >
             <StatusBar style="dark" />
             <View
-                style={{height: "95%", bottom: 0, borderTopRightRadius: 32, borderTopLeftRadius: 32}}
-                className="bg-general w-full absolute shadow-xl shadow-tertiaryGray">
+                style={{height: "105%", bottom: 0}}
+                className="bg-general dark:bg-secondaryBlack w-full absolute shadow-xl shadow-tertiaryGray">
                 <View
                     className="flex-1 flex justify-center items-center w-full relative">
 
@@ -43,9 +43,9 @@ const OtpChangePhoneNumber = () => {
                     <View
                         style={{marginTop: "50%"}}
                         className="w-full flex justify-center items-center absolute">
-                        <Text className="text-xl font-GoogleSansMedium mb-2 text-center flex-shrink">Phone Number Updated Successful!</Text>
-                        <Text className="text-sm font-GoogleSansRegular text-center flex-shrink">Please be patient...</Text>
-                        <Text className="text-sm font-GoogleSansRegular text-center flex-shrink">You will be redirected to the homepage</Text>
+                        <Text className="text-xl font-GoogleSansMedium mb-2 text-center flex-shrink dark:text-general">Phone Number Updated Successful!</Text>
+                        <Text className="text-sm font-GoogleSansRegular text-center flex-shrink dark:text-tertiaryWhite">Please be patient...</Text>
+                        <Text className="text-sm font-GoogleSansRegular text-center flex-shrink dark:text-tertiaryWhite">You will be redirected to the homepage</Text>
                     </View>
 
 

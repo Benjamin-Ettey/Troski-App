@@ -6,6 +6,7 @@ import {router} from "expo-router";
 import PrimaryButton from "@/components/PrimaryButton";
 import {useAppStore} from "@/utils/store";
 import DisabledPrimaryButton from "@/components/DisabledPrimaryButton";
+import {useColorScheme} from "nativewind";
 
 const Withdraw = () => {
 
@@ -14,6 +15,8 @@ const Withdraw = () => {
     const [error, setError] = useState('');
     const isDisabled = value.length !== 10 || amount.length === 0;
     const [processing, setProcessing] = useState(false);
+    const { colorScheme } = useColorScheme();
+
 
 
     const validate = (text: string) => {
@@ -54,15 +57,15 @@ const Withdraw = () => {
     };
 
     return (
-        <View className="flex-1 bg-general">
+        <View style={{backgroundColor: colorScheme === "dark"? "#000000" : "#F5F7FA"}} className="flex-1 ">
             <KeyboardAwareScrollView
                 keyboardShouldPersistTaps="handled"
                 className="flex-1">
                 <StatusBar style="dark"/>
 
                 <View className="w-full flex-1 flex items-center px-6">
-                    <View className="w-full">
-                        <Text className="text-xl tracking-tight font-GoogleSansMedium">Enter amount number?</Text>
+                    <View className="w-full py-2">
+                        <Text className="text-xl tracking-tight font-GoogleSansMedium dark:text-general">Enter amount number?</Text>
                     </View>
 
                     <TextInput
@@ -74,7 +77,7 @@ const Withdraw = () => {
                         keyboardType="phone-pad"
                         autoFocus={true}
                         style={{paddingLeft: 16, }}
-                        className="bg-general mb-1 font-medium text-secondaryGray w-full py-4 border border-tertiaryGray  rounded-xl focus:border focus:border-green-600/40"
+                        className="bg-general dark:bg-secondaryBlack mb-1 font-medium dark:text-general text-secondaryGray w-full py-4 border border-tertiaryGray  rounded-xl focus:border dark:focus:border-tertiaryGray focus:border-green-600/40"
                     />
 
                     {error ? (
@@ -84,12 +87,12 @@ const Withdraw = () => {
                             </Text>
                         </View>
                     ) : <View className="mb-6 w-full items-start">
-                        <Text className="text-sm font-GoogleSansRegular">This is the number you would like to withdraw your money into.</Text>
+                        <Text className="text-sm font-GoogleSansRegular dark:text-tertiaryGray">This is the number you would like to withdraw your money into.</Text>
                     </View>
                     }
 
-                    <View className="w-full">
-                        <Text className="text-xl tracking-tight font-GoogleSansMedium">Amount to be withdrawn?</Text>
+                    <View className="w-full py-2">
+                        <Text className="text-xl tracking-tight font-GoogleSansMedium dark:text-general">Amount to be withdrawn?</Text>
                     </View>
 
                     <TextInput
@@ -101,7 +104,7 @@ const Withdraw = () => {
                         autoCapitalize="none"
                         keyboardType="phone-pad"
                         style={{paddingLeft: 16, marginBottom: 24}}
-                        className="bg-general mb-1 font-medium text-secondaryGray w-full py-4 border border-tertiaryGray  rounded-xl focus:border focus:border-green-600/40"
+                        className="bg-general dark:bg-secondaryBlack mb-1 font-medium dark:text-general text-secondaryGray w-full py-4 border border-tertiaryGray  rounded-xl focus:border dark:focus:border-tertiaryGray focus:border-green-600/40"
                     />
 
                     {isDisabled?

@@ -11,6 +11,7 @@ import * as Location from "expo-location";
 import { useAppStore } from "@/utils/store";
 import { useRouter } from "expo-router";
 import { FlashList } from "@shopify/flash-list";
+import {useColorScheme} from "nativewind";
 
 type GeoFeature = {
     type: "geo";
@@ -79,6 +80,8 @@ const Index = () => {
     const setDestinationPoint = useAppStore((s) => s.setDestinationPoint);
     const setPickupCoords = useAppStore((s) => s.setPickupCoords);
     const setDestinationCoords = useAppStore((s) => s.setDestinationCoords);
+    const { colorScheme } = useColorScheme();
+
 
     const resetTrip = () => {
         setPickupPoint("");
@@ -253,7 +256,7 @@ const Index = () => {
     const listData: ListItem[] = search.trim().length > 1 ? results : rides;
 
     return (
-        <View style={{ flex: 1 }} className="bg-general">
+        <View style={{ backgroundColor: colorScheme === "dark"? "#000000" : "#F5F7FA", flex: 1 }} >
             <View style={{ padding: 16 }}>
                 <TouchableOpacity onPress={() => setActiveField("pickup")}>
                     <View
@@ -263,6 +266,8 @@ const Index = () => {
                             borderRadius: 10,
                             flexDirection: "row",
                             alignItems: "center",
+                            borderColor: "#444444",
+
                         }}
                     >
                         <Ionicons name="radio-button-on" size={22} color="#0165FC" />
@@ -274,10 +279,10 @@ const Index = () => {
                                 placeholder="Search pickup (Ghana only)"
                                 style={{ flex: 1, marginLeft: 10 }}
                                 autoFocus
-                                className="font-GoogleSansRegular"
+                                className="font-GoogleSansRegular dark:text-general"
                             />
                         ) : (
-                            <Text className="font-GoogleSansRegular" style={{ marginLeft: 10, flex: 1 }} numberOfLines={1}>
+                            <Text className="font-GoogleSansRegular dark:text-general" style={{ marginLeft: 10, flex: 1 }} numberOfLines={1}>
                                 {pickupPoint || "Pickup point"}
                             </Text>
                         )}
@@ -298,7 +303,7 @@ const Index = () => {
                     >
                         {activeField === "destination" ? (
                             <TextInput
-                                className="font-GoogleSansRegular"
+                                className="font-GoogleSansRegular dark:text-general"
                                 value={search}
                                 onChangeText={onChangeSearch}
                                 placeholder="Search destination (Ghana only)"
@@ -306,7 +311,7 @@ const Index = () => {
                                 autoFocus
                             />
                         ) : (
-                            <Text className="font-GoogleSansRegular text-secondaryGray" style={{ flex: 1, marginLeft: 32 }} numberOfLines={1}>
+                            <Text className="font-GoogleSansRegular text-secondaryGray dark:text-tertiaryGray" style={{ flex: 1, marginLeft: 32 }} numberOfLines={1}>
                                 {destinationPoint || "Destination"}
                             </Text>
                         )}
@@ -335,16 +340,17 @@ const Index = () => {
                             <Pressable
                                 onPress={() => handleSelectGeo(geo)}
                                 style={{
-                                    padding: 16,
+                                    paddingVertical: 16,
+                                    paddingHorizontal: 24,
                                     flexDirection: "row",
                                     alignItems: "center",
                                 }}
                             >
-                                <Ionicons name="location-outline" size={20} />
+                                <Ionicons name="location-outline" size={20} color={colorScheme === "dark"? "#ffffff": "#000000"}/>
 
                                 <View style={{ marginLeft: 10 }}>
-                                    <Text>{name}</Text>
-                                    {subtitle ? <Text style={{ fontSize: 12, color: "gray" }}>{subtitle}</Text> : null}
+                                    <Text className="font-GoogleSansMedium dark:text-general">{name}</Text>
+                                    {subtitle ? <Text className="text-secondaryGray dark:text-tertiaryGray" style={{ fontSize: 12 }}>{subtitle}</Text> : null}
                                 </View>
                             </Pressable>
                         );
@@ -386,14 +392,14 @@ const Index = () => {
                                 alignItems: "center",
                             }}
                         >
-                            <Ionicons name="bus-outline" size={24} />
+                            <Ionicons name="bus-outline" size={24} color={colorScheme === "dark"? "#ffffff": "#000000"}/>
 
                             <View style={{ flex: 1, paddingLeft: 24 }}>
-                                <Text style={{ fontSize: 16 }}>{ride.destination}</Text>
-                                <Text style={{ fontSize: 12, color: "gray" }}>{ride.area}</Text>
+                                <Text style={{ fontSize: 16 }} className="font-GoogleSansRegular dark:text-general">{ride.destination}</Text>
+                                <Text style={{ fontSize: 12, color: "gray" }} className="font-GoogleSansRegular dark:text-tertiaryGray">{ride.area}</Text>
                             </View>
 
-                            <Text style={{ fontSize: 12 }}>{km} km</Text>
+                            <Text style={{ fontSize: 12 }} className="font-GoogleSansRegular dark:text-tertiaryGray">{km} km</Text>
                         </Pressable>
                     );
                 }}
