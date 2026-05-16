@@ -1,110 +1,72 @@
 const mongoose = require("mongoose");
-const bcrypt = require("bcryptjs");
 
-const driverSchema = new mongoose.Schema({
-  name: {
-    type: String,
+// DRIVER PROFILE.
+// A 1:1 extension of a User (Passenger). Created when an admin approves a
+// DriverApplication. Holds all driver-specific identity, document, and
+// operational state. The base identity (name, phone, email) stays on the
+// linked User document — look it up via `populate('user')`.
+//
+// Vehicle.driver and Ride.driver reference _this_ Driver document, not the
+// underlying User. To go from a Ride to the human's phone number you do
+// ride.driver -> driver.user -> user.phoneNumber.
+
+const driverSchema = new mongoose.Schema(
+  {
+    // 1:1 link to the user
+    user: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Passenger",
+      required: true,
+      unique: true,
+      index: true,
+    },
+
+    // ----- Identity (copied from the approved DriverApplication) -----
+    licenseID: { type: String, required: true, unique: true },
+    ghanaCardNumber: { type: String, required: true, unique: true },
+    ghanaCardImage: { type: String, required: true },
+    ghanaCardImagePublicId: { type: String, required: true },
+    licenseImage: { type: String, required: true },
+    licenseImagePublicId: { type: String, required: true },
+    city: { type: String, required: true },
+
+    // ----- Vehicle -----
+    // A driver registers their vehicle separately, post-approval, via the
+    // driver app. Until then this is null and the driver cannot go online.
+    vehicle: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Vehicle",
+      default: null,
+    },
+
+    // ----- Operational state -----
+    // Online status + live GPS live in the DriverLocation collection
+    // (separate, indexed for geo queries). This doc only tracks the active
+    // trip reference.
+    activeTrip: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Trip",
+      default: null,
+    },
+
+    // ----- Financials -----
+    totalEarnings: { type: Number, default: 0 },
+    completedTrips: { type: Number, default: 0 },
+    cancelledTrips: { type: Number, default: 0 },
+
+    // ----- Approval audit trail -----
+    application: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "DriverApplication",
+    },
+    approvedBy: { type: mongoose.Schema.Types.ObjectId, ref: "Admin" },
+    approvedAt: { type: Date },
   },
+  { timestamps: true },
+);
 
-  phoneNumber: {
-    type: String,
-    unique: true,
-  },
-
-  email: {
-    type: String,
-  },
-
-  city: {
-    type: String,
-  },
-
-  pinCode: {
-    type: String,
-  },
-
-  role: {
-    type: String,
-    default: "driver",
-  },
-
-  ride: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: "Ride",
-  },
-
-  licenseID: {
-    type: String,
-    unique: true,
-  },
-
-  ghanaCardNumber: {
-    type: String,
-    unique: true,
-  },
-
-  ghanaCardImage: {
-    type: String,
-  },
-
-  ghanaCardImagePublicId: {
-    type: String,
-  },
-
-  licenseImage: {
-    type: String,
-  },
-
-  licenseImagePublicId: {
-    type: String,
-  },
-
-  totalEarnings: {
-    type: Number,
-    default: 0,
-  },
-
-  currentLatitude: {
-    type: Number,
-  },
-
-  currentLongitude: {
-    type: Number,
-  },
-
-  lastLocationUpdate: {
-    type: Date,
-  },
-
-  vehicle: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: "Vehicle",
-  },
-
-  otpCode: {
-    type: String,
-  },
-
-  otpExpiresAt: {
-    type: Date,
-  },
-});
-
-driverSchema.pre("save", async function () {
-  if (!this.isModified("pinCode")) return;
-  const salt = await bcrypt.genSalt(10);
-  this.pinCode = await bcrypt.hash(this.pinCode, salt);
-});
-
-driverSchema.methods.comparePinCode = async function (candidatePinCode) {
-  const isMatch = await bcrypt.compare(candidatePinCode, this.pinCode);
-  return isMatch;
-};
-
-driverSchema.methods.toJSON = function () {
-  let obj = this.toObject();
-  delete obj.pinCode;
-  return obj;
+driverSchema.methods.canGoOnline = function () {
+  return !!this.vehicle;
 };
 
 const Driver = mongoose.model("Driver", driverSchema);

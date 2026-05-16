@@ -1,65 +1,71 @@
 const mongoose = require("mongoose");
 const bcrypt = require("bcryptjs");
 
-const passengerSchema = new mongoose.Schema({
-  name: {
-    type: String,
-  },
+// USER collection.
+// Model name stays "Passenger" so existing refs in Ride/Wallet/etc. continue
+// to work — but conceptually this is the unified user table. Every user
+// (passenger AND driver) has exactly one document here.
+//
+// A user starts with roles = ['passenger']. When their DriverApplication is
+// approved, an admin appends 'driver' to roles AND creates a linked Driver
+// document (see ../models/drivers.js) that holds all driver-specific data.
+// This model intentionally knows NOTHING about licenses, vehicles, or
+// driver location — that lives on the Driver profile.
 
-  phoneNumber: {
-    type: String,
-    unique: true,
-  },
+const userSchema = new mongoose.Schema(
+  {
+    // ----- Identity (set at sign-up) -----
+    name: { type: String, required: true },
+    phoneNumber: { type: String, unique: true, required: true },
+    email: { type: String, required: true },
+    pinCode: { type: String, default: null },
 
-  email: {
-    type: String,
-  },
+    // ----- Roles -----
+    roles: {
+      type: [String],
+      enum: ["passenger", "driver"],
+      default: ["passenger"],
+    },
 
-  pinCode: {
-    type: String,
-    default: null,
-  },
+    // ----- Profile (set at /complete-profile) -----
+    profilePhoto: { type: String, default: null },
+    profilePhotoPublicId: { type: String, default: null },
+    dateOfBirth: { type: Date, default: null },
 
-  role: {
-    type: String,
-    default: "passenger",
-  },
+    // ----- Verification flags -----
+    isPhoneVerified: { type: Boolean, default: false },
+    isProfileComplete: { type: Boolean, default: false },
 
-  isPhoneVerified: {
-    type: Boolean,
-    default: false,
+    // ----- OTP state -----
+    otpCode: { type: String },
+    otpExpiresAt: { type: Date },
   },
+  { timestamps: true },
+);
 
-  isProfileComplete: {
-    type: Boolean,
-    default: false,
-  },
-
-  otpCode: {
-    type: String,
-  },
-
-  otpExpiresAt: {
-    type: Date,
-  },
-});
-
-passengerSchema.pre("save", async function () {
+userSchema.pre("save", async function () {
   if (!this.isModified("pinCode")) return;
+  if (!this.pinCode) return;
   const salt = await bcrypt.genSalt(10);
   this.pinCode = await bcrypt.hash(this.pinCode, salt);
 });
 
-passengerSchema.methods.comparePinCode = async function (candidatePinCode) {
-  const isMatch = await bcrypt.compare(candidatePinCode, this.pinCode);
-  return isMatch;
+userSchema.methods.comparePinCode = async function (candidatePinCode) {
+  if (!this.pinCode) return false;
+  return bcrypt.compare(candidatePinCode, this.pinCode);
 };
 
-passengerSchema.methods.toJSON = function () {
-  let obj = this.toObject();
+userSchema.methods.hasRole = function (role) {
+  return Array.isArray(this.roles) && this.roles.includes(role);
+};
+
+userSchema.methods.toJSON = function () {
+  const obj = this.toObject();
   delete obj.pinCode;
+  delete obj.otpCode;
+  delete obj.otpExpiresAt;
   return obj;
 };
 
-const Passenger = mongoose.model("Passenger", passengerSchema);
+const Passenger = mongoose.model("Passenger", userSchema);
 module.exports = Passenger;

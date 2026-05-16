@@ -29,7 +29,9 @@ const validateIdParam = withValidationErrors([
   }),
 ]);
 
-const validatePassengerSignUpInput = withValidationErrors([
+// Sign-up step 1: name + phone + email + pin.
+// Profile photo and date of birth are collected later at /complete-profile.
+const validateUserSignUpInput = withValidationErrors([
   body("name").trim().notEmpty().withMessage("name is required"),
   body("phoneNumber")
     .trim()
@@ -53,8 +55,11 @@ const validatePassengerSignUpInput = withValidationErrors([
     .withMessage("PIN code must be 6 digits"),
 ]);
 
+// Legacy alias (router still imports this name)
+const validatePassengerSignUpInput = validateUserSignUpInput;
+
 const validateDriverSignUpInput = withValidationErrors([
-  body("name").trim().notEmpty().withMessage("name is required"),
+  // Name is collected at /complete-profile after OTP verification.
   body("phoneNumber")
     .trim()
     .notEmpty()
@@ -106,12 +111,111 @@ const validateLoginInput = withValidationErrors([
 ]);
 
 const validateVerifyOtpInput = withValidationErrors([
+  body("phoneNumber")
+    .trim()
+    .notEmpty()
+    .withMessage("phone number is required")
+    .isMobilePhone("en-GH")
+    .withMessage("invalid phone number"),
   body("otpCode")
     .trim()
     .notEmpty()
     .withMessage("OTP code is required")
     .isLength({ min: 6, max: 6 })
     .withMessage("OTP code must be 6 digits"),
+]);
+
+// Complete-profile collects profilePhoto (multipart file, validated in the
+// controller) and dateOfBirth. Both are optional individually but at least
+// one should normally be provided; we don't enforce that strictly here.
+const validateCompleteProfileInput = withValidationErrors([
+  body("dateOfBirth")
+    .optional({ checkFalsy: true })
+    .isISO8601()
+    .withMessage("dateOfBirth must be a valid ISO date")
+    .custom((v) => {
+      const d = new Date(v);
+      const eighteenYearsAgo = new Date();
+      eighteenYearsAgo.setFullYear(eighteenYearsAgo.getFullYear() - 18);
+      if (d > eighteenYearsAgo) {
+        throw new Error("You must be at least 18 years old");
+      }
+      return true;
+    }),
+]);
+
+// Driver application — identity fields. Images are validated in the
+// controller because they're multipart files.
+const validateDriverApplicationInput = withValidationErrors([
+  body("licenseID")
+    .trim()
+    .toUpperCase()
+    .notEmpty()
+    .withMessage("license ID is required")
+    .matches(/^[A-Z]{3}-\d{8}-\d{4,5}$/)
+    .withMessage("Invalid Ghana license ID format"),
+  body("ghanaCardNumber")
+    .trim()
+    .toUpperCase()
+    .notEmpty()
+    .withMessage("Ghana card number is required")
+    .matches(/^GHA-\d{9}-\d$/)
+    .withMessage("Invalid Ghana Card number format"),
+  body("city")
+    .trim()
+    .notEmpty()
+    .withMessage("city is required")
+    .isIn(Object.values(ghanaCapitalCities))
+    .withMessage("invalid city"),
+]);
+
+const validateRejectApplicationInput = withValidationErrors([
+  body("rejectionReason")
+    .trim()
+    .notEmpty()
+    .withMessage("rejection reason is required")
+    .isLength({ min: 5, max: 500 })
+    .withMessage("rejection reason must be 5-500 chars"),
+]);
+
+const validatePinInput = withValidationErrors([
+  body("pinCode")
+    .trim()
+    .notEmpty()
+    .withMessage("PIN code is required")
+    .isNumeric()
+    .withMessage("PIN Code should contain only numbers")
+    .isLength({ min: 6, max: 6 })
+    .withMessage("PIN code must be 6 digits"),
+]);
+
+const validateAdminInviteInput = withValidationErrors([
+  body("email")
+    .trim()
+    .notEmpty()
+    .withMessage("email is required")
+    .isEmail()
+    .withMessage("invalid email"),
+  body("role")
+    .optional()
+    .isIn(["admin", "super_admin"])
+    .withMessage("invalid role"),
+]);
+
+const validateAdminRegisterInput = withValidationErrors([
+  body("token").trim().notEmpty().withMessage("token is required"),
+  body("email").trim().isEmail().withMessage("valid email is required"),
+  body("username")
+    .trim()
+    .notEmpty()
+    .withMessage("username is required")
+    .isLength({ min: 3, max: 32 })
+    .withMessage("username must be 3-32 chars"),
+  body("password")
+    .notEmpty()
+    .withMessage("password is required")
+    .isLength({ min: 8 })
+    .withMessage("password must be at least 8 characters"),
 ]);
 
 const validateVehicleRegistrationInput = withValidationErrors([
@@ -261,9 +365,16 @@ const validateUpdateVehicleInput = withValidationErrors([
 
 module.exports = {
   validateIdParam,
-  validatePassengerSignUpInput,
+  validateUserSignUpInput,
+  validatePassengerSignUpInput, // legacy alias
   validateLoginInput,
   validateVerifyOtpInput,
+  validateCompleteProfileInput,
+  validatePinInput,
+  validateDriverApplicationInput,
+  validateRejectApplicationInput,
+  validateAdminInviteInput,
+  validateAdminRegisterInput,
   validateDriverSignUpInput,
   validateVehicleRegistrationInput,
   validateUpdateDriverInput,
