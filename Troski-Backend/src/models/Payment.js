@@ -1,30 +1,39 @@
 const mongoose = require("mongoose");
 
+// Payment record. Two flavors, discriminated by `paymentType`:
+//   "ride_payment"  — escrow hold + release for a passenger's Booking
+//                     (one Payment per Booking, not per Trip).
+//   "wallet_topup"  — passenger added funds via Paystack.
+//
+// For a top-up, `booking` is null. For a ride payment, `booking` points at
+// the specific Booking (and `trip` is denormalized for easy lookups).
+
 const paymentSchema = new mongoose.Schema(
   {
-    // Make ride optional because Top-ups don't have a ride ID
-    ride: {
+    booking: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "Ride",
+      ref: "Booking",
       required: false,
     },
 
-    // Change this to match the controller or vice versa.
-    // Let's stick with 'passenger' for consistency with rides.
+    trip: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Trip",
+      required: false,
+    },
+
     passenger: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "User",
+      ref: "Passenger", // unified user collection
       required: true,
     },
 
-    // Add this to identify what kind of payment this is
     paymentType: {
       type: String,
       enum: ["ride_payment", "wallet_topup"],
       required: true,
     },
 
-    // Add phoneNumber for shared wallet lookups
     phoneNumber: {
       type: String,
       required: true,
@@ -39,7 +48,6 @@ const paymentSchema = new mongoose.Schema(
       default: "paystack",
     },
 
-    // Ensure this matches what you send from the controller
     paystackReference: {
       type: String,
       unique: true,
@@ -51,7 +59,10 @@ const paymentSchema = new mongoose.Schema(
       enum: ["pending", "held", "completed", "failed", "cancelled", "refunded"],
       default: "pending",
     },
-    // ... other fields (driverPay, troskiProfit, etc.)
+
+    // Lifecycle markers used by the escrow release flow.
+    escrowReleased: { type: Boolean, default: false },
+    paidAt: { type: Date, default: null },
   },
   { timestamps: true },
 );

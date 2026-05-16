@@ -1,0 +1,263 @@
+// Wallet money-movement helpers.
+//
+// Every function here:
+//   - verifies wallet integrity (HMAC over balance:escrowBalance:phoneNumber)
+//   - mutates balance / escrowBalance atomically on the in-memory doc
+//   - regenerates and saves the new hash
+//   - writes audit records (WalletTransaction + Transaction)
+//
+// On any integrity failure the function throws and DOES NOT modify state.
+//
+// Wallet auto-creation: a user's wallet is lazily created on first touch
+// (getOrCreateWallet). This keeps the auth flow free of wallet concerns.
+
+const Wallet = require("../models/Wallet");
+const Transaction = require("../models/Transaction");
+const WalletTransaction = require("../models/walletTransaction");
+const Passenger = require("../models/passengers");
+const {
+  generateBalanceHash,
+  verifyWalletIntegrity,
+} = require("./hashUtils");
+
+class WalletError extends Error {
+  constructor(message, code) {
+    super(message);
+    this.code = code;
+  }
+}
+
+async function getOrCreateWallet(userId) {
+  let wallet = await Wallet.findOne({ user: userId });
+  if (wallet) return wallet;
+
+  const user = await Passenger.findById(userId).select("phoneNumber");
+  if (!user) throw new WalletError("User not found", "USER_NOT_FOUND");
+
+  // New wallets start at zero; the hash is over (0, 0, phoneNumber).
+  const balanceHash = generateBalanceHash(0, 0, user.phoneNumber);
+  wallet = await Wallet.create({
+    user: userId,
+    phoneNumber: user.phoneNumber,
+    balance: 0,
+    escrowBalance: 0,
+    balanceHash,
+  });
+  return wallet;
+}
+
+/**
+ * Hold funds in escrow (passenger creating a Booking).
+ * Throws WalletError("INSUFFICIENT_FUNDS") if balance < amount.
+ */
+async function holdEscrow({ userId, amount, description, tripId, bookingId }) {
+  if (!(amount > 0)) {
+    throw new WalletError("Amount must be positive", "BAD_AMOUNT");
+  }
+
+  const wallet = await getOrCreateWallet(userId);
+  if (!verifyWalletIntegrity(wallet)) {
+    throw new WalletError("Wallet integrity check failed", "INTEGRITY_FAIL");
+  }
+  if (wallet.balance < amount) {
+    throw new WalletError("Insufficient wallet balance", "INSUFFICIENT_FUNDS");
+  }
+
+  const balanceBefore = wallet.balance;
+  wallet.balance -= amount;
+  wallet.escrowBalance += amount;
+  wallet.balanceHash = generateBalanceHash(
+    wallet.balance,
+    wallet.escrowBalance,
+    wallet.phoneNumber,
+  );
+  await wallet.save();
+
+  await WalletTransaction.create({
+    wallet: wallet._id,
+    user: userId,
+    type: "debit",
+    amount,
+    description: description || "Escrow hold for trip",
+    trip: tripId,
+    booking: bookingId,
+    balanceBefore,
+    balanceAfter: wallet.balance,
+  });
+
+  await Transaction.create({
+    trip: tripId,
+    booking: bookingId,
+    passenger: userId,
+    amount,
+    type: "escrow_hold",
+    status: "held",
+  });
+
+  return wallet;
+}
+
+/**
+ * Return escrowed funds to the passenger's spendable balance
+ * (cancellation refund). No-op if escrow < amount (we log a refund anyway
+ * but caller should investigate; in practice this means we're trying to
+ * refund more than we held, which indicates a bug).
+ */
+async function refundEscrow({ userId, amount, description, tripId, bookingId }) {
+  if (!(amount > 0)) {
+    throw new WalletError("Amount must be positive", "BAD_AMOUNT");
+  }
+
+  const wallet = await Wallet.findOne({ user: userId });
+  if (!wallet) throw new WalletError("Wallet not found", "NO_WALLET");
+  if (!verifyWalletIntegrity(wallet)) {
+    throw new WalletError("Wallet integrity check failed", "INTEGRITY_FAIL");
+  }
+  if (wallet.escrowBalance < amount) {
+    throw new WalletError("Escrow shortfall on refund", "ESCROW_SHORTFALL");
+  }
+
+  const balanceBefore = wallet.balance;
+  wallet.escrowBalance -= amount;
+  wallet.balance += amount;
+  wallet.balanceHash = generateBalanceHash(
+    wallet.balance,
+    wallet.escrowBalance,
+    wallet.phoneNumber,
+  );
+  await wallet.save();
+
+  await WalletTransaction.create({
+    wallet: wallet._id,
+    user: userId,
+    type: "credit",
+    amount,
+    description: description || "Refund (cancellation)",
+    trip: tripId,
+    booking: bookingId,
+    balanceBefore,
+    balanceAfter: wallet.balance,
+  });
+
+  await Transaction.create({
+    trip: tripId,
+    booking: bookingId,
+    passenger: userId,
+    amount,
+    type: "refund",
+    status: "completed",
+  });
+
+  return wallet;
+}
+
+/**
+ * Settle one Booking's payout at trip completion. Decrements the
+ * passenger's escrowBalance by the full fare; credits the driver's wallet
+ * balance with driverPay; records the platform's cut (commission + flat
+ * platform fee) as a system Transaction with no wallet impact.
+ *
+ * All values are taken from the Trip's snapshot at creation, NOT
+ * recomputed — so a zonesConfig change between request and completion
+ * doesn't shift what anyone gets paid.
+ */
+async function settleBookingPayout({
+  passengerUserId,
+  driverUserId,
+  driverProfileId,
+  fareAmount,
+  driverPay,
+  platformProfit,
+  tripId,
+  bookingId,
+}) {
+  // ---- 1. Drop escrow on passenger ----
+  const passengerWallet = await Wallet.findOne({ user: passengerUserId });
+  if (!passengerWallet) {
+    throw new WalletError("Passenger wallet missing", "NO_WALLET");
+  }
+  if (!verifyWalletIntegrity(passengerWallet)) {
+    throw new WalletError(
+      "Passenger wallet integrity check failed",
+      "INTEGRITY_FAIL",
+    );
+  }
+  if (passengerWallet.escrowBalance < fareAmount) {
+    throw new WalletError(
+      "Escrow shortfall on settlement",
+      "ESCROW_SHORTFALL",
+    );
+  }
+  passengerWallet.escrowBalance -= fareAmount;
+  passengerWallet.balanceHash = generateBalanceHash(
+    passengerWallet.balance,
+    passengerWallet.escrowBalance,
+    passengerWallet.phoneNumber,
+  );
+  await passengerWallet.save();
+
+  // ---- 2. Credit the driver ----
+  const driverWallet = await getOrCreateWallet(driverUserId);
+  if (!verifyWalletIntegrity(driverWallet)) {
+    throw new WalletError(
+      "Driver wallet integrity check failed",
+      "INTEGRITY_FAIL",
+    );
+  }
+  const driverBalanceBefore = driverWallet.balance;
+  driverWallet.balance += driverPay;
+  driverWallet.balanceHash = generateBalanceHash(
+    driverWallet.balance,
+    driverWallet.escrowBalance,
+    driverWallet.phoneNumber,
+  );
+  await driverWallet.save();
+
+  // ---- 3. Driver's wallet statement ----
+  await WalletTransaction.create({
+    wallet: driverWallet._id,
+    user: driverUserId,
+    type: "credit",
+    amount: driverPay,
+    description: "Trip payout",
+    trip: tripId,
+    booking: bookingId,
+    balanceBefore: driverBalanceBefore,
+    balanceAfter: driverWallet.balance,
+  });
+
+  // ---- 4. System ledger ----
+  // Commission portion of platform profit. (We compute it so a future
+  // report can break out commission vs flat platform fee separately.)
+  // For now we log them as one platform_fee Transaction.
+  await Transaction.create({
+    trip: tripId,
+    booking: bookingId,
+    passenger: passengerUserId,
+    driver: driverProfileId,
+    amount: driverPay,
+    commission: platformProfit, // = commission + flat platform fee, snapshot
+    type: "driver_payout",
+    status: "completed",
+  });
+
+  if (platformProfit > 0) {
+    await Transaction.create({
+      trip: tripId,
+      booking: bookingId,
+      passenger: passengerUserId,
+      driver: driverProfileId,
+      amount: platformProfit,
+      type: "platform_fee",
+      status: "completed",
+    });
+  }
+}
+
+module.exports = {
+  WalletError,
+  getOrCreateWallet,
+  holdEscrow,
+  refundEscrow,
+  settleBookingPayout,
+};

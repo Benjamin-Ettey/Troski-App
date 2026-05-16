@@ -1,24 +1,37 @@
 const mongoose = require("mongoose");
 
+// System-wide money-movement ledger. Every wallet credit/debit/refund/
+// payout/withdrawal writes one row here. Used for reconciliation,
+// dispute resolution, and any future financial reporting.
+//
+// Per-wallet running-balance ledger lives in walletTransaction.js.
+// Use both: Transaction = "what the system did", walletTransaction =
+// "what this wallet's statement looks like".
+
 const transactionSchema = new mongoose.Schema(
   {
-    ride: {
+    trip: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "Ride",
+      ref: "Trip",
+    },
+
+    booking: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Booking",
     },
 
     passenger: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "User",
+      ref: "Passenger",
     },
 
+    // Driver here refers to the Driver profile (not the user directly).
     driver: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "User",
+      ref: "Driver",
     },
 
     amount: Number,
-
     commission: Number,
 
     type: {
@@ -30,6 +43,7 @@ const transactionSchema = new mongoose.Schema(
         "refund",
         "withdrawal",
         "cancellation_fee",
+        "platform_fee",
       ],
     },
 
@@ -39,9 +53,7 @@ const transactionSchema = new mongoose.Schema(
       default: "pending",
     },
   },
-  {
-    timestamps: true,
-  },
+  { timestamps: true },
 );
 
 module.exports = mongoose.model("Transaction", transactionSchema);

@@ -1,0 +1,445 @@
+{
+  "info": {
+    "name": "Troski Backend",
+    "description": "Endpoint coverage for the Troski-Backend project. Import alongside the included environment file (`troski.postman_environment.json`). Cookies (accessToken + refreshToken) are set by the server on verify-otp/verify-signup-otp/admin login; Postman keeps them in its cookie jar automatically, so subsequent requests are authenticated as long as you stay in the same Postman session.\n\nFLOW TIPS:\n1. POST /auth/sign-up\n2. POST /auth/verify-signup-otp  (you must read the OTP from your SMS provider / server logs)\n3. PATCH /auth/complete-profile  (optional dateOfBirth + profilePhoto file)\n4. POST /auth/request-otp  (login on a new session)\n5. POST /auth/verify-otp\n\nFor admins, run the seed script first: `node src/scripts/seedSuperAdmin.js <username> <email> <password>` then POST /auth/admin/login.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:5000",
+      "type": "string"
+    },
+    {
+      "key": "phoneNumber",
+      "value": "0244000001",
+      "type": "string"
+    },
+    {
+      "key": "adminUsername",
+      "value": "superadmin",
+      "type": "string"
+    },
+    {
+      "key": "adminPassword",
+      "value": "Password123!",
+      "type": "string"
+    },
+    {
+      "key": "tripId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "applicationId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "inviteId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "inviteToken",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "inviteEmail",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Auth — User (passenger + driver share)",
+      "description": "Unified sign-up + OTP login. Everyone starts as a passenger. Drivers gain their role only after a DriverApplication is approved by an admin.",
+      "item": [
+        {
+          "name": "1. Sign Up (phone + email + name + PIN)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/api/v1/auth/sign-up",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Ama Mensah\",\n  \"phoneNumber\": \"{{phoneNumber}}\",\n  \"email\": \"ama@example.com\",\n  \"pinCode\": \"123456\"\n}"
+            },
+            "description": "Creates an unverified user and sends an OTP via SMS (default) or email (set method=\"email\" in body). Rate-limited 3/10min per IP."
+          }
+        },
+        {
+          "name": "2. Verify Sign-Up OTP",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/api/v1/auth/verify-signup-otp",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"phoneNumber\": \"{{phoneNumber}}\",\n  \"otpCode\": \"REPLACE_WITH_OTP_FROM_LOGS\"\n}"
+            },
+            "description": "On success: sets accessToken + refreshToken signed cookies and returns nextStep: 'complete-profile'."
+          }
+        },
+        {
+          "name": "3. Complete Profile (DOB + photo)",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/auth/complete-profile",
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                { "key": "dateOfBirth", "value": "2000-01-15", "type": "text" },
+                { "key": "profilePhoto", "type": "file", "src": [] }
+              ]
+            },
+            "description": "Authenticated (cookies from step 2). Multipart. dateOfBirth must be 18+. profilePhoto is optional."
+          }
+        },
+        {
+          "name": "Verify PIN (gate sensitive ops)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/api/v1/auth/verify-pin",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"pinCode\": \"123456\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Login: Request OTP",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/api/v1/auth/request-otp",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"phoneNumber\": \"{{phoneNumber}}\",\n  \"method\": \"sms\"\n}"
+            },
+            "description": "Rate-limited 3/10min. Only verified accounts can receive a login OTP."
+          }
+        },
+        {
+          "name": "Login: Verify OTP",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/api/v1/auth/verify-otp",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"phoneNumber\": \"{{phoneNumber}}\",\n  \"otpCode\": \"REPLACE_WITH_OTP\"\n}"
+            },
+            "description": "Logs the user in. Sets fresh accessToken + refreshToken cookies. Rate-limited 5/10min."
+          }
+        },
+        {
+          "name": "Logout",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/auth/logout"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Auth — Admin (invite-only)",
+      "description": "Bootstrap the very first super_admin with `node src/scripts/seedSuperAdmin.js`. All further admins must be invited from a logged-in super_admin.",
+      "item": [
+        {
+          "name": "Admin Login",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/api/v1/auth/admin/login",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"{{adminUsername}}\",\n  \"password\": \"{{adminPassword}}\"\n}"
+            },
+            "description": "Rate-limited 10/15min."
+          }
+        },
+        {
+          "name": "Send Admin Invite (super_admin only)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/api/v1/auth/admin/invite",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"newadmin@example.com\",\n  \"role\": \"admin\"\n}"
+            },
+            "description": "Generates a one-time invite link (48h expiry) and emails it. The raw token is never stored — only its hash."
+          }
+        },
+        {
+          "name": "List Outstanding Invites",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/v1/auth/admin/invite"
+          }
+        },
+        {
+          "name": "Verify Invite (public; called by the dashboard)",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/admin/invite/verify?token={{inviteToken}}&email={{inviteEmail}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "auth", "admin", "invite", "verify"],
+              "query": [
+                { "key": "token", "value": "{{inviteToken}}" },
+                { "key": "email", "value": "{{inviteEmail}}" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Register with Invite (public)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/api/v1/auth/admin/register-with-invite",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"token\": \"{{inviteToken}}\",\n  \"email\": \"{{inviteEmail}}\",\n  \"username\": \"newadmin\",\n  \"password\": \"StrongPass1!\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Revoke Invite",
+          "request": {
+            "method": "DELETE",
+            "url": "{{baseUrl}}/api/v1/auth/admin/invite/{{inviteId}}"
+          }
+        },
+        {
+          "name": "Admin Logout",
+          "request": {
+            "method": "DELETE",
+            "url": "{{baseUrl}}/api/v1/auth/admin/logout"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Driver Application",
+      "description": "A logged-in user uploads identity docs to apply to drive. Admin reviews. On approval, a Driver profile is created and 'driver' is added to user.roles.",
+      "item": [
+        {
+          "name": "Submit Application (user)",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/driver-application",
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                { "key": "licenseID", "value": "ABC-12345678-1234", "type": "text" },
+                { "key": "ghanaCardNumber", "value": "GHA-123456789-1", "type": "text" },
+                { "key": "city", "value": "Accra", "type": "text" },
+                { "key": "ghanaCardImage", "type": "file", "src": [] },
+                { "key": "licenseImage", "type": "file", "src": [] }
+              ]
+            },
+            "description": "Multipart. licenseID must match /^[A-Z]{3}-\\d{8}-\\d{4,5}$/. ghanaCardNumber must match /^GHA-\\d{9}-\\d$/."
+          }
+        },
+        {
+          "name": "Get My Application Status (user)",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/v1/driver-application/me"
+          }
+        },
+        {
+          "name": "List Applications (admin)",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/driver-application/admin?status=pending",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "driver-application", "admin"],
+              "query": [
+                { "key": "status", "value": "pending", "description": "pending | approved | rejected" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get One Application (admin)",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/v1/driver-application/admin/{{applicationId}}"
+          }
+        },
+        {
+          "name": "Approve Application (admin)",
+          "request": {
+            "method": "PATCH",
+            "url": "{{baseUrl}}/api/v1/driver-application/admin/{{applicationId}}/approve",
+            "description": "On approve: appends 'driver' to user.roles AND creates a Driver profile linked to the user."
+          }
+        },
+        {
+          "name": "Reject Application (admin)",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/api/v1/driver-application/admin/{{applicationId}}/reject",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"rejectionReason\": \"Ghana card image is unclear, please re-submit.\"\n}"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Trip — Passenger",
+      "description": "Demand-aggregation rides. A passenger places a request; system clusters them with other passengers going to the same dropoff. Trip becomes visible to drivers only when 5+ passengers are in the same cluster.",
+      "item": [
+        {
+          "name": "Request Ride (auto-cluster + escrow hold)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "  const body = pm.response.json();",
+                  "  if (body.trip && body.trip._id) pm.collectionVariables.set('tripId', body.trip._id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/api/v1/trip/request",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"pickup\": {\n    \"latitude\": 5.6037,\n    \"longitude\": -0.1870,\n    \"name\": \"Accra Mall\"\n  },\n  \"dropoff\": {\n    \"latitude\": 5.6698,\n    \"longitude\": -0.0167,\n    \"name\": \"Tema Station\"\n  }\n}"
+            },
+            "description": "Computes fare via zonesConfig, creates a Trip (or joins existing one within 200m of same dropoff), creates a Booking, and holds fareAmount in escrow on the passenger's wallet. Returns 402 if wallet balance is insufficient."
+          }
+        },
+        {
+          "name": "Get My Active Booking",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/v1/trip/my-booking"
+          }
+        },
+        {
+          "name": "Cancel My Booking (refunds escrow)",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/api/v1/trip/booking/cancel",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"reason\": \"Changed plans\"\n}"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Trip — Driver",
+      "description": "Driver-side trip operations. Require the user to have the 'driver' role and an approved Driver profile.",
+      "item": [
+        {
+          "name": "List Available Trips (matching my routes + nearby)",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/v1/trip/available",
+            "description": "Returns trips that are open_for_drivers, whose dropoff matches one of the driver's vehicle.routePreferences[*].to, and whose pickup centroid is within DRIVER_SEARCH_RADIUS_KM (5km) of the driver. Driver must be online + have fresh location."
+          }
+        },
+        {
+          "name": "Accept Trip (atomic claim)",
+          "request": {
+            "method": "PATCH",
+            "url": "{{baseUrl}}/api/v1/trip/{{tripId}}/accept",
+            "description": "First-to-accept wins. Returns 409 if another driver already took it."
+          }
+        },
+        {
+          "name": "Mark Arrived at Pickup",
+          "request": {
+            "method": "PATCH",
+            "url": "{{baseUrl}}/api/v1/trip/{{tripId}}/arrived",
+            "description": "Locks the group from new joiners."
+          }
+        },
+        {
+          "name": "Start Trip",
+          "request": {
+            "method": "PATCH",
+            "url": "{{baseUrl}}/api/v1/trip/{{tripId}}/start"
+          }
+        },
+        {
+          "name": "Complete Trip (settles all passenger payouts)",
+          "request": {
+            "method": "PATCH",
+            "url": "{{baseUrl}}/api/v1/trip/{{tripId}}/complete",
+            "description": "For each active Booking: drops the passenger's escrow, credits the driver's wallet with trip.driverPayPerPassenger, records the platform's cut. Returns settlementErrors[] if any individual settlement fails (the trip is still marked completed)."
+          }
+        },
+        {
+          "name": "Cancel Trip (driver, returns to pool)",
+          "request": {
+            "method": "PATCH",
+            "url": "{{baseUrl}}/api/v1/trip/{{tripId}}/cancel",
+            "description": "If trip still has 5+ active bookings, returns to open_for_drivers status for another driver. Below threshold, returns to forming."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Driver Location",
+      "description": "Drivers must go online + share a fresh location to receive trip broadcasts. Real-time updates should go over socket.io ('driver:location' event). These HTTP endpoints are a fallback / for initial 'go online' state.",
+      "item": [
+        {
+          "name": "Go Online",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/api/v1/driver-location/online",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"latitude\": 5.6037,\n  \"longitude\": -0.1870\n}"
+            }
+          }
+        },
+        {
+          "name": "Update Location",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/api/v1/driver-location/update",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"latitude\": 5.6100,\n  \"longitude\": -0.1900,\n  \"heading\": 90,\n  \"speed\": 35\n}"
+            }
+          }
+        },
+        {
+          "name": "Go Offline",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/v1/driver-location/offline"
+          }
+        }
+      ]
+    }
+  ]
+}

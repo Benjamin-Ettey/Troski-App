@@ -1,162 +1,212 @@
-const User = require("../models/User");
-const Wallet = require("../models/Wallet");
-const Token = require("../models/Token");
+// ============================================================
+// AUTH CONTROLLER
+//
+// Unified user model: passengers and drivers share one collection ("Passenger"
+// — kept that name to avoid breaking other refs, but it's the User collection).
+// Roles are tracked in user.roles. Everyone starts as ["passenger"]. Adding
+// "driver" happens only via an approved DriverApplication, reviewed by an
+// admin.
+//
+// Admin auth is separate (different collection, password-based, invite-only).
+// ============================================================
 
+const Passenger = require("../models/passengers"); // = User
+const Admin = require("../models/admins");
+const AdminInvite = require("../models/adminInvite");
+const PassengerToken = require("../models/passengerToken"); // = UserToken
+const AdminToken = require("../models/adminToken");
+
+const { StatusCodes } = require("http-status-codes");
 const crypto = require("crypto");
 const cloudinary = require("cloudinary");
 
-const { StatusCodes } = require("http-status-codes");
-
-const { attachCookiesToResponse } = require("../utils/tokenUtils");
-
-const createHash = require("../utils/createHash");
-const createTokenUser = require("../utils/createTokenUser");
-
+const {
+  attachPassengerCookiesToResponse,
+  attachAdminCookiesToResponse,
+} = require("../utils/tokenUtils");
 const { sendOTPEmail } = require("../utils/sendOTPEmail");
 const { sendOTPSMS } = require("../utils/sendOTPSMS");
-
+const createHash = require("../utils/createHash");
+const createTokenPassenger = require("../utils/createTokenPassenger");
+const createTokenAdmin = require("../utils/createTokenAdmin");
 const { formatImage } = require("../middleware/multerMiddleware");
 
-const {
-  generateBalanceHash,
-  verifyWalletIntegrity,
-} = require("../utils/hashUtils");
+// ============================================================
+// USER SIGN-UP (3 STEPS)
+// ============================================================
 
-const signUp = async (req, res) => {
-  const { phoneNumber, email, role } = req.body;
+// STEP 1 — phone, email, pin, name. Creates an unverified user and sends OTP.
+// If a record exists but is unverified, we reuse and update it.
+const userSignUp = async (req, res) => {
+  const { phoneNumber, email, pinCode, name } = req.body;
 
-  // 1. Check if user exists
-  const existingUser = await User.findOne({
-    $or: [
-      { phoneNumber, role },
-      { email, role },
-    ],
-  });
+  const existing = await Passenger.findOne({ phoneNumber });
 
-  if (existingUser) {
+  if (existing && existing.isPhoneVerified) {
     return res.status(StatusCodes.BAD_REQUEST).json({
-      msg: `A ${role} account with this phone number or email already exists.`,
+      msg: "An account with this phone number already exists. Please log in.",
     });
   }
 
-  attachDriverCookiesToResponse({ res, driver: tokenDriver, refreshToken });
+  let user;
+  if (existing) {
+    existing.name = name;
+    existing.email = email;
+    existing.pinCode = pinCode; // re-hashed by pre('save')
+    user = existing;
+  } else {
+    user = new Passenger({
+      name,
+      phoneNumber,
+      email,
+      pinCode,
+      roles: ["passenger"],
+      isPhoneVerified: false,
+      isProfileComplete: false,
+    });
+  }
 
-  res.status(StatusCodes.OK).json({
-    msg: "Authentication successful",
-    driver: tokenDriver,
-    isNewDriver,
-    isProfileComplete: !!(driver.name && driver.licenseID && driver.ghanaCardNumber),
+  const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
+  user.otpCode = createHash(otpCode);
+  user.otpExpiresAt = new Date(Date.now() + 1000 * 60 * 5);
+  await user.save();
+
+  const method = (req.body.method || "sms").toLowerCase();
+  if (method === "email") {
+    await sendOTPEmail({ email: user.email, otpCode });
+  } else {
+    await sendOTPSMS({ phoneNumber: user.phoneNumber, otpCode });
+  }
+
+  res.status(StatusCodes.CREATED).json({
+    msg: "Sign-up started. OTP sent for verification.",
+    phoneNumber: user.phoneNumber,
   });
 };
 
-// Called after OTP verification — driver uploads documents and fills profile details
-const completeDriverProfile = async (req, res) => {
-  const driverId = req.user.driverId;
+// STEP 2 — verify the OTP from sign-up. Marks verified, logs the user in.
+const verifySignUpOTP = async (req, res) => {
+  const { phoneNumber, otpCode } = req.body;
 
-  const driver = await Driver.findById(driverId);
-
-  if (!driver) {
-    return res.status(StatusCodes.NOT_FOUND).json({ msg: "Driver not found" });
-  }
-
-  const uploadFields = {
-    ghanaCardImage: "Ghana Card",
-    licenseImage: "Driver's License",
-  };
-
-  if (role === "driver") {
-    const missingFields = Object.keys(uploadFields).filter((field) => {
-      return !(req.files && req.files[field] && req.files[field][0]);
-    });
-
-    if (missingFields.length > 0) {
-      return res.status(StatusCodes.BAD_REQUEST).json({
-        msg: `Please upload photo of ${missingFields.map((f) => uploadFields[f]).join(", ")}`,
-      });
-    }
-  }
-
-  const uploadedPublicIds = [];
-  try {
-    if (role === "driver") {
-      await Promise.all(
-        Object.keys(uploadFields).map(async (field) => {
-          if (req.files && req.files[field]) {
-            const file = formatImage(req.files[field][0]);
-            const response = await cloudinary.v2.uploader.upload(file, {
-              use_filename: true,
-              folder: `/Troski/Troski-Driver-${field}s`,
-            });
-            req.body[field] = response.secure_url;
-            req.body[`${field}PublicId`] = response.public_id;
-            uploadedPublicIds.push(response.public_id);
-          }
-        }),
-      );
-    }
-
-    // 2. Create the User
-    const user = await User.create(req.body);
-
-    // 3. SHARED WALLET LOGIC WITH INTEGRITY CHECK
-    const existingWallet = await Wallet.findOne({ phoneNumber });
-
-    if (!existingWallet) {
-      // Create a brand new wallet with a fresh seal
-      const initialHash = generateBalanceHash(0, 0, user.phoneNumber);
-
-      await Wallet.create({
-        user: user._id,
-        phoneNumber: user.phoneNumber,
-        balance: 0,
-        escrowBalance: 0,
-        balanceHash: initialHash,
-      });
-    } else {
-      // VALIDATE SHARED WALLET: Ensure the existing wallet hasn't been tampered with
-      if (!verifyWalletIntegrity(existingWallet)) {
-        // If the wallet is corrupted, we throw an error to trigger the catch block.
-        // This will clean up any uploaded Cloudinary images.
-        throw new Error(
-          "Security Alert: The existing wallet associated with this number is compromised. Contact support.",
-        );
-      }
-
-      console.log(`Verified integrity for shared wallet: ${phoneNumber}`);
-    }
-
-    res.status(StatusCodes.CREATED).json({
-      msg: "User created successfully",
-      user,
-    });
-  } catch (error) {
-    // 4. CLEANUP: If anything fails (including the integrity check), delete uploaded images
-    if (uploadedPublicIds.length > 0) {
-      await Promise.all(
-        uploadedPublicIds.map((id) =>
-          cloudinary.v2.uploader.destroy(id).catch(() => {}),
-        ),
-      );
-    }
-
-    // Determine the status code based on the error type
-    const statusCode = error.message.includes("Security Alert")
-      ? StatusCodes.FORBIDDEN
-      : StatusCodes.INTERNAL_SERVER_ERROR;
-
+  const user = await Passenger.findOne({ phoneNumber });
+  if (!user) {
     return res
-      .status(statusCode)
-      .json({ msg: "Signup failed", error: error.message });
+      .status(StatusCodes.NOT_FOUND)
+      .json({ msg: "Sign-up not started for this phone number" });
   }
+  if (user.isPhoneVerified) {
+    return res
+      .status(StatusCodes.BAD_REQUEST)
+      .json({ msg: "Account already verified. Please log in." });
+  }
+  if (!user.otpCode || !user.otpExpiresAt) {
+    return res
+      .status(StatusCodes.BAD_REQUEST)
+      .json({ msg: "No OTP request found. Please restart sign-up." });
+  }
+  if (user.otpExpiresAt < new Date()) {
+    return res.status(StatusCodes.BAD_REQUEST).json({ msg: "OTP has expired" });
+  }
+  if (createHash(otpCode) !== user.otpCode) {
+    return res.status(StatusCodes.UNAUTHORIZED).json({ msg: "Invalid OTP" });
+  }
+
+  user.otpCode = null;
+  user.otpExpiresAt = null;
+  user.isPhoneVerified = true;
+  await user.save();
+
+  await issueUserSession(req, res, user, {
+    msg: "Phone verified. Please complete your profile.",
+    nextStep: "complete-profile",
+  });
 };
 
-const requestOTP = async (req, res) => {
-  const { phoneNumber, role, method = "sms" } = req.body;
-
-  const user = await User.findOne({ phoneNumber, role });
-
+// STEP 3 — complete-profile: profile photo (file) + date of birth.
+// Authenticated.
+const completeProfile = async (req, res) => {
+  const user = await Passenger.findById(req.user.passengerId);
   if (!user) {
     return res.status(StatusCodes.NOT_FOUND).json({ msg: "User not found" });
+  }
+  if (!user.isPhoneVerified) {
+    return res
+      .status(StatusCodes.FORBIDDEN)
+      .json({ msg: "Verify your phone number first" });
+  }
+
+  const { dateOfBirth } = req.body;
+  if (dateOfBirth) {
+    const dob = new Date(dateOfBirth);
+    if (isNaN(dob.getTime())) {
+      return res
+        .status(StatusCodes.BAD_REQUEST)
+        .json({ msg: "Invalid date of birth" });
+    }
+    user.dateOfBirth = dob;
+  }
+
+  // Optional profile photo (multipart "profilePhoto" field)
+  if (req.file) {
+    try {
+      const formatted = formatImage(req.file);
+      const uploaded = await cloudinary.v2.uploader.upload(formatted, {
+        use_filename: true,
+        folder: "/Troski/Troski-Profile-Photos",
+      });
+      // Clean up any previous photo
+      if (user.profilePhotoPublicId) {
+        cloudinary.v2.uploader
+          .destroy(user.profilePhotoPublicId)
+          .catch((e) => console.error("Failed deleting old profile photo", e));
+      }
+      user.profilePhoto = uploaded.secure_url;
+      user.profilePhotoPublicId = uploaded.public_id;
+    } catch (e) {
+      console.error(e);
+      return res
+        .status(StatusCodes.INTERNAL_SERVER_ERROR)
+        .json({ msg: "Profile photo upload failed" });
+    }
+  }
+
+  user.isProfileComplete = true;
+  await user.save();
+
+  res.status(StatusCodes.OK).json({ msg: "Profile completed", user });
+};
+
+// PIN gate — used to authorize sensitive actions (wallet ops, withdrawals…).
+const verifyPin = async (req, res) => {
+  const { pinCode } = req.body;
+  const user = await Passenger.findById(req.user.passengerId);
+  if (!user || !user.pinCode) {
+    return res.status(StatusCodes.UNAUTHORIZED).json({ msg: "PIN not set" });
+  }
+  const ok = await user.comparePinCode(pinCode);
+  if (!ok) {
+    return res.status(StatusCodes.UNAUTHORIZED).json({ msg: "Invalid PIN" });
+  }
+  res.status(StatusCodes.OK).json({ msg: "PIN verified" });
+};
+
+// ============================================================
+// USER LOGIN (OTP)
+// ============================================================
+
+const requestLoginOTP = async (req, res) => {
+  const { phoneNumber, method = "sms" } = req.body;
+  const user = await Passenger.findOne({ phoneNumber });
+
+  if (!user) {
+    return res
+      .status(StatusCodes.NOT_FOUND)
+      .json({ msg: "Account not found" });
+  }
+  if (!user.isPhoneVerified) {
+    return res.status(StatusCodes.FORBIDDEN).json({
+      msg: "Phone number not verified. Please complete sign-up.",
+    });
   }
 
   const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
@@ -170,53 +220,267 @@ const requestOTP = async (req, res) => {
     await sendOTPSMS({ phoneNumber: user.phoneNumber, otpCode });
   }
 
-  res.status(StatusCodes.OK).json({ msg: "OTP sent successfully" });
+  res.status(StatusCodes.OK).json({
+    msg:
+      method === "email"
+        ? "OTP sent to email successfully"
+        : "OTP sent to phone number successfully",
+  });
 };
 
-const verifyOTP = async (req, res) => {
-  const { phoneNumber, role, otpCode } = req.body;
+const verifyLoginOTP = async (req, res) => {
+  const { phoneNumber, otpCode } = req.body;
 
-  const user = await User.findOne({ phoneNumber, role });
-
-  if (!user || !user.otpCode || user.otpCode !== createHash(otpCode)) {
-    return res.status(StatusCodes.UNAUTHORIZED).json({ msg: "Invalid OTP" });
+  const user = await Passenger.findOne({ phoneNumber });
+  if (!user) {
+    return res.status(StatusCodes.NOT_FOUND).json({ msg: "User not found" });
   }
-
-  if (user.otpExpiresAt < new Date()) {
-    return res.status(StatusCodes.BAD_REQUEST).json({ msg: "OTP expired" });
+  if (!user.isPhoneVerified) {
+    return res.status(StatusCodes.FORBIDDEN).json({
+      msg: "Phone number not verified. Please complete sign-up.",
+    });
+  }
+  if (!user.otpCode) {
+    return res
+      .status(StatusCodes.BAD_REQUEST)
+      .json({ msg: "No OTP request found" });
+  }
+  if (user.otpExpiresAt && user.otpExpiresAt < new Date()) {
+    return res.status(StatusCodes.BAD_REQUEST).json({ msg: "OTP has expired" });
+  }
+  if (createHash(otpCode) !== user.otpCode) {
+    return res.status(StatusCodes.UNAUTHORIZED).json({ msg: "Invalid OTP" });
   }
 
   user.otpCode = null;
   user.otpExpiresAt = null;
   await user.save();
 
-  const tokenUser = createTokenUser(user);
-  let refreshToken = "";
-  const existingToken = await Token.findOne({ user: user._id });
+  await issueUserSession(req, res, user, { msg: "Login successful" });
+};
 
-  if (existingToken) {
-    refreshToken = existingToken.refreshToken;
-    attachCookiesToResponse({ res, user: tokenUser, refreshToken });
-    return res
-      .status(StatusCodes.OK)
-      .json({ msg: "Login successful", user: tokenUser });
-  }
+const userLogout = async (req, res) => {
+  await PassengerToken.findOneAndDelete({ passenger: req.user.passengerId });
+  res.cookie("accessToken", "logout", {
+    httpOnly: true,
+    expires: new Date(Date.now()),
+  });
+  res.cookie("refreshToken", "logout", {
+    httpOnly: true,
+    expires: new Date(Date.now()),
+  });
+  res.status(StatusCodes.OK).json({ msg: "Logged out" });
+};
 
-  refreshToken = crypto.randomBytes(40).toString("hex");
-  await Token.create({
+// Helper: issue tokens + attach cookies + send response.
+async function issueUserSession(req, res, user, extra = {}) {
+  const tokenPayload = createTokenPassenger(user);
+  // Ensure roles travel in the token so the client and middleware can gate
+  // routes without an extra DB lookup.
+  tokenPayload.roles = user.roles;
+
+  const refreshToken = crypto.randomBytes(40).toString("hex");
+  await PassengerToken.findOneAndDelete({ passenger: user._id });
+  await PassengerToken.create({
     refreshToken,
     ip: req.ip,
     userAgent: req.headers["user-agent"],
-    user: user._id,
+    passenger: user._id,
   });
-  attachCookiesToResponse({ res, user: tokenUser, refreshToken });
 
-  res.status(StatusCodes.OK).json({ msg: "Login successful", user: tokenUser });
+  attachPassengerCookiesToResponse({
+    res,
+    passenger: tokenPayload,
+    refreshToken,
+  });
+
+  res.status(StatusCodes.OK).json({
+    ...extra,
+    user: tokenPayload,
+  });
+}
+
+// ============================================================
+// ADMIN AUTH (separate collection, invite-based)
+// ============================================================
+
+const INVITE_TTL_HOURS = 48;
+
+const inviteAdmin = async (req, res) => {
+  const { email, role = "admin" } = req.body;
+  if (!["admin", "super_admin"].includes(role)) {
+    return res.status(StatusCodes.BAD_REQUEST).json({ msg: "Invalid role" });
+  }
+  const normalizedEmail = email.toLowerCase().trim();
+
+  if (await Admin.findOne({ email: normalizedEmail })) {
+    return res
+      .status(StatusCodes.BAD_REQUEST)
+      .json({ msg: "An admin with this email already exists" });
+  }
+
+  await AdminInvite.deleteMany({ email: normalizedEmail, used: false });
+
+  const rawToken = crypto.randomBytes(32).toString("hex");
+  const tokenHash = createHash(rawToken);
+  const expiresAt = new Date(Date.now() + INVITE_TTL_HOURS * 60 * 60 * 1000);
+
+  await AdminInvite.create({
+    email: normalizedEmail,
+    tokenHash,
+    role,
+    invitedBy: req.user.adminId,
+    expiresAt,
+  });
+
+  const dashboardUrl =
+    process.env.ADMIN_DASHBOARD_URL || "https://admin.troski.com";
+  const inviteLink = `${dashboardUrl}/register?token=${rawToken}&email=${encodeURIComponent(
+    normalizedEmail,
+  )}`;
+
+  try {
+    await sendOTPEmail({
+      email: normalizedEmail,
+      otpCode: `Click to register as an admin: ${inviteLink}`,
+    });
+  } catch (e) {
+    console.error("Failed to send admin invite email", e);
+    return res
+      .status(StatusCodes.INTERNAL_SERVER_ERROR)
+      .json({ msg: "Could not send invite email" });
+  }
+
+  res.status(StatusCodes.CREATED).json({
+    msg: "Invite sent",
+    email: normalizedEmail,
+    expiresAt,
+  });
 };
 
-const logout = async (req, res) => {
-  await Token.findOneAndDelete({ user: req.user.userId });
+const verifyAdminInvite = async (req, res) => {
+  const { token, email } = req.query;
+  if (!token || !email) {
+    return res
+      .status(StatusCodes.BAD_REQUEST)
+      .json({ valid: false, msg: "Missing token or email" });
+  }
+  const invite = await AdminInvite.findOne({
+    email: email.toLowerCase().trim(),
+    tokenHash: createHash(token),
+  });
+  if (!invite) {
+    return res
+      .status(StatusCodes.NOT_FOUND)
+      .json({ valid: false, msg: "Invite not found" });
+  }
+  if (invite.used) {
+    return res
+      .status(StatusCodes.BAD_REQUEST)
+      .json({ valid: false, msg: "Invite already used" });
+  }
+  if (invite.expiresAt < new Date()) {
+    return res
+      .status(StatusCodes.BAD_REQUEST)
+      .json({ valid: false, msg: "Invite expired" });
+  }
+  res
+    .status(StatusCodes.OK)
+    .json({ valid: true, email: invite.email, role: invite.role });
+};
 
+const registerAdminWithInvite = async (req, res) => {
+  const { token, email, username, password } = req.body;
+  const normalizedEmail = email.toLowerCase().trim();
+  const invite = await AdminInvite.findOne({
+    email: normalizedEmail,
+    tokenHash: createHash(token),
+  });
+  if (!invite || invite.used || invite.expiresAt < new Date()) {
+    return res
+      .status(StatusCodes.UNAUTHORIZED)
+      .json({ msg: "Invalid or expired invite" });
+  }
+  if (await Admin.findOne({ username })) {
+    return res
+      .status(StatusCodes.BAD_REQUEST)
+      .json({ msg: "Username already taken" });
+  }
+
+  await Admin.create({
+    username,
+    password,
+    email: normalizedEmail,
+    role: invite.role,
+    invitedBy: invite.invitedBy,
+  });
+  invite.used = true;
+  invite.usedAt = new Date();
+  await invite.save();
+
+  res
+    .status(StatusCodes.CREATED)
+    .json({ msg: "Admin account created. Please log in.", username });
+};
+
+const listAdminInvites = async (req, res) => {
+  const invites = await AdminInvite.find()
+    .sort({ createdAt: -1 })
+    .populate("invitedBy", "username email")
+    .lean();
+  const cleaned = invites.map(({ tokenHash, ...rest }) => rest);
+  res.status(StatusCodes.OK).json({ invites: cleaned });
+};
+
+const revokeAdminInvite = async (req, res) => {
+  const invite = await AdminInvite.findById(req.params.id);
+  if (!invite) {
+    return res.status(StatusCodes.NOT_FOUND).json({ msg: "Invite not found" });
+  }
+  if (invite.used) {
+    return res
+      .status(StatusCodes.BAD_REQUEST)
+      .json({ msg: "Cannot revoke a used invite" });
+  }
+  await invite.deleteOne();
+  res.status(StatusCodes.OK).json({ msg: "Invite revoked" });
+};
+
+const adminLogin = async (req, res) => {
+  const { username, password } = req.body;
+  if (!username || !password) {
+    return res
+      .status(StatusCodes.UNAUTHORIZED)
+      .json({ msg: "Please provide username and password" });
+  }
+
+  const admin = await Admin.findOne({ username });
+  if (!admin) {
+    return res.status(StatusCodes.NOT_FOUND).json({ msg: "Admin not found" });
+  }
+
+  const isPasswordCorrect = await admin.comparePassword(password);
+  if (!isPasswordCorrect) {
+    return res
+      .status(StatusCodes.UNAUTHORIZED)
+      .json({ msg: "Invalid credentials" });
+  }
+
+  const tokenAdmin = createTokenAdmin(admin);
+  const refreshToken = crypto.randomBytes(40).toString("hex");
+  await AdminToken.findOneAndDelete({ admin: admin._id });
+  await AdminToken.create({
+    refreshToken,
+    ip: req.ip,
+    userAgent: req.headers["user-agent"],
+    admin: admin._id,
+  });
+  attachAdminCookiesToResponse({ res, admin: tokenAdmin, refreshToken });
+  res.status(StatusCodes.OK).json({ msg: "Login successful", admin: tokenAdmin });
+};
+
+const adminLogout = async (req, res) => {
+  await AdminToken.findOneAndDelete({ admin: req.user.adminId });
   res.cookie("accessToken", "logout", {
     httpOnly: true,
     expires: new Date(Date.now()),
@@ -226,8 +490,25 @@ const logout = async (req, res) => {
     httpOnly: true,
     expires: new Date(Date.now()),
   });
-
-  res.status(StatusCodes.OK).json({ msg: "Logged out successfully" });
+  res.status(StatusCodes.OK).json({ msg: "admin logged out!" });
 };
 
-module.exports = { signUp, requestOTP, verifyOTP, logout };
+module.exports = {
+  // User (passenger + driver share this — roles differ)
+  userSignUp,
+  verifySignUpOTP,
+  completeProfile,
+  verifyPin,
+  requestLoginOTP,
+  verifyLoginOTP,
+  userLogout,
+
+  // Admin
+  inviteAdmin,
+  verifyAdminInvite,
+  registerAdminWithInvite,
+  listAdminInvites,
+  revokeAdminInvite,
+  adminLogin,
+  adminLogout,
+};
