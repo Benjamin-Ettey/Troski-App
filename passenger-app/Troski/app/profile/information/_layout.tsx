@@ -9,7 +9,7 @@ const InformationRoute = () => {
     const { colorScheme } = useColorScheme();
 
     return (
-        <View style={{flex:1 , backgroundColor: colorScheme === "dark"? "#000000": "#ffffff"}}>
+        <View  style={{flex:1 , backgroundColor: colorScheme === "dark"? "#000000": "#ffffff"}}>
 
             <Stack>
                 <Stack.Screen

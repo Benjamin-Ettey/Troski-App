@@ -108,6 +108,7 @@ const SelectRideType = ({ routeCoords, duration, price }: SelectRideTypeProps) =
                 return (
                     <Pressable
                         style={{
+                            height: 82,
                             paddingLeft: 16,
                             paddingRight: 16,
                             gap: 24,

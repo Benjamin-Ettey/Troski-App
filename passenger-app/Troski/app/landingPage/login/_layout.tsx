@@ -40,7 +40,8 @@ const LoginRoute = () => {
                                     colorScheme === "dark" ? "#000000" : "#FFFFFF",
                             },
                             headerTintColor:
-                                colorScheme === "dark" ? "#FFFFFF" : "#000000",                        headerTitle: 'Login',
+                                colorScheme === "dark" ? "#FFFFFF" : "#000000",
+                            headerTitle: 'Login',
                             headerLeft: ()=>(
                                 <TouchableOpacity onPress={()=>router.back()} style={{display: "flex", justifyContent: "center", alignItems: "center"}}>
                                     <Ionicons name="chevron-back" size={30} color={colorScheme==="dark"? "white": "black"}/>

@@ -14,7 +14,7 @@ const EditProfileRoute = () => {
         <GestureHandlerRootView>
             <BottomSheetModalProvider>
                 <KeyboardProvider>
-                    <View style={{flex:1 , backgroundColor: colorScheme === "dark"? "#000000": "#ffffff"}}>
+                    <View  style={{flex:1 , backgroundColor: colorScheme === "dark"? "#000000": "#ffffff"}}>
 
                         <Stack>
                             <Stack.Screen

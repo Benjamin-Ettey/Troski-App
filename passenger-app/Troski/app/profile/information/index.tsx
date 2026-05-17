@@ -20,7 +20,7 @@ const Index = () => {
                 </View>
 
                 <View style={{paddingHorizontal: 24, marginBottom: 24}} className="w-full flex flex-col justify-center items-center">
-                    <View style={{borderRadius: 24, paddingVertical: 16, paddingHorizontal: 16}} className="w-full">
+                    <View style={{borderRadius: 24, paddingVertical: 16, paddingHorizontal: 16, height: 130}} className="w-full">
                         <Text style={{marginBottom: 10}} className="font-GoogleSansRegular flex-shrink dark:text-tertiaryGray">
                             Troski is a mobile ride hailing app that helps passengers book and verify tro-tro rides quickly and safely.
                         </Text>
@@ -35,7 +35,7 @@ const Index = () => {
                 </View>
 
                 <View style={{paddingHorizontal: 24, marginBottom: 24}} className="w-full flex flex-col justify-center items-center">
-                    <View style={{borderRadius: 24, paddingVertical: 16, paddingHorizontal: 16}} className="w-full">
+                    <View style={{borderRadius: 24, paddingVertical: 16, paddingHorizontal: 16, height: 130}} className="w-full">
                         <Text  className="font-GoogleSansRegular flex-shrink dark:text-tertiaryGray">
                             1. Passenger books a ride
                         </Text>
@@ -59,7 +59,7 @@ const Index = () => {
 
                 <View style={{paddingHorizontal: 24, marginBottom: 8}} className="w-full flex flex-col justify-center items-center">
                     <View style={{borderRadius: 24, backgroundColor: "#a9a9a922", paddingVertical: 16, paddingHorizontal: 16}} className="w-full">
-                        <TouchableOpacity style={{marginBottom: 10}} className="w-full flex flex-colw justify-between">
+                        <TouchableOpacity style={{marginBottom: 10, height: 28}} className="w-full flex flex-colw justify-between">
                             <View className="w-full flex flex-row justify-between">
                                 <Text className="font-GoogleSansMedium dark:text-tertiaryWhite">Help Center</Text>
                                 <Ionicons name="chevron-forward" size={16} color="gray"/>
@@ -71,7 +71,7 @@ const Index = () => {
 
                         <View style={{height: 1, backgroundColor: "#a9a9a9", marginBottom: 10}} className="w-full "/>
 
-                        <TouchableOpacity className="w-full flex flex-colw justify-between">
+                        <TouchableOpacity style={{ height: 28}} className="w-full flex flex-colw justify-between">
                             <View className="w-full flex flex-row justify-between">
                                 <Text className="font-GoogleSansMedium dark:text-tertiaryWhite">Send Feedback</Text>
                                 <Ionicons name="chevron-forward" size={16} color="gray"/>

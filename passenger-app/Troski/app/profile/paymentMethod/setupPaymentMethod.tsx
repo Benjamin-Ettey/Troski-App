@@ -97,7 +97,7 @@ const SetupPaymentMethod = () => {
                 className="flex-1"
             >
 
-                <StatusBar style="dark" />
+                <StatusBar style="auto" />
 
                 <View className="w-full flex-1 flex items-center px-6">
 
@@ -112,7 +112,7 @@ const SetupPaymentMethod = () => {
                         onPress={() => setOpen(!open)}
                         style={{
                             paddingHorizontal: 16,
-                            height: 56,
+                            height: 48,
                             marginBottom: 6,
                         }}
                         className="mb-1 flex flex-row justify-between items-center font-GoogleSansRegular text-secondaryGray w-full dark:border-tertiaryGray border border-green-600/40 rounded-xl"
@@ -241,7 +241,7 @@ const SetupPaymentMethod = () => {
                         autoCapitalize="none"
                         keyboardType="phone-pad"
                         autoFocus={true}
-                        style={{ paddingLeft: 16 }}
+                        style={{ paddingLeft: 16, height: 48 }}
                         className="mb-1 font-medium dark:text-general text-secondaryGray w-full py-4 border border-tertiaryGray rounded-xl dark:focus:border-tertiaryGray focus:border focus:border-green-600/40"
                     />
 

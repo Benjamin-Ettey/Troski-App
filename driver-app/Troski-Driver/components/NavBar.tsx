@@ -9,7 +9,7 @@ const NavBar = ({name, title, textcolor, color, goforwardcolor, onPress} : any) 
 
         <TouchableOpacity
             onPress={onPress}
-            style={{paddingHorizontal: 16, paddingVertical: 16, height: 52}}
+            style={{paddingHorizontal: 16, paddingVertical: 16}}
             className="flex flex-row justify-between items-center">
             <View className="flex flex-row justify-start items-center gap-4">
                 <Ionicons name={name} size={20} color={color}/>

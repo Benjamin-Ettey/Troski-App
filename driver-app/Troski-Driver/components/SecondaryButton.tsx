@@ -3,10 +3,7 @@ import React from 'react'
 
 const SecondaryButton = ({onPress, title} : any) => {
     return (
-        <TouchableOpacity
-            style={{height: 48}}
-            onPress={onPress}
-            className=" w-[80%] bg-tertiaryWhite  py-4 flex justify-center rounded-full items-center">
+        <TouchableOpacity onPress={onPress} className=" w-[80%] bg-tertiaryWhite  py-4 flex justify-center rounded-full items-center">
             <Text className="text-black font-GoogleSansBold text-[16px]">{title}</Text>
         </TouchableOpacity>
     )

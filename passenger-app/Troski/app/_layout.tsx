@@ -7,6 +7,7 @@ import {ErrorBoundary} from "@/components/ui/ErrorBoundary";
 import SuspenseFallback from "@/components/ui/SuspenseFallback";
 import {View} from "react-native";
 import {useColorScheme} from "nativewind";
+import LottieView from "lottie-react-native";
 
 const RootLayout = () => {
     const loggedIn = useAppStore((state)=>state.loggedIn);
@@ -33,6 +34,7 @@ const RootLayout = () => {
                 <View style={{flex:1 , backgroundColor: colorScheme === "dark"? "#000000": "#ffffff"}} >
 
 
+                    <>
                     <Stack>
                         <Stack.Screen
                             name="index"
@@ -85,6 +87,7 @@ const RootLayout = () => {
                             }}
                         />
                     </Stack>
+                    </>
                 </View>
             </Suspense>
         </ErrorBoundary>

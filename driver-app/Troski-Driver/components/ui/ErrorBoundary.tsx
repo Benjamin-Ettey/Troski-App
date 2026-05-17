@@ -84,7 +84,6 @@ export class ErrorBoundary extends React.Component<Props, State> {
 
                     <View className="mt-5 w-full justify-center items-center">
                         <TouchableOpacity
-                            style={{height: 48}}
                             onPress={this.handleRetry}
                             className="w-[80%] bg-primary py-4 flex justify-center rounded-full items-center"
                         >
