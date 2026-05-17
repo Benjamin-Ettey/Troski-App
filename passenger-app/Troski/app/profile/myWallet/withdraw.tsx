@@ -76,7 +76,7 @@ const Withdraw = () => {
                         autoCapitalize="none"
                         keyboardType="phone-pad"
                         autoFocus={true}
-                        style={{paddingLeft: 16, }}
+                        style={{paddingLeft: 16, height: 48}}
                         className="bg-general dark:bg-secondaryBlack mb-1 font-medium dark:text-general text-secondaryGray w-full py-4 border border-tertiaryGray  rounded-xl focus:border dark:focus:border-tertiaryGray focus:border-green-600/40"
                     />
 
@@ -103,7 +103,7 @@ const Withdraw = () => {
                         autoCorrect={false}
                         autoCapitalize="none"
                         keyboardType="phone-pad"
-                        style={{paddingLeft: 16, marginBottom: 24}}
+                        style={{paddingLeft: 16, marginBottom: 24, height: 48}}
                         className="bg-general dark:bg-secondaryBlack mb-1 font-medium dark:text-general text-secondaryGray w-full py-4 border border-tertiaryGray  rounded-xl focus:border dark:focus:border-tertiaryGray focus:border-green-600/40"
                     />
 

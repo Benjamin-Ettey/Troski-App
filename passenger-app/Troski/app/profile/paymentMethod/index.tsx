@@ -89,7 +89,7 @@ const Index = () => {
 
                     <Text
                         style={{ marginBottom: 16 }}
-                        className="font-GoogleSansRegular text-center flex-shrink dark:text-tertiaryWhite"
+                        className="font-GoogleSansRegular text-center flex-shrink dark:text-tertiaryGray"
                     >
                         Add a payment method to see it here.
                     </Text>
@@ -100,7 +100,8 @@ const Index = () => {
                         }
                         style={{
                             paddingHorizontal: 12,
-                            paddingVertical: 12
+                            paddingVertical: 12,
+                            height: 42,
                         }}
                         className="bg-primary rounded-full flex justify-center items-center"
                     >

@@ -1,47 +1,74 @@
-import {View, Text, Image} from 'react-native'
-import React from 'react'
-import {StatusBar} from "expo-status-bar";
+import { View, Text, Image } from "react-native";
+import React from "react";
+import { StatusBar } from "expo-status-bar";
 import PrimaryButton from "@/components/PrimaryButton";
-import {router} from "expo-router";
 import SecondaryButton from "@/components/SecondaryButton";
-
-
+import { router } from "expo-router";
 
 const Index = () => {
+
+
     return (
-        <View className="flex-1 bg-general relative">
-            <StatusBar style="light"/>
+        <View className="flex-1 bg-general">
+            <StatusBar style="light" />
+
 
             <Image
-                style={{width: "100%", height: "70%", }}
                 source={require("../../assets/images/landingImage.png")}
                 resizeMode="cover"
+                style={{
+                    width: "100%",
+                    height: "68%",
+                }}
             />
 
             <View
-                style={{borderTopLeftRadius: 36, borderTopRightRadius: 36}}
-                className="w-full h-[40%] absolute bottom-0 flex items-center dark:bg-secondaryBlack bg-general py-4 ">
+                className="absolute bottom-0 w-full dark:bg-secondaryBlack bg-general pt-6 pb-8"
+                style={{
+                    height: "40%",
+                    borderTopLeftRadius: 36,
+                    borderTopRightRadius: 36,
+                }}
+            >
+                <View className="flex-1 justify-between items-center">
 
-                <View className=" w-full flex flex-col items-center mb-6">
 
-                    <View className="w-16 h-16 rounded-full p-2 mb-2">
-                        <Image style={{width: "100%", height: "100%"}} source={require("../../assets/images/favicon.png")} resizeMode="cover"/>
+                    <View className="w-full items-center">
+                        <View className="w-16 h-16 rounded-full p-2 mb-3">
+                            <Image
+                                source={require("../../assets/images/favicon.png")}
+                                resizeMode="contain"
+                                style={{ width: "100%", height: "100%" }}
+                            />
+                        </View>
+
+                        <Text
+                            numberOfLines={2}
+                            adjustsFontSizeToFit
+                            minimumFontScale={0.7}
+                            className="text-secondaryBlack dark:text-general text-4xl font-GoogleSansMedium text-center tracking-tight max-w-[80%]"
+                        >
+                            Book your rides on the go.
+                        </Text>
                     </View>
-                    <Text className="text-secondaryBlack dark:text-general font-GoogleSansMedium text-4xl font-medium text-center tracking-tighter leading-tighter max-w-[60%]">Book your rides on the go.</Text>
 
+                    {/* BUTTONS */}
+                    <View className="w-full items-center gap-3">
+                        <PrimaryButton
+                            disabled={false}
+                            name="Sign up for free"
+                            onPress={() => router.push("/landingPage/signup")}
+                        />
+
+                        <SecondaryButton
+                            title="Login"
+                            onPress={() => router.push("/landingPage/login")}
+                        />
+                    </View>
                 </View>
-
-                <View className="w-full flex items-center gap-2 mb-4">
-
-                    <PrimaryButton disabled={false}  name="Sign up for free" onPress={()=>router.push("/landingPage/signup")}/>
-                    <SecondaryButton title="Login" onPress={()=>router.push("/landingPage/login")}/>
-
-                </View>
-
-
             </View>
-
         </View>
-    )
-}
-export default Index
+    );
+};
+
+export default Index;

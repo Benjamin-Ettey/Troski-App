@@ -237,7 +237,7 @@ const Index = () => {
                                 autoComplete="name"
                                 keyboardType="default"
                                 autoFocus={true}
-                                style={{paddingLeft: 16}}
+                                style={{paddingLeft: 16, height: 48}}
                                 className="bg-general mb-1 dark:bg-secondaryBlack dark:text-general dark:focus:border-tertiaryGray font-GoogleSansMedium text-secondaryBlack w-full py-4 border border-tertiaryGray  rounded-xl focus:border focus:border-green-600/40"
 
                             />
@@ -267,7 +267,7 @@ const Index = () => {
                         onChangeText={handleEmailChange}
                         keyboardType="email-address"
                         autoFocus={true}
-                        style={{paddingLeft: 16}}
+                        style={{paddingLeft: 16, height: 48}}
                         className="bg-general mb-1 dark:bg-secondaryBlack dark:text-general dark:focus:border-tertiaryGray font-GoogleSansMedium text-secondaryBlack w-full py-4 border border-tertiaryGray  rounded-xl focus:border focus:border-green-600/40"
 
                 />

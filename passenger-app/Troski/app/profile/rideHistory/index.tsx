@@ -77,7 +77,7 @@ const Index = () => {
                     <Text className="font-GoogleSansMedium dark:text-general">No Ride History.</Text>
                     <Text style={{marginBottom: 16, }} className="font-GoogleSansRegular dark:text-tertiaryGray text-center flex-shrink">Your ride history will appear here once you book a ride.</Text>
 
-                    <TouchableOpacity onPress={()=>router.push("/homepage/bookings")} style={{paddingHorizontal: 12, paddingVertical: 12}} className="bg-primary rounded-full flex justify-center items-center">
+                    <TouchableOpacity onPress={()=>router.push("/homepage/bookings")} style={{paddingHorizontal: 12, paddingVertical: 12, height: 42}} className="bg-primary rounded-full flex justify-center items-center">
                         <Text className="font-GoogleSansMedium">Book a ride</Text>
                     </TouchableOpacity>
                 </View>

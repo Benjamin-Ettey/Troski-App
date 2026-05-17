@@ -7,6 +7,7 @@ const PrimaryButton = ({name, onPress, disabled}) => {
         <TouchableOpacity
             disabled={disabled}
             onPress={onPress}
+            style={{height: 48}}
             className=" w-[80%] bg-primary py-4 flex justify-center rounded-full items-center">
             <Text className="text-secondaryBlack font-GoogleSansBold text-[16px]">{name}</Text>
         </TouchableOpacity>
