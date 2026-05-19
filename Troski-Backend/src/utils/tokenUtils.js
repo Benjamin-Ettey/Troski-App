@@ -2,6 +2,7 @@ const jwt = require("jsonwebtoken");
 
 const ACCESS_TOKEN_EXPIRY = "15m";
 const REFRESH_TOKEN_EXPIRY = "30d";
+const SIGNUP_SESSION_EXPIRY = "15m";
 
 const createJWT = ({ payload, expiresIn }) => {
   return jwt.sign(payload, process.env.JWT_SECRET, { expiresIn });
@@ -62,9 +63,36 @@ const attachAdminCookiesToResponse = ({ res, admin, refreshToken }) => {
   });
 };
 
+// Short-lived cookie that authenticates the user during the in-progress
+// sign-up flow (between OTP verification and PIN confirmation). It's
+// intentionally separate from the real access/refresh tokens so a partially
+// signed-up account can't be used to access protected APIs.
+const attachSignupSessionCookie = ({ res, signupPayload }) => {
+  const token = createJWT({
+    payload: { signup: signupPayload },
+    expiresIn: SIGNUP_SESSION_EXPIRY,
+  });
+  res.cookie("signupSession", token, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    signed: true,
+    expires: new Date(Date.now() + fifteenMinutes),
+  });
+};
+
+const clearSignupSessionCookie = (res) => {
+  res.cookie("signupSession", "", {
+    httpOnly: true,
+    signed: true,
+    expires: new Date(Date.now()),
+  });
+};
+
 module.exports = {
   createJWT,
   isTokenValid,
   attachPassengerCookiesToResponse,
   attachAdminCookiesToResponse,
+  attachSignupSessionCookie,
+  clearSignupSessionCookie,
 };

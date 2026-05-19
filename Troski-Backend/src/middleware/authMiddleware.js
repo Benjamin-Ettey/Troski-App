@@ -96,6 +96,28 @@ const authenticateAdmin = async (req, res, next) => {
   }
 };
 
+// Authenticates a user mid-sign-up (between OTP verification and PIN
+// confirmation). Reads the short-lived `signupSession` signed cookie set
+// by /auth/verify-signup-otp.
+const requireSignupSession = (req, res, next) => {
+  const { signupSession } = req.signedCookies;
+  if (!signupSession) {
+    return res
+      .status(StatusCodes.UNAUTHORIZED)
+      .json({ msg: "Sign-up session missing or expired. Please start sign-up again." });
+  }
+  try {
+    const payload = isTokenValid(signupSession);
+    if (!payload.signup) throw new Error("malformed signup token");
+    req.signupUser = payload.signup; // { userId, phoneNumber, stage }
+    return next();
+  } catch (err) {
+    return res
+      .status(StatusCodes.UNAUTHORIZED)
+      .json({ msg: "Sign-up session invalid. Please start sign-up again." });
+  }
+};
+
 // Require the authenticated user's roles array to include `role`.
 // Use AFTER authenticateUser.
 const requireRole = (role) => (req, res, next) => {
@@ -127,6 +149,7 @@ module.exports = {
   authenticatePassenger,
   authenticateDriver,
   authenticateAdmin,
+  requireSignupSession,
   requireRole,
   requireSuperAdmin,
 };

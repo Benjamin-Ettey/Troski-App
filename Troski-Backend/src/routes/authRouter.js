@@ -1,16 +1,16 @@
 const express = require("express");
-
 const router = express.Router();
 const rateLimiter = require("express-rate-limit");
 
 const {
-  // User (passenger + driver share this)
+  // User
   userSignUp,
   verifySignUpOTP,
-  completeProfile,
+  setPin,
+  confirmPin,
+  login,
   verifyPin,
-  requestLoginOTP,
-  verifyLoginOTP,
+  completeProfile,
   userLogout,
 
   // Admin
@@ -36,17 +36,13 @@ const {
 const {
   authenticateUser,
   authenticateAdmin,
+  requireSignupSession,
   requireSuperAdmin,
 } = require("../middleware/authMiddleware");
 
 const { upload } = require("../middleware/multerMiddleware");
 
 // ---------- RATE LIMITERS ----------
-const otpRequestLimiter = rateLimiter({
-  windowMs: 1000 * 60 * 10,
-  max: 3,
-  message: { msg: "Too many OTP requests. Please try again later" },
-});
 const otpVerifyLimiter = rateLimiter({
   windowMs: 1000 * 60 * 10,
   max: 5,
@@ -57,6 +53,15 @@ const signUpLimiter = rateLimiter({
   max: 3,
   message: { msg: "Too many sign-up attempts. Please try again later" },
 });
+// PIN login is brute-force-able since PIN is 6 digits. Tight per-IP cap +
+// short window keeps it from being scriptable.
+const loginLimiter = rateLimiter({
+  windowMs: 1000 * 60 * 15,
+  max: 10,
+  message: {
+    msg: "Too many login attempts. Please wait 15 minutes and try again.",
+  },
+});
 const adminLoginLimiter = rateLimiter({
   windowMs: 1000 * 60 * 15,
   max: 10,
@@ -64,7 +69,17 @@ const adminLoginLimiter = rateLimiter({
 });
 
 // ============================================================
-// USER ROUTES (passengers + drivers — same endpoints)
+// USER (passengers + drivers — same endpoints)
+// Flow:
+//   POST /sign-up                 { name, phoneNumber, email }
+//   POST /verify-signup-otp       { phoneNumber, otpCode }     -> sets signup-session
+//   POST /set-pin                 { pinCode }                   (signup-session)
+//   POST /confirm-pin             { pinCode }                   (signup-session)
+//                                                                -> real session cookies
+//   POST /login                   { phoneNumber, pinCode }     -> real session cookies
+//   PATCH /complete-profile       { dateOfBirth, profilePhoto }
+//   POST /verify-pin              { pinCode }                   (gates in-app actions)
+//   DELETE /logout
 // ============================================================
 router.post("/sign-up", signUpLimiter, validateUserSignUpInput, userSignUp);
 router.post(
@@ -73,6 +88,10 @@ router.post(
   validateVerifyOtpInput,
   verifySignUpOTP,
 );
+router.post("/set-pin", requireSignupSession, validatePinInput, setPin);
+router.post("/confirm-pin", requireSignupSession, validatePinInput, confirmPin);
+router.post("/login", loginLimiter, validateLoginInput, login);
+
 router.patch(
   "/complete-profile",
   authenticateUser,
@@ -81,26 +100,13 @@ router.patch(
   completeProfile,
 );
 router.post("/verify-pin", authenticateUser, validatePinInput, verifyPin);
-router.post(
-  "/request-otp",
-  otpRequestLimiter,
-  validateLoginInput,
-  requestLoginOTP,
-);
-router.post(
-  "/verify-otp",
-  otpVerifyLimiter,
-  validateVerifyOtpInput,
-  verifyLoginOTP,
-);
 router.delete("/logout", authenticateUser, userLogout);
 
 // ============================================================
-// ADMIN ROUTES
-// ============================================================
+// ADMIN
 // First super_admin is seeded via src/scripts/seedSuperAdmin.js.
 // All further admins must be invited.
-
+// ============================================================
 router
   .route("/admin/invite")
   .post(

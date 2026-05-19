@@ -18,11 +18,14 @@ const AdminToken = require("../models/adminToken");
 
 const { StatusCodes } = require("http-status-codes");
 const crypto = require("crypto");
+const bcrypt = require("bcryptjs");
 const cloudinary = require("cloudinary");
 
 const {
   attachPassengerCookiesToResponse,
   attachAdminCookiesToResponse,
+  attachSignupSessionCookie,
+  clearSignupSessionCookie,
 } = require("../utils/tokenUtils");
 const { sendOTPEmail } = require("../utils/sendOTPEmail");
 const { sendOTPSMS } = require("../utils/sendOTPSMS");
@@ -32,17 +35,24 @@ const createTokenAdmin = require("../utils/createTokenAdmin");
 const { formatImage } = require("../middleware/multerMiddleware");
 
 // ============================================================
-// USER SIGN-UP (3 STEPS)
+// USER SIGN-UP (4 STEPS)
+//   1. /sign-up               { name, phoneNumber, email }
+//   2. /verify-signup-otp     { phoneNumber, otpCode }
+//        → sets short-lived `signupSession` cookie
+//   3. /set-pin               { pinCode }     (signup-session required)
+//   4. /confirm-pin           { pinCode }     (signup-session required)
+//        → account is created; real access/refresh cookies issued
 // ============================================================
 
-// STEP 1 — phone, email, pin, name. Creates an unverified user and sends OTP.
-// If a record exists but is unverified, we reuse and update it.
+// STEP 1 — collect identity. No PIN yet; OTP gets sent.
+// Continuation: if a user exists for this phone but PIN isn't set yet, we
+// reuse the row and resend an OTP (resetting phone-verified state so they
+// have to re-verify).
 const userSignUp = async (req, res) => {
-  const { phoneNumber, email, pinCode, name } = req.body;
+  const { phoneNumber, email, name } = req.body;
 
   const existing = await Passenger.findOne({ phoneNumber });
-
-  if (existing && existing.isPhoneVerified) {
+  if (existing && existing.pinCode) {
     return res.status(StatusCodes.BAD_REQUEST).json({
       msg: "An account with this phone number already exists. Please log in.",
     });
@@ -52,14 +62,14 @@ const userSignUp = async (req, res) => {
   if (existing) {
     existing.name = name;
     existing.email = email;
-    existing.pinCode = pinCode; // re-hashed by pre('save')
+    existing.isPhoneVerified = false;
+    existing.pendingPinCode = null;
     user = existing;
   } else {
     user = new Passenger({
       name,
       phoneNumber,
       email,
-      pinCode,
       roles: ["passenger"],
       isPhoneVerified: false,
       isProfileComplete: false,
@@ -81,10 +91,13 @@ const userSignUp = async (req, res) => {
   res.status(StatusCodes.CREATED).json({
     msg: "Sign-up started. OTP sent for verification.",
     phoneNumber: user.phoneNumber,
+    nextStep: "verify-signup-otp",
   });
 };
 
-// STEP 2 — verify the OTP from sign-up. Marks verified, logs the user in.
+// STEP 2 — verify the OTP. We don't issue a real session here, just a
+// short-lived `signupSession` cookie that authenticates /set-pin and
+// /confirm-pin. The account isn't usable until PIN confirmation.
 const verifySignUpOTP = async (req, res) => {
   const { phoneNumber, otpCode } = req.body;
 
@@ -94,10 +107,10 @@ const verifySignUpOTP = async (req, res) => {
       .status(StatusCodes.NOT_FOUND)
       .json({ msg: "Sign-up not started for this phone number" });
   }
-  if (user.isPhoneVerified) {
+  if (user.pinCode) {
     return res
       .status(StatusCodes.BAD_REQUEST)
-      .json({ msg: "Account already verified. Please log in." });
+      .json({ msg: "Account already created. Please log in." });
   }
   if (!user.otpCode || !user.otpExpiresAt) {
     return res
@@ -116,8 +129,99 @@ const verifySignUpOTP = async (req, res) => {
   user.isPhoneVerified = true;
   await user.save();
 
-  await issueUserSession(req, res, user, {
-    msg: "Phone verified. Please complete your profile.",
+  attachSignupSessionCookie({
+    res,
+    signupPayload: {
+      userId: user._id,
+      phoneNumber: user.phoneNumber,
+      stage: "post-otp",
+    },
+  });
+
+  res.status(StatusCodes.OK).json({
+    msg: "Phone verified. Please set your PIN.",
+    nextStep: "set-pin",
+  });
+};
+
+// STEP 3 — store a freshly-set PIN (hashed) into pendingPinCode.
+// Requires the signupSession cookie. Does NOT issue a real session yet —
+// the user has to type the PIN again at /confirm-pin to prove it wasn't
+// a typo.
+const setPin = async (req, res) => {
+  const { pinCode } = req.body;
+  const { userId } = req.signupUser;
+
+  const user = await Passenger.findById(userId);
+  if (!user) {
+    return res.status(StatusCodes.NOT_FOUND).json({ msg: "User not found" });
+  }
+  if (!user.isPhoneVerified) {
+    return res
+      .status(StatusCodes.FORBIDDEN)
+      .json({ msg: "Verify your phone number first" });
+  }
+  if (user.pinCode) {
+    return res
+      .status(StatusCodes.BAD_REQUEST)
+      .json({ msg: "PIN already set. Please log in instead." });
+  }
+
+  // Hash manually + write via updateOne so the pre('save') hook (which
+  // only watches `pinCode`) doesn't fire on the temporary field.
+  const salt = await bcrypt.genSalt(10);
+  const hashed = await bcrypt.hash(pinCode, salt);
+  await Passenger.updateOne(
+    { _id: user._id },
+    { $set: { pendingPinCode: hashed } },
+  );
+
+  res.status(StatusCodes.OK).json({
+    msg: "PIN recorded. Please confirm by entering it again.",
+    nextStep: "confirm-pin",
+  });
+};
+
+// STEP 4 — confirm the PIN matches what was set at /set-pin. On match:
+// promote the pending PIN to the real one, clear the signup-session, and
+// issue real access/refresh cookies. The account is fully created.
+const confirmPin = async (req, res) => {
+  const { pinCode } = req.body;
+  const { userId } = req.signupUser;
+
+  const user = await Passenger.findById(userId);
+  if (!user) {
+    return res.status(StatusCodes.NOT_FOUND).json({ msg: "User not found" });
+  }
+  if (!user.pendingPinCode) {
+    return res.status(StatusCodes.BAD_REQUEST).json({
+      msg: "No PIN to confirm. Please set a PIN first.",
+    });
+  }
+
+  const ok = await bcrypt.compare(pinCode, user.pendingPinCode);
+  if (!ok) {
+    return res.status(StatusCodes.UNAUTHORIZED).json({
+      msg: "PIN does not match. Please re-enter the same PIN you just created.",
+    });
+  }
+
+  // Promote pendingPinCode -> pinCode via updateOne so the pre('save')
+  // hook doesn't re-hash the already-hashed value.
+  await Passenger.updateOne(
+    { _id: user._id },
+    {
+      $set: { pinCode: user.pendingPinCode },
+      $unset: { pendingPinCode: 1 },
+    },
+  );
+
+  // Reload the user with the new state for token issuance
+  const updatedUser = await Passenger.findById(userId);
+
+  clearSignupSessionCookie(res);
+  await issueUserSession(req, res, updatedUser, {
+    msg: "Account created. Welcome to Troski!",
     nextStep: "complete-profile",
   });
 };
@@ -191,72 +295,32 @@ const verifyPin = async (req, res) => {
 };
 
 // ============================================================
-// USER LOGIN (OTP)
+// USER LOGIN (phone + PIN)
 // ============================================================
 
-const requestLoginOTP = async (req, res) => {
-  const { phoneNumber, method = "sms" } = req.body;
+// Returning users authenticate with phone + the PIN they set at sign-up.
+// Issues real access/refresh cookies. Rate-limited at the router.
+const login = async (req, res) => {
+  const { phoneNumber, pinCode } = req.body;
+
   const user = await Passenger.findOne({ phoneNumber });
-
-  if (!user) {
+  if (!user || !user.pinCode || !user.isPhoneVerified) {
     return res
-      .status(StatusCodes.NOT_FOUND)
-      .json({ msg: "Account not found" });
-  }
-  if (!user.isPhoneVerified) {
-    return res.status(StatusCodes.FORBIDDEN).json({
-      msg: "Phone number not verified. Please complete sign-up.",
-    });
+      .status(StatusCodes.UNAUTHORIZED)
+      .json({ msg: "Invalid credentials" });
   }
 
-  const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
-  user.otpCode = createHash(otpCode);
-  user.otpExpiresAt = new Date(Date.now() + 1000 * 60 * 5);
-  await user.save();
-
-  if (method === "email") {
-    await sendOTPEmail({ email: user.email, otpCode });
-  } else {
-    await sendOTPSMS({ phoneNumber: user.phoneNumber, otpCode });
+  const ok = await user.comparePinCode(pinCode);
+  if (!ok) {
+    return res
+      .status(StatusCodes.UNAUTHORIZED)
+      .json({ msg: "Invalid credentials" });
   }
 
-  res.status(StatusCodes.OK).json({
-    msg:
-      method === "email"
-        ? "OTP sent to email successfully"
-        : "OTP sent to phone number successfully",
+  await issueUserSession(req, res, user, {
+    msg: "Login successful",
+    nextStep: user.isProfileComplete ? null : "complete-profile",
   });
-};
-
-const verifyLoginOTP = async (req, res) => {
-  const { phoneNumber, otpCode } = req.body;
-
-  const user = await Passenger.findOne({ phoneNumber });
-  if (!user) {
-    return res.status(StatusCodes.NOT_FOUND).json({ msg: "User not found" });
-  }
-  if (!user.isPhoneVerified) {
-    return res.status(StatusCodes.FORBIDDEN).json({
-      msg: "Phone number not verified. Please complete sign-up.",
-    });
-  }
-  if (!user.otpCode) {
-    return res
-      .status(StatusCodes.BAD_REQUEST)
-      .json({ msg: "No OTP request found" });
-  }
-  if (user.otpExpiresAt && user.otpExpiresAt < new Date()) {
-    return res.status(StatusCodes.BAD_REQUEST).json({ msg: "OTP has expired" });
-  }
-  if (createHash(otpCode) !== user.otpCode) {
-    return res.status(StatusCodes.UNAUTHORIZED).json({ msg: "Invalid OTP" });
-  }
-
-  user.otpCode = null;
-  user.otpExpiresAt = null;
-  await user.save();
-
-  await issueUserSession(req, res, user, { msg: "Login successful" });
 };
 
 const userLogout = async (req, res) => {
@@ -497,10 +561,11 @@ module.exports = {
   // User (passenger + driver share this — roles differ)
   userSignUp,
   verifySignUpOTP,
-  completeProfile,
+  setPin,
+  confirmPin,
+  login,
   verifyPin,
-  requestLoginOTP,
-  verifyLoginOTP,
+  completeProfile,
   userLogout,
 
   // Admin

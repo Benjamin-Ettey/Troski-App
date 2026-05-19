@@ -1,89 +1,97 @@
 {
   "info": {
     "name": "Troski Backend",
-    "description": "Endpoint coverage for the Troski-Backend project. Import alongside the included environment file (`troski.postman_environment.json`). Cookies (accessToken + refreshToken) are set by the server on verify-otp/verify-signup-otp/admin login; Postman keeps them in its cookie jar automatically, so subsequent requests are authenticated as long as you stay in the same Postman session.\n\nFLOW TIPS:\n1. POST /auth/sign-up\n2. POST /auth/verify-signup-otp  (you must read the OTP from your SMS provider / server logs)\n3. PATCH /auth/complete-profile  (optional dateOfBirth + profilePhoto file)\n4. POST /auth/request-otp  (login on a new session)\n5. POST /auth/verify-otp\n\nFor admins, run the seed script first: `node src/scripts/seedSuperAdmin.js <username> <email> <password>` then POST /auth/admin/login.",
+    "description": "Endpoint coverage for the Troski-Backend project. Import alongside `troski.postman_environment.json`.\n\nCookies are managed by Postman automatically:\n  - signed `signupSession` cookie is set on /verify-signup-otp; required for /set-pin and /confirm-pin.\n  - signed `accessToken` + `refreshToken` cookies are set on /confirm-pin and /login; required for all authenticated endpoints.\n\nSIGN-UP FLOW (new user):\n  1. POST /auth/sign-up               { name, phoneNumber, email }\n  2. POST /auth/verify-signup-otp     { phoneNumber, otpCode }\n  3. POST /auth/set-pin               { pinCode }\n  4. POST /auth/confirm-pin           { pinCode }\n  → user is now logged in. They can call /complete-profile next.\n\nLOGIN FLOW (returning user):\n  POST /auth/login                    { phoneNumber, pinCode }\n\nADMIN: seed first super_admin via `node src/scripts/seedSuperAdmin.js <username> <email> <password>`, then POST /auth/admin/login.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "variable": [
-    {
-      "key": "baseUrl",
-      "value": "http://localhost:5000",
-      "type": "string"
-    },
-    {
-      "key": "phoneNumber",
-      "value": "0244000001",
-      "type": "string"
-    },
-    {
-      "key": "adminUsername",
-      "value": "superadmin",
-      "type": "string"
-    },
-    {
-      "key": "adminPassword",
-      "value": "Password123!",
-      "type": "string"
-    },
-    {
-      "key": "tripId",
-      "value": "",
-      "type": "string"
-    },
-    {
-      "key": "applicationId",
-      "value": "",
-      "type": "string"
-    },
-    {
-      "key": "inviteId",
-      "value": "",
-      "type": "string"
-    },
-    {
-      "key": "inviteToken",
-      "value": "",
-      "type": "string"
-    },
-    {
-      "key": "inviteEmail",
-      "value": "",
-      "type": "string"
-    }
+    { "key": "baseUrl", "value": "http://localhost:5000", "type": "string" },
+    { "key": "phoneNumber", "value": "0244000001", "type": "string" },
+    { "key": "adminUsername", "value": "superadmin", "type": "string" },
+    { "key": "adminPassword", "value": "Password123!", "type": "string" },
+    { "key": "tripId", "value": "", "type": "string" },
+    { "key": "applicationId", "value": "", "type": "string" },
+    { "key": "inviteId", "value": "", "type": "string" },
+    { "key": "inviteToken", "value": "", "type": "string" },
+    { "key": "inviteEmail", "value": "", "type": "string" }
   ],
   "item": [
     {
-      "name": "Auth — User (passenger + driver share)",
-      "description": "Unified sign-up + OTP login. Everyone starts as a passenger. Drivers gain their role only after a DriverApplication is approved by an admin.",
+      "name": "Auth — User Sign-up",
+      "description": "4-step sign-up flow. Steps 1-2 are public; steps 3-4 require the signupSession cookie set by step 2.",
       "item": [
         {
-          "name": "1. Sign Up (phone + email + name + PIN)",
+          "name": "1. Sign Up (name + phone + email)",
           "request": {
             "method": "POST",
             "header": [{ "key": "Content-Type", "value": "application/json" }],
             "url": "{{baseUrl}}/api/v1/auth/sign-up",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"name\": \"Ama Mensah\",\n  \"phoneNumber\": \"{{phoneNumber}}\",\n  \"email\": \"ama@example.com\",\n  \"pinCode\": \"123456\"\n}"
+              "raw": "{\n  \"name\": \"Ama Mensah\",\n  \"phoneNumber\": \"{{phoneNumber}}\",\n  \"email\": \"ama@example.com\"\n}"
             },
-            "description": "Creates an unverified user and sends an OTP via SMS (default) or email (set method=\"email\" in body). Rate-limited 3/10min per IP."
+            "description": "Creates an unverified user record and sends an OTP via SMS (default; pass method=\"email\" to use email instead). Rate-limited 3/10min per IP. If the phone is already fully registered (PIN set), returns 400."
           }
         },
         {
-          "name": "2. Verify Sign-Up OTP",
+          "name": "2. Verify Sign-up OTP",
           "request": {
             "method": "POST",
             "header": [{ "key": "Content-Type", "value": "application/json" }],
             "url": "{{baseUrl}}/api/v1/auth/verify-signup-otp",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"phoneNumber\": \"{{phoneNumber}}\",\n  \"otpCode\": \"REPLACE_WITH_OTP_FROM_LOGS\"\n}"
+              "raw": "{\n  \"phoneNumber\": \"{{phoneNumber}}\",\n  \"otpCode\": \"REPLACE_WITH_OTP\"\n}"
             },
-            "description": "On success: sets accessToken + refreshToken signed cookies and returns nextStep: 'complete-profile'."
+            "description": "Validates the OTP and sets a short-lived (15 min) `signupSession` signed cookie. Returns nextStep='set-pin'. NOT a real login yet — the cookie only works for /set-pin and /confirm-pin."
           }
         },
         {
-          "name": "3. Complete Profile (DOB + photo)",
+          "name": "3. Set PIN",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/api/v1/auth/set-pin",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"pinCode\": \"123456\"\n}"
+            },
+            "description": "Requires the signupSession cookie. Stores the (hashed) PIN in `pendingPinCode`. Returns nextStep='confirm-pin'."
+          }
+        },
+        {
+          "name": "4. Confirm PIN (account created → real session)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/api/v1/auth/confirm-pin",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"pinCode\": \"123456\"\n}"
+            },
+            "description": "User re-enters the same PIN. On match: PIN is promoted, signup cookie cleared, REAL accessToken + refreshToken cookies set. Account is now fully created. Returns nextStep='complete-profile'."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Auth — User Login & Session",
+      "item": [
+        {
+          "name": "Login (phone + PIN)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/api/v1/auth/login",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"phoneNumber\": \"{{phoneNumber}}\",\n  \"pinCode\": \"123456\"\n}"
+            },
+            "description": "Returning users. Rate-limited 10/15min per IP. On match, sets accessToken + refreshToken cookies. Returns nextStep='complete-profile' if the user hasn't filled DOB/photo yet."
+          }
+        },
+        {
+          "name": "Complete Profile (DOB + photo)",
           "request": {
             "method": "PATCH",
             "header": [],
@@ -95,11 +103,11 @@
                 { "key": "profilePhoto", "type": "file", "src": [] }
               ]
             },
-            "description": "Authenticated (cookies from step 2). Multipart. dateOfBirth must be 18+. profilePhoto is optional."
+            "description": "Authenticated. Multipart. dateOfBirth must be 18+. profilePhoto is optional."
           }
         },
         {
-          "name": "Verify PIN (gate sensitive ops)",
+          "name": "Verify PIN (gate sensitive in-app actions)",
           "request": {
             "method": "POST",
             "header": [{ "key": "Content-Type", "value": "application/json" }],
@@ -107,33 +115,8 @@
             "body": {
               "mode": "raw",
               "raw": "{\n  \"pinCode\": \"123456\"\n}"
-            }
-          }
-        },
-        {
-          "name": "Login: Request OTP",
-          "request": {
-            "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "url": "{{baseUrl}}/api/v1/auth/request-otp",
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"phoneNumber\": \"{{phoneNumber}}\",\n  \"method\": \"sms\"\n}"
             },
-            "description": "Rate-limited 3/10min. Only verified accounts can receive a login OTP."
-          }
-        },
-        {
-          "name": "Login: Verify OTP",
-          "request": {
-            "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "url": "{{baseUrl}}/api/v1/auth/verify-otp",
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"phoneNumber\": \"{{phoneNumber}}\",\n  \"otpCode\": \"REPLACE_WITH_OTP\"\n}"
-            },
-            "description": "Logs the user in. Sets fresh accessToken + refreshToken cookies. Rate-limited 5/10min."
+            "description": "Authenticated. Use to re-confirm PIN before high-risk actions (wallet ops, withdrawals, etc.)."
           }
         },
         {
@@ -148,7 +131,7 @@
     },
     {
       "name": "Auth — Admin (invite-only)",
-      "description": "Bootstrap the very first super_admin with `node src/scripts/seedSuperAdmin.js`. All further admins must be invited from a logged-in super_admin.",
+      "description": "Seed the first super_admin via `node src/scripts/seedSuperAdmin.js`. All further admins must be invited from a logged-in super_admin.",
       "item": [
         {
           "name": "Admin Login",
@@ -159,8 +142,7 @@
             "body": {
               "mode": "raw",
               "raw": "{\n  \"username\": \"{{adminUsername}}\",\n  \"password\": \"{{adminPassword}}\"\n}"
-            },
-            "description": "Rate-limited 10/15min."
+            }
           }
         },
         {
@@ -172,19 +154,15 @@
             "body": {
               "mode": "raw",
               "raw": "{\n  \"email\": \"newadmin@example.com\",\n  \"role\": \"admin\"\n}"
-            },
-            "description": "Generates a one-time invite link (48h expiry) and emails it. The raw token is never stored — only its hash."
+            }
           }
         },
         {
           "name": "List Outstanding Invites",
-          "request": {
-            "method": "GET",
-            "url": "{{baseUrl}}/api/v1/auth/admin/invite"
-          }
+          "request": { "method": "GET", "url": "{{baseUrl}}/api/v1/auth/admin/invite" }
         },
         {
-          "name": "Verify Invite (public; called by the dashboard)",
+          "name": "Verify Invite (public)",
           "request": {
             "method": "GET",
             "url": {
@@ -219,10 +197,7 @@
         },
         {
           "name": "Admin Logout",
-          "request": {
-            "method": "DELETE",
-            "url": "{{baseUrl}}/api/v1/auth/admin/logout"
-          }
+          "request": { "method": "DELETE", "url": "{{baseUrl}}/api/v1/auth/admin/logout" }
         }
       ]
     },
@@ -245,16 +220,12 @@
                 { "key": "ghanaCardImage", "type": "file", "src": [] },
                 { "key": "licenseImage", "type": "file", "src": [] }
               ]
-            },
-            "description": "Multipart. licenseID must match /^[A-Z]{3}-\\d{8}-\\d{4,5}$/. ghanaCardNumber must match /^GHA-\\d{9}-\\d$/."
+            }
           }
         },
         {
           "name": "Get My Application Status (user)",
-          "request": {
-            "method": "GET",
-            "url": "{{baseUrl}}/api/v1/driver-application/me"
-          }
+          "request": { "method": "GET", "url": "{{baseUrl}}/api/v1/driver-application/me" }
         },
         {
           "name": "List Applications (admin)",
@@ -264,9 +235,7 @@
               "raw": "{{baseUrl}}/api/v1/driver-application/admin?status=pending",
               "host": ["{{baseUrl}}"],
               "path": ["api", "v1", "driver-application", "admin"],
-              "query": [
-                { "key": "status", "value": "pending", "description": "pending | approved | rejected" }
-              ]
+              "query": [{ "key": "status", "value": "pending" }]
             }
           }
         },
@@ -281,8 +250,7 @@
           "name": "Approve Application (admin)",
           "request": {
             "method": "PATCH",
-            "url": "{{baseUrl}}/api/v1/driver-application/admin/{{applicationId}}/approve",
-            "description": "On approve: appends 'driver' to user.roles AND creates a Driver profile linked to the user."
+            "url": "{{baseUrl}}/api/v1/driver-application/admin/{{applicationId}}/approve"
           }
         },
         {
@@ -301,7 +269,6 @@
     },
     {
       "name": "Trip — Passenger",
-      "description": "Demand-aggregation rides. A passenger places a request; system clusters them with other passengers going to the same dropoff. Trip becomes visible to drivers only when 5+ passengers are in the same cluster.",
       "item": [
         {
           "name": "Request Ride (auto-cluster + escrow hold)",
@@ -326,16 +293,12 @@
             "body": {
               "mode": "raw",
               "raw": "{\n  \"pickup\": {\n    \"latitude\": 5.6037,\n    \"longitude\": -0.1870,\n    \"name\": \"Accra Mall\"\n  },\n  \"dropoff\": {\n    \"latitude\": 5.6698,\n    \"longitude\": -0.0167,\n    \"name\": \"Tema Station\"\n  }\n}"
-            },
-            "description": "Computes fare via zonesConfig, creates a Trip (or joins existing one within 200m of same dropoff), creates a Booking, and holds fareAmount in escrow on the passenger's wallet. Returns 402 if wallet balance is insufficient."
+            }
           }
         },
         {
           "name": "Get My Active Booking",
-          "request": {
-            "method": "GET",
-            "url": "{{baseUrl}}/api/v1/trip/my-booking"
-          }
+          "request": { "method": "GET", "url": "{{baseUrl}}/api/v1/trip/my-booking" }
         },
         {
           "name": "Cancel My Booking (refunds escrow)",
@@ -353,60 +316,35 @@
     },
     {
       "name": "Trip — Driver",
-      "description": "Driver-side trip operations. Require the user to have the 'driver' role and an approved Driver profile.",
       "item": [
         {
-          "name": "List Available Trips (matching my routes + nearby)",
-          "request": {
-            "method": "GET",
-            "url": "{{baseUrl}}/api/v1/trip/available",
-            "description": "Returns trips that are open_for_drivers, whose dropoff matches one of the driver's vehicle.routePreferences[*].to, and whose pickup centroid is within DRIVER_SEARCH_RADIUS_KM (5km) of the driver. Driver must be online + have fresh location."
-          }
+          "name": "List Available Trips",
+          "request": { "method": "GET", "url": "{{baseUrl}}/api/v1/trip/available" }
         },
         {
-          "name": "Accept Trip (atomic claim)",
-          "request": {
-            "method": "PATCH",
-            "url": "{{baseUrl}}/api/v1/trip/{{tripId}}/accept",
-            "description": "First-to-accept wins. Returns 409 if another driver already took it."
-          }
+          "name": "Accept Trip",
+          "request": { "method": "PATCH", "url": "{{baseUrl}}/api/v1/trip/{{tripId}}/accept" }
         },
         {
           "name": "Mark Arrived at Pickup",
-          "request": {
-            "method": "PATCH",
-            "url": "{{baseUrl}}/api/v1/trip/{{tripId}}/arrived",
-            "description": "Locks the group from new joiners."
-          }
+          "request": { "method": "PATCH", "url": "{{baseUrl}}/api/v1/trip/{{tripId}}/arrived" }
         },
         {
           "name": "Start Trip",
-          "request": {
-            "method": "PATCH",
-            "url": "{{baseUrl}}/api/v1/trip/{{tripId}}/start"
-          }
+          "request": { "method": "PATCH", "url": "{{baseUrl}}/api/v1/trip/{{tripId}}/start" }
         },
         {
-          "name": "Complete Trip (settles all passenger payouts)",
-          "request": {
-            "method": "PATCH",
-            "url": "{{baseUrl}}/api/v1/trip/{{tripId}}/complete",
-            "description": "For each active Booking: drops the passenger's escrow, credits the driver's wallet with trip.driverPayPerPassenger, records the platform's cut. Returns settlementErrors[] if any individual settlement fails (the trip is still marked completed)."
-          }
+          "name": "Complete Trip (settles payouts)",
+          "request": { "method": "PATCH", "url": "{{baseUrl}}/api/v1/trip/{{tripId}}/complete" }
         },
         {
-          "name": "Cancel Trip (driver, returns to pool)",
-          "request": {
-            "method": "PATCH",
-            "url": "{{baseUrl}}/api/v1/trip/{{tripId}}/cancel",
-            "description": "If trip still has 5+ active bookings, returns to open_for_drivers status for another driver. Below threshold, returns to forming."
-          }
+          "name": "Cancel Trip (returns to pool)",
+          "request": { "method": "PATCH", "url": "{{baseUrl}}/api/v1/trip/{{tripId}}/cancel" }
         }
       ]
     },
     {
       "name": "Driver Location",
-      "description": "Drivers must go online + share a fresh location to receive trip broadcasts. Real-time updates should go over socket.io ('driver:location' event). These HTTP endpoints are a fallback / for initial 'go online' state.",
       "item": [
         {
           "name": "Go Online",
@@ -434,10 +372,7 @@
         },
         {
           "name": "Go Offline",
-          "request": {
-            "method": "POST",
-            "url": "{{baseUrl}}/api/v1/driver-location/offline"
-          }
+          "request": { "method": "POST", "url": "{{baseUrl}}/api/v1/driver-location/offline" }
         }
       ]
     }

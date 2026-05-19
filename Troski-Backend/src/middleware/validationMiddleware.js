@@ -30,8 +30,9 @@ const validateIdParam = withValidationErrors([
 // USER SIGN-UP & LOGIN
 // ============================================================
 
-// Sign-up step 1: name + phone + email + pin.
-// Profile photo and date of birth are collected later at /complete-profile.
+// Sign-up step 1: name + phone + email ONLY.
+// PIN is collected later via /set-pin + /confirm-pin (after OTP verification).
+// Profile photo and DOB come later still, via /complete-profile.
 const validateUserSignUpInput = withValidationErrors([
   body("name").trim().notEmpty().withMessage("name is required"),
   body("phoneNumber")
@@ -46,6 +47,17 @@ const validateUserSignUpInput = withValidationErrors([
     .withMessage("email is required")
     .isEmail()
     .withMessage("invalid email address"),
+]);
+const validatePassengerSignUpInput = validateUserSignUpInput; // legacy alias
+
+// Login uses phone + PIN (not OTP).
+const validateLoginInput = withValidationErrors([
+  body("phoneNumber")
+    .trim()
+    .notEmpty()
+    .withMessage("phone number is required")
+    .isMobilePhone("en-GH")
+    .withMessage("invalid phone number"),
   body("pinCode")
     .trim()
     .notEmpty()
@@ -54,16 +66,6 @@ const validateUserSignUpInput = withValidationErrors([
     .withMessage("PIN Code should contain only numbers")
     .isLength({ min: 6, max: 6 })
     .withMessage("PIN code must be 6 digits"),
-]);
-const validatePassengerSignUpInput = validateUserSignUpInput; // legacy alias
-
-const validateLoginInput = withValidationErrors([
-  body("phoneNumber")
-    .trim()
-    .notEmpty()
-    .withMessage("phone number is required")
-    .isMobilePhone("en-GH")
-    .withMessage("invalid phone number"),
 ]);
 
 const validateVerifyOtpInput = withValidationErrors([

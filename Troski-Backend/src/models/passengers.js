@@ -19,6 +19,10 @@ const userSchema = new mongoose.Schema(
     phoneNumber: { type: String, unique: true, required: true },
     email: { type: String, required: true },
     pinCode: { type: String, default: null },
+    // Temporary holding spot for a freshly-set PIN during sign-up.
+    // Set by /auth/set-pin (hashed), then compared in /auth/confirm-pin.
+    // On confirm match it's promoted to `pinCode` and cleared.
+    pendingPinCode: { type: String, default: null },
 
     // ----- Roles -----
     roles: {
