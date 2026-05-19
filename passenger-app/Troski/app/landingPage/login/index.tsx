@@ -57,7 +57,7 @@ const Index = () => {
 
                     <View className="w-full flex-1 flex items-center px-6">
                         <View className="w-full py-2">
-                            <Text className="text-xl tracking-tight dark:text-general font-GoogleSansMedium">Enter phone number?</Text>
+                            <Text className="text-xl leading-6 tracking-tight dark:text-general font-GoogleSansMedium">Enter phone number?</Text>
                         </View>
 
                         <TextInput
@@ -76,12 +76,12 @@ const Index = () => {
 
                         {error ? (
                             <View className="mb-6 w-full items-start">
-                                <Text className="text-sm font-GoogleSansMedium text-red-600">
+                                <Text className="text-sm leading-4 font-GoogleSansMedium text-red-600">
                                     {error}
                                 </Text>
                             </View>
                         ) : <View className="mb-6 w-full items-start">
-                            <Text className="text-sm dark:text-tertiaryGray font-GoogleSansRegular">This is the number you provided when you created your account.</Text>
+                            <Text className="text-sm leading-6 dark:text-tertiaryGray font-GoogleSansRegular">This is the number you provided when you created your account.</Text>
                         </View>}
 
                         {isDisabled?

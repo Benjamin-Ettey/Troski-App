@@ -82,7 +82,7 @@ const ChangeOldPhoneNumber = () => {
 
 
     return (
-        <View style={{backgroundColor: colorScheme === "dark"? "#000000" : "#F5F7FA", flex: 1}}>
+        <View style={{backgroundColor: colorScheme === "dark"? "#000000" : "#F5F7FA"}} className="flex-1">
 
             <KeyboardAwareScrollView
                 keyboardShouldPersistTaps="handled"
@@ -94,7 +94,7 @@ const ChangeOldPhoneNumber = () => {
 
                 <View className="w-full flex-1 flex items-center px-6">
                     <View className="w-full py-2">
-                        <Text className="text-xl tracking-tight font-GoogleSansMedium dark:text-general">Enter old phone number?</Text>
+                        <Text className="text-xl leading-6 tracking-tight font-GoogleSansMedium dark:text-general">Enter old phone number?</Text>
                     </View>
 
                     <TextInput
@@ -105,8 +105,8 @@ const ChangeOldPhoneNumber = () => {
                         autoCapitalize="none"
                         keyboardType="phone-pad"
                         autoFocus={true}
-                        style={{paddingLeft: 16, height: 48}}
-                        className="bg-general dark:bg-secondaryBlack mb-1 font-medium dark:text-general text-secondaryGray w-full py-4 border border-tertiaryGray   rounded-xl focus:border dark:focus:border-tertiaryGray focus:border-green-600/40"
+                        style={{paddingLeft: 16}}
+                        className="h-14 dark:bg-secondaryBlack mb-1 font-medium dark:text-general text-secondaryGray w-full py-4 border border-tertiaryGray   rounded-xl focus:border dark:focus:border-tertiaryGray focus:border-green-600/40"
 
                     />
 
@@ -117,12 +117,12 @@ const ChangeOldPhoneNumber = () => {
                             </Text>
                         </View>
                     ) : <View className="mb-6 w-full items-start">
-                        <Text className="text-sm font-GoogleSansRegular dark:text-tertiaryGray">This is the number that is currently logged in.</Text>
+                        <Text className="text-sm leading-5 font-GoogleSansRegular dark:text-tertiaryGray">This is the number that is currently logged in.</Text>
                     </View>}
 
 
                     <View className="w-full py-2">
-                        <Text className="text-xl  tracking-tight font-GoogleSansMedium dark:text-general">Enter new phone number?</Text>
+                        <Text className="text-xl leading-6  tracking-tight font-GoogleSansMedium dark:text-general">Enter new phone number?</Text>
                     </View>
 
                     <TextInput
@@ -132,22 +132,22 @@ const ChangeOldPhoneNumber = () => {
                         autoCorrect={false}
                         autoCapitalize="none"
                         keyboardType="phone-pad"
-                        style={{paddingLeft: 16, height: 48 }}
-                        className="bg-general dark:bg-secondaryBlack mb-1 font-medium dark:text-general text-secondaryGray w-full py-4 border border-tertiaryGray   rounded-xl focus:border dark:focus:border-tertiaryGray focus:border-green-600/40"
+                        style={{paddingLeft: 16}}
+                        className="h-14 dark:bg-secondaryBlack mb-1 font-medium dark:text-general text-secondaryGray w-full py-4 border border-tertiaryGray   rounded-xl focus:border dark:focus:border-tertiaryGray focus:border-green-600/40"
 
                     />
 
 
                     {newError ? (
                         <View className="mb-6 w-full items-start">
-                            <Text className="text-sm font-GoogleSansMedium text-red-600">
+                            <Text className="text-sm leading-5 font-GoogleSansMedium text-red-600">
                                 {newError}
                             </Text>
                         </View>
                     ) :
                         <View className="mb-6 w-full flex flex-row  items-center">
-                            <Ionicons style={{paddingRight: 5, }} name="checkmark-circle-sharp" size={16} color="green"/>
-                            <Text className="text-sm font-GoogleSansRegula flex-shrink dark:text-tertiaryGray">To proceed, confirm that your new phone number can receive SMS or calls.</Text>
+                            <Ionicons style={{paddingRight: 5 }} name="checkmark-circle-sharp" size={16} color="green"/>
+                            <Text className="text-sm leading-5 font-GoogleSansRegula flex-shrink dark:text-tertiaryGray">To proceed, confirm that your new phone number can receive SMS or calls.</Text>
                     </View>}
 
 

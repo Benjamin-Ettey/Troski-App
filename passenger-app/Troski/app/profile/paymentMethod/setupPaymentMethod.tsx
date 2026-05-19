@@ -101,43 +101,29 @@ const SetupPaymentMethod = () => {
 
                 <View className="w-full flex-1 flex items-center px-6">
 
-                    {/* SERVICE PROVIDER */}
+
                     <View className="w-full py-2">
-                        <Text className="text-xl tracking-tight font-GoogleSansMedium dark:text-general">
+                        <Text className="text-xl leading-6 tracking-tight font-GoogleSansMedium dark:text-general">
                             Select Service Provider
                         </Text>
                     </View>
 
                     <TouchableOpacity
                         onPress={() => setOpen(!open)}
-                        style={{
-                            paddingHorizontal: 16,
-                            height: 48,
-                            marginBottom: 6,
-                        }}
-                        className="mb-1 flex flex-row justify-between items-center font-GoogleSansRegular text-secondaryGray w-full dark:border-tertiaryGray border border-green-600/40 rounded-xl"
+                        className="flex px-4 h-14 mb-2 flex-row justify-between items-center font-GoogleSansRegular text-secondaryGray w-full dark:border-tertiaryGray border border-green-600/40 rounded-xl"
                     >
 
                         <View
-                            className="flex flex-row items-center"
-                            style={{ gap: 12 }}
+                            className="flex flex-row items-center gap-4"
                         >
 
                             {selectedValue !== "Select service provider" && (
                                 <View
-                                    style={{
-                                        width: 32,
-                                        height: 32,
-                                        overflow: "hidden",
-                                    }}
-                                    className="rounded-full"
+                                    className="rounded-full h-9 w-9 overflow-hidden"
                                 >
                                     <Image
                                         source={getProviderLogo(selectedValue)}
-                                        style={{
-                                            width: "100%",
-                                            height: "100%",
-                                        }}
+                                        className="w-full h-full"
                                         resizeMode="cover"
                                     />
                                 </View>
@@ -164,7 +150,7 @@ const SetupPaymentMethod = () => {
 
                     {providerError ? (
                         <View className="w-full items-start mb-3">
-                            <Text className="text-sm font-GoogleSansMedium text-red-600">
+                            <Text className="text-sm leading-4 font-GoogleSansMedium text-red-600">
                                 {providerError}
                             </Text>
                         </View>
@@ -173,12 +159,9 @@ const SetupPaymentMethod = () => {
                     {open && (
                         <View
                             style={{
-                                marginBottom: 10,
-                                paddingVertical: 8,
-                                paddingHorizontal: 16,
                                 backgroundColor: "#a9a9a922"
                             }}
-                            className="w-full gap-2 border-tertiaryGray border font-GoogleSansMedium rounded-xl"
+                            className="w-full gap-2 px-5 mb-3 border-tertiaryGray border font-GoogleSansMedium rounded-xl"
                         >
 
                             {["MTN", "Telecel", "Airtel/Tigo"].map((item) => (
@@ -190,32 +173,20 @@ const SetupPaymentMethod = () => {
                                         setProviderError('');
                                         setOpen(false);
                                     }}
-                                    style={{
-                                        padding: 6,
-                                    }}
-                                    className="w-full flex flex-row items-center rounded-xl"
+                                    className="w-full py-2 flex flex-row items-center rounded-xl"
                                 >
 
                                     <View
-                                        style={{
-                                            width: 32,
-                                            height: 32,
-                                            overflow: "hidden",
-                                            marginRight: 12,
-                                        }}
-                                        className="rounded-full"
+                                        className="rounded-full h-9 w-9 mr-4 overflow-hidden"
                                     >
                                         <Image
                                             source={getProviderLogo(item)}
-                                            style={{
-                                                width: "100%",
-                                                height: "100%",
-                                            }}
+                                            className="w-full h-full"
                                             resizeMode="cover"
                                         />
                                     </View>
 
-                                    <Text className="font-GoogleSansRegular text-xl dark:text-tertiaryGray">
+                                    <Text className="font-GoogleSansRegular text-xl leading-6 dark:text-tertiaryGray">
                                         {item}
                                     </Text>
 
@@ -228,7 +199,7 @@ const SetupPaymentMethod = () => {
 
                     {/* PHONE NUMBER */}
                     <View className="w-full py-2">
-                        <Text className="text-xl tracking-tight font-GoogleSansMedium dark:text-general">
+                        <Text className="text-xl leading-6 tracking-tight font-GoogleSansMedium dark:text-general">
                             Phone number
                         </Text>
                     </View>
@@ -241,19 +212,19 @@ const SetupPaymentMethod = () => {
                         autoCapitalize="none"
                         keyboardType="phone-pad"
                         autoFocus={true}
-                        style={{ paddingLeft: 16, height: 48 }}
-                        className="mb-1 font-medium dark:text-general text-secondaryGray w-full py-4 border border-tertiaryGray rounded-xl dark:focus:border-tertiaryGray focus:border focus:border-green-600/40"
+                        style={{ paddingLeft: 16}}
+                        className="mb-1 font-medium dark:text-general text-secondaryGray w-full h-14 border border-tertiaryGray rounded-xl dark:focus:border-tertiaryGray focus:border focus:border-green-600/40"
                     />
 
                     {error ? (
                         <View className="mb-6 w-full items-start">
-                            <Text className="text-sm font-GoogleSansMedium text-red-600">
+                            <Text className="text-sm leading-4 font-GoogleSansMedium text-red-600">
                                 {error}
                             </Text>
                         </View>
                     ) : (
                         <View className="mb-6 w-full items-start">
-                            <Text className="text-sm font-GoogleSansRegular dark:text-tertiaryGray">
+                            <Text className="text-sm leading-4 font-GoogleSansRegular dark:text-tertiaryGray">
                                 This number will be used for payment transactions.
                             </Text>
                         </View>

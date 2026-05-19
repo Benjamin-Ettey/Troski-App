@@ -636,26 +636,40 @@ const SearchDriver = () => {
                                     </View>
                                 </View>
                             ) : (
-                                <View className="flex-1 justify-center items-center">
+                                <View className="flex-1 w-full">
 
-                                    <View className="justify-center items-center">
 
-                                        <LottieView
-                                            source={require("../../../assets/video/loadingdots.json")}
-                                            autoPlay
-                                            loop
-                                            style={{
-                                                width: 300,
-                                                height: 300,
-                                            }}
-                                        />
+                                    <View className="flex-1 w-full justify-center items-center">
 
-                                        <View className="absolute bottom-10">
-                                            <Text className="font-GoogleSansRegular dark:text-tertiaryGray text-center">
-                                                Searching for a driver. Please be patient...
-                                            </Text>
+                                        <View className="justify-center items-center">
+
+                                            <LottieView
+                                                source={require("../../../assets/video/loadingdots.json")}
+                                                autoPlay
+                                                loop
+                                                style={{
+                                                    width: 300,
+                                                    height: 300,
+                                                }}
+                                            />
+
+                                            <View className="absolute bottom-10">
+                                                <Text className="font-GoogleSansRegular dark:text-tertiaryGray text-center">
+                                                    Searching for a driver. Please be patient...
+                                                </Text>
+                                            </View>
+
                                         </View>
 
+                                    </View>
+
+
+                                    <View className="justify-center w-full items-center pb-10">
+                                        <PrimaryButton
+                                            name="Cancel Ride"
+                                            disabled={false}
+                                            onPress={() => router.replace("/homepage")}
+                                        />
                                     </View>
 
                                 </View>

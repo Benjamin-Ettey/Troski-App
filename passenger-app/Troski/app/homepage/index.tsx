@@ -1,6 +1,6 @@
 // @ts-ignore
 
-import {View, Pressable, TouchableOpacity} from "react-native";
+import {View, Pressable, TouchableOpacity, Text} from "react-native";
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { StatusBar } from "expo-status-bar";
 import MapView, { Marker, Circle } from "react-native-maps";
@@ -104,7 +104,18 @@ const Index = () => {
                 {coords && (
 
                     <>
-                    <Marker coordinate={coords} pinColor="#ffcc00"/>
+                        <Marker coordinate={coords}>
+                            <View className="items-center">
+                                <View
+                                    className="w-10 h-10 rounded-full border-4 border-general bg-blue-500 items-center justify-center"
+                                >
+
+                                </View>
+
+
+
+                            </View>
+                        </Marker>
 
 
                     <Circle
@@ -174,7 +185,7 @@ const Index = () => {
             >
                 <BottomSheetView>
                     <View className="flex flex-col gap-4" style={{ paddingHorizontal: 16, paddingVertical: 8 }}>
-                        <SearchBarButton name="Where are you going?" onPress={handleSearchRides}/>
+                        <SearchBarButton name="Where to?" onPress={handleSearchRides}/>
                         <RollingTrips/>
                     </View>
 

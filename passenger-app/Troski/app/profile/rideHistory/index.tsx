@@ -69,21 +69,23 @@ const Index = () => {
     return (
 
 
-        <View style={{backgroundColor: colorScheme === "dark"? "#000000" : "#F5F7FA", flex: 1}} className="w-full">
+        <View style={{backgroundColor: colorScheme === "dark"? "#000000" : "#F5F7FA"}} className="w-full flex-1">
 
             {showRideHistory?
-                <View style={{flex: 1, marginTop: "-20%"}} className="w-full flex justify-center items-center">
-                    <Ionicons style={{marginBottom: 10}} name="timer-outline" size={100} color="gray"/>
-                    <Text className="font-GoogleSansMedium dark:text-general">No Ride History.</Text>
-                    <Text style={{marginBottom: 16, }} className="font-GoogleSansRegular dark:text-tertiaryGray text-center flex-shrink">Your ride history will appear here once you book a ride.</Text>
+                <View style={{ marginTop: "-20%"}} className="w-full flex-1 flex justify-center items-center">
+                    <Ionicons className="mb-3" name="timer-outline" size={100} color="gray"/>
+                    <Text className="font-GoogleSansMedium text-xl leading-6 tracking-tighter dark:text-general">No Ride History.</Text>
+                    <Text className="font-GoogleSansRegular mb-4 text-sm leading-5 dark:text-tertiaryGray text-center flex-shrink">Your ride history will appear here once you book a ride.</Text>
 
-                    <TouchableOpacity onPress={()=>router.push("/homepage/bookings")} style={{paddingHorizontal: 12, paddingVertical: 12, height: 42}} className="bg-primary rounded-full flex justify-center items-center">
-                        <Text className="font-GoogleSansMedium">Book a ride</Text>
+                    <TouchableOpacity
+                        onPress={()=>router.push("/homepage/bookings")}
+                        className="bg-primary rounded-full px-4 h-12 flex justify-center items-center">
+                        <Text className="font-GoogleSansMedium text-base leading-5">Book a ride</Text>
                     </TouchableOpacity>
                 </View>
                 :
                 <View style={{paddingLeft: 16}} className="w-full flex items-center">
-                    <View style={{borderRadius: 32, marginTop: 4}} >
+                    <View >
                     <SectionList
                         contentContainerStyle={{paddingBottom: 100}}
                         sections={DATA}
@@ -91,8 +93,8 @@ const Index = () => {
 
                         renderSectionHeader={({section})=>{
                             return(
-                                <View style={{paddingHorizontal: 16, marginTop: 24}}>
-                                    <Text className="font-GoogleSansMedium text-xl dark:text-general">{section.date}</Text>
+                                <View >
+                                    <Text className="font-GoogleSansMedium px-4 text-xl leading-6 mt-6 dark:text-general">{section.date}</Text>
                                 </View>
                             )
                         }}
@@ -102,8 +104,7 @@ const Index = () => {
 
                             <>
                                 <View
-                                    style={{height: 72, borderRadius: 24, paddingLeft: 20, paddingRight: 20,}}
-                                    className="w-full  flex flex-row justify-between items-center">
+                                    className="w-full h-20 px-6 flex flex-row justify-between items-center">
                                     <View>
                                         <Ionicons name="location" size={32} color={colorScheme === "dark"? "#ffffff":"black"}/>
 
@@ -111,33 +112,31 @@ const Index = () => {
 
 
                                     <View
-                                        style={{flex: 1, gap: 2, paddingLeft: 16 }}
-                                        className="flex  flex-col justify-center items-center ">
+                                        style={{paddingLeft: 16 }}
+                                        className="flex flex-1 gap-2  flex-col justify-center items-center ">
                                         <View className="flex flex-row justify-start items-center w-full gap-2">
-                                            <Text className="text-xl font-GoogleSansRegular dark:text-general">
+                                            <Text className="text-xl leading-6 font-GoogleSansRegular dark:text-general">
                                                 {item.pickup}
                                             </Text>
 
                                             <Ionicons name="arrow-forward" size={12} color={colorScheme === "dark"? "#ffffff":"black"}/>
 
-                                            <Text className="text-xl font-GoogleSansRegular dark:text-general">
+                                            <Text className="text-xl leading-6 font-GoogleSansRegular dark:text-general">
                                                 {item.destination}
                                             </Text>
                                         </View>
 
                                         <View className="w-full flex flex-row gap-2 items-center ">
                                             <Text
-                                                style={{paddingHorizontal: 4, fontSize: 12}}
-                                                className=" text-secondaryBlack font-GoogleSansRegular rounded-full dark:text-tertiaryGray">{item.date}</Text>
+                                                className=" text-secondaryBlack text-sm leading-4 font-GoogleSansRegular rounded-full dark:text-tertiaryGray">{item.date}</Text>
 
 
                                         </View>
                                     </View>
 
                                     <View
-                                        style={{width: 84, height: 32, paddingHorizontal: 2}}
-                                        className="rounded-full bg-primary dark:bg-secondaryBlack flex justify-center items-center">
-                                        <Text numberOfLines={1} className="font-GoogleSansBold text-sm dark:text-primary">{item.price}</Text>
+                                        className="rounded-full h-9 w-24 px-1 bg-primary dark:bg-secondaryBlack flex justify-center items-center">
+                                        <Text numberOfLines={1} className="font-GoogleSansBold text-sm leading-4 dark:text-primary">{item.price}</Text>
                                     </View>
 
                                 </View>
@@ -152,11 +151,11 @@ const Index = () => {
                         }}/>
                     </View>
 
-                    <View style={{ bottom: 0, height: "15%"}} className="absolute w-full flex justify-center items-center">
+                    <View className="absolute bottom-12 w-full flex justify-center items-center">
                         <TouchableOpacity onPress={handleClearRideHistory}
-                              style={{paddingHorizontal: 12, paddingVertical: 12, backgroundColor: "#ff0000"}}
-                              className=" rounded-full  flex justify-center items-center">
-                            <Text style={{color: "white"}} className="font-GoogleSansMedium">Clear Ride History</Text>
+                              style={{backgroundColor: "#ff0000"}}
+                              className=" rounded-full px-4 h-12 flex justify-center items-center">
+                            <Text className="font-GoogleSansMedium text-base leading-5 text-general">Clear Ride History</Text>
                         </TouchableOpacity>
                     </View>
 
