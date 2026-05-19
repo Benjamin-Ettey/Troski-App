@@ -1,13 +1,13 @@
 import {View, Text} from 'react-native'
 import React from 'react'
-import "../global.css"
 
 const Index = () => {
 
     return (
-        <View>
-            <Text className="font-ManropeBold text-xl tracking-tighter">Edit this index.js for the driver screen based on the UI!</Text>
-
+        <View style={{flex: 1}} className="flex justify-center items-center">
+           <Text>
+               Homepage
+           </Text>
         </View>
     )
 }

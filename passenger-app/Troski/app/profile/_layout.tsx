@@ -1,53 +1,112 @@
 import React from 'react'
 import {router, Stack} from "expo-router";
-import {TouchableOpacity} from "react-native";
+import {TouchableOpacity, View} from "react-native";
 import {Ionicons} from "@expo/vector-icons";
+import {KeyboardProvider} from "react-native-keyboard-controller";
+import {GestureHandlerRootView} from "react-native-gesture-handler";
+import {BottomSheetModalProvider} from "@gorhom/bottom-sheet";
+import {useColorScheme} from "nativewind";
 
-const _Layout = () => {
+const ProfileRoute = () => {
+
+    const { colorScheme } = useColorScheme();
+
+
     return (
-        <Stack>
-            <Stack.Screen
-                name="profileScreen"
-                options={()=> ({
-                    headerShadowVisible: false,
-                    headerStyle: {backgroundColor: "#F5F7FA"},
-                    headerTitle: 'Profile',
-                    headerLeft: ()=>(
-                        <TouchableOpacity onPress={()=>router.back()} style={{display: "flex", justifyContent: "center", alignItems: "center"}}>
-                            <Ionicons name="chevron-back" size={30} color="black"/>
-                        </TouchableOpacity>
-                    )
-                })}
-            />
+        <GestureHandlerRootView>
+            <BottomSheetModalProvider>
+                <KeyboardProvider>
+                    <View style={{flex:1 , backgroundColor: colorScheme === "dark"? "#000000": "#ffffff"}}>
 
-            <Stack.Screen
-                name="editProfile"
-                options={()=> ({
-                    headerShadowVisible: false,
-                    headerStyle: {backgroundColor: "#F5F7FA"},
-                    headerTitle: 'Edit Profile',
-                    headerLeft: ()=>(
-                        <TouchableOpacity onPress={()=>router.back()} style={{display: "flex", justifyContent: "center", alignItems: "center"}}>
-                            <Ionicons name="chevron-back" size={30} color="black"/>
-                        </TouchableOpacity>
-                    )
-                })}
-            />
+                        <Stack>
+                            <Stack.Screen
+                                name="index"
+                                options={()=> ({
+                                    headerShadowVisible: false,
 
-            <Stack.Screen
-                name="rideHistory"
-                options={()=> ({
-                    headerShadowVisible: false,
-                    headerStyle: {backgroundColor: "#F5F7FA"},
-                    headerTitle: 'Ride History',
-                    headerLeft: ()=>(
-                        <TouchableOpacity onPress={()=>router.back()} style={{display: "flex", justifyContent: "center", alignItems: "center"}}>
-                            <Ionicons name="chevron-back" size={30} color="black"/>
-                        </TouchableOpacity>
-                    )
-                })}
-            />
-        </Stack>
+                                    headerStyle: {
+                                        backgroundColor:
+                                            colorScheme === "dark" ? "#000000" : "#F5F7FA",
+                                    },
+                                    headerTintColor:
+                                        colorScheme === "dark" ? "#FFFFFF" : "#000000",
+
+                                    headerTitle: 'Profile',
+                                    headerLeft: ()=>(
+                                        <TouchableOpacity onPress={()=>router.back()} style={{display: "flex", justifyContent: "center", alignItems: "center"}}>
+                                            <Ionicons name="chevron-back" size={30} color={colorScheme==="dark"? "white": "black"}/>
+                                        </TouchableOpacity>
+                                    )
+                                })}
+                            />
+
+                            <Stack.Screen
+                                name="editProfile"
+                                options={()=> ({
+                                    headerShown: false
+                                })}
+                            />
+
+                            <Stack.Screen
+                                name="rideHistory"
+                                options={()=> ({
+                                    headerShown: false
+                                })}
+                            />
+
+                            <Stack.Screen
+                                name="paymentMethod"
+                                options={()=> ({
+                                    headerShown: false
+                                })}
+                            />
+
+
+
+                            <Stack.Screen
+                                name="myWallet"
+                                options={()=> ({
+                                    headerShown: false
+                                })}
+                            />
+
+                            <Stack.Screen
+                                name="settings"
+                                options={()=> ({
+                                    headerShown: false
+                                })}
+                            />
+
+
+                            <Stack.Screen
+                                name="information"
+                                options={()=> ({
+                                    headerShown: false
+                                })}
+                            />
+
+                            <Stack.Screen
+                                name="recentEmails"
+                                options={()=> ({
+                                    headerShown: false
+                                })}
+                            />
+
+                            <Stack.Screen
+                                name="requestRefund"
+                                options={()=> ({
+                                    headerShown: false
+                                })}
+                            />
+
+
+
+
+                        </Stack>
+                    </View>
+                </KeyboardProvider>
+            </BottomSheetModalProvider>
+        </GestureHandlerRootView>
     )
 }
-export default _Layout
+export default ProfileRoute

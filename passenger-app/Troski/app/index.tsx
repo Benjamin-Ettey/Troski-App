@@ -1,19 +1,86 @@
-import {View, Text, TouchableOpacity} from 'react-native'
-import React from 'react'
-import "../global.css"
-import {router} from "expo-router";
+import React, { useEffect, useRef } from "react";
+import { View, StyleSheet } from "react-native";
+import { router } from "expo-router";
+import { StatusBar } from "expo-status-bar";
+import { useAppStore } from "@/utils/store";
+import { VideoView, useVideoPlayer } from "expo-video";
+import { useAudioPlayer } from "expo-audio";
 
-const Index = () => {
+const videoSource = require("../assets/video/splash.mp4");
+const audioSource = require("../assets/audio/splashhorn.mp3");
+
+const Splash: React.FC = () => {
+    const loggedIn = useAppStore((state) => state.loggedIn);
+
+    const player = useVideoPlayer(videoSource);
+    const audioPlayer = useAudioPlayer(audioSource);
+
+
+    const hasPlayedRef = useRef(false);
+
+
+    useEffect(() => {
+        if (hasPlayedRef.current) return;
+        hasPlayedRef.current = true;
+
+        const playVideo = async () => {
+            try {
+                await player.play();
+            } catch (err) {
+                console.warn("Video play failed:", err);
+            }
+        };
+
+        playVideo();
+    }, [player]);
+
+
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            try {
+                audioPlayer.play();
+            } catch (err) {
+                console.warn("Audio play failed:", err);
+            }
+        }, 3000);
+
+        return () => clearTimeout(timer);
+    }, [audioPlayer]);
+
+
+    useEffect(() => {
+        const sub = player.addListener?.("playToEnd", () => {
+            if (!loggedIn) {
+                router.replace("/landingPage");
+            } else {
+                router.replace("/homepage");
+            }
+        });
+
+        return () => {
+            sub?.remove?.();
+        };
+    }, [player, loggedIn]);
 
     return (
-        <View className="w-full flex items-center ">
-            <Text className="font-DMSansBlack text-2xl tracking-tighter text-center mb-2">Click on the Go to see what shows next. </Text>
-            <TouchableOpacity
-                className="px-4 bg-blue-500 rounded-full w-[30%] h-12 flex justify-center items-center"
-                onPress={()=> router.push("../onboarding/landingPage")}>
-                <Text className="text-xl font-bold text-white">Go</Text>
-            </TouchableOpacity>
+        <View style={styles.container}>
+            <StatusBar hidden />
+
+            <VideoView
+                player={player}
+                style={StyleSheet.absoluteFill}
+                contentFit="cover"
+                nativeControls={false}
+            />
         </View>
-    )
-}
-export default Index
+    );
+};
+
+export default Splash;
+
+const styles = StyleSheet.create({
+    container: {
+        flex: 1,
+        backgroundColor: "#000",
+    },
+});
