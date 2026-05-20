@@ -39,7 +39,7 @@ const TripRow = ({ item, onPress }: { item: TripItem; onPress: () => void }) => 
 
                     <Image
                         source={require("../../assets/images/minibus.png")}
-                        className="w-9 h-9"
+                        className="w-9 h-9 mx-2"
                     />
 
 
