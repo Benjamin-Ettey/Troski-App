@@ -31,74 +31,78 @@ const TripRow = ({ item, onPress }: { item: TripItem; onPress: () => void }) => 
     return (
         <Pressable
             onPress={onPress}
-            style={{
-                height: 72,
-                borderRadius: 24,
-                marginBottom: 12,
-                paddingLeft: 20,
-                paddingRight: 20,
-                gap: 24,
-            }}
-            className="w-full bg-tertiaryWhite dark:bg-secondaryGray/40 flex flex-row justify-between items-center"
+            className="w-full h-20 rounded-3xl px-4 mb-4 gap-4 bg-tertiaryWhite dark:bg-secondaryGray/40 flex flex-col justify-center items-center"
         >
-            <View>
-                <Image
-                    source={require("../../assets/images/minibus.png")}
-                    style={{ width: 32, height: 32 }}
-                />
-            </View>
+            <View className="flex w-full flex-row justify-between items-center gap-4">
 
-            <View
-                style={{ width: "50%", gap: 2 }}
-                className="flex flex-col justify-center items-center "
-            >
-                <View className="flex flex-row justify-start items-center w-full gap-2">
-                    <Text
-                        numberOfLines={1}
-                        ellipsizeMode="tail"
-                        className="text-xl font-GoogleSansRegular text-secondaryBlack dark:text-tertiaryGray"
-                        style={{ maxWidth: "45%" }}
-                    >
-                        {item.pickup}
-                    </Text>
+                <View className="flex-row flex gap-4 flex-1">
 
-                    <Ionicons name="arrow-forward" size={12} color={colorScheme === "dark"? "#f0f0f0": "#444444"} />
+                    <Image
+                        source={require("../../assets/images/minibus.png")}
+                        className="w-9 h-9 mx-2"
+                    />
 
-                    <Text
-                        numberOfLines={1}
-                        ellipsizeMode="tail"
-                        className="text-xl font-GoogleSansRegular text-secondaryBlack dark:text-tertiaryGray"
-                        style={{ maxWidth: "45%" }}
-                    >
-                        {item.destination}
-                    </Text>
-                </View>
 
-                <View className="w-full flex flex-row gap-2 items-center mt-1">
-                    <Text
-                        style={{ paddingHorizontal: 6, paddingVertical: 2, fontSize: 10 }}
-                        className="text-white bg-secondaryBlack font-GoogleSansRegular rounded-full"
-                    >
-                        {item.minutes}
-                    </Text>
+                    <View className="flex flex-col">
 
-                    <View style={{ gap: 2 }} className="flex flex-row items-center ml-2">
-                        <Ionicons name="person" size={10} color={colorScheme === "dark"? "#f0f0f0": "gray"} />
-                        <Text className="font-GoogleSansRegular text-secondaryGray dark:text-tertiaryWhite" style={{ fontSize: 12 }}>
-                            {item.passengercount}
-                        </Text>
+                        <View className="flex  flex-row justify-start items-center gap-2">
+                            <Text
+                                numberOfLines={1}
+                                ellipsizeMode="tail"
+                                className="text-lg leading-5 font-GoogleSansRegular max-w-[80px] text-secondaryBlack dark:text-tertiaryGray"
+                            >
+                                {item.pickup}
+                            </Text>
+
+                            <Ionicons name="arrow-forward" size={12} color={colorScheme === "dark"? "#f0f0f0": "#444444"} />
+
+                            <Text
+                                numberOfLines={1}
+                                ellipsizeMode="tail"
+                                className="text-lg leading-5 font-GoogleSansRegular max-w-[80px] text-secondaryBlack dark:text-tertiaryGray"
+                            >
+                                {item.destination}
+                            </Text>
+                        </View>
+
+                        <View className="w-full flex flex-row items-center mt-1">
+                            <Text
+                                className="text-white text-xs leading-4 px-2 py-0.5 bg-secondaryBlack font-GoogleSansRegular rounded-full"
+                            >
+                                {item.minutes}
+                            </Text>
+
+                            <View className="flex gap-1 flex-row items-center ml-2">
+                                <Ionicons name="person" size={12} color={colorScheme === "dark"? "#f0f0f0": "gray"} />
+                                <Text className="font-GoogleSansRegular text-sm leading-4 text-secondaryGray dark:text-tertiaryWhite">
+                                    {item.passengercount}
+                                </Text>
+                            </View>
+                        </View>
+
                     </View>
+
                 </View>
+
+
+                <View
+                    className="rounded-full h-9 w-24 bg-primary dark:bg-secondaryBlack flex justify-center items-center"
+                >
+                    <Text numberOfLines={1} className="font-GoogleSansBold text-sm leading-4 dark:text-primary text-secondaryBlack">
+                        {item.price}
+                    </Text>
+
+                </View>
+
+
+
+
             </View>
 
-            <View
-                style={{ width: 84, height: 32, paddingHorizontal: 2 }}
-                className="rounded-full bg-primary dark:bg-secondaryBlack flex justify-center items-center"
-            >
-                <Text numberOfLines={1} className="font-GoogleSansBold text-sm dark:text-primary text-secondaryBlack">
-                    {item.price}
-                </Text>
-            </View>
+
+
+
+
         </Pressable>
     );
 };
@@ -212,8 +216,8 @@ const RollingTrips = () => {
             numColumns={1}
             showsVerticalScrollIndicator={true}
             ListHeaderComponent={
-                <View style={{ marginTop: 6, paddingHorizontal: 8, marginBottom: 12 }}>
-                    <Text style={{ fontSize: 20, fontWeight: "600" }} className="font-GoogleSansMedium text-secondaryBlack dark:text-white">
+                <View>
+                    <Text className="font-GoogleSansMedium text-xl leading-6 my-3 text-secondaryBlack dark:text-white">
                         Rolling Trips
                     </Text>
                 </View>

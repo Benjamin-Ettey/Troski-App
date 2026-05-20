@@ -43,52 +43,48 @@ const Index = () => {
 
                 <ScrollView contentContainerStyle={{paddingBottom: 40}}>
                     <View
-                        style={{height: 84, paddingHorizontal: 16, marginTop: 24}}
-                        className="w-full flex flex-row justify-start items-center gap-4 mb-8">
+                        className="w-full h-24 px-4 mt-6 flex flex-row justify-start items-center gap-4 mb-8">
 
                         {image ? (
                             <Image
                                 source={{ uri: image }}
-                                style={{ width: 60, height: 60, backgroundColor: "#ffcc0033"  }}
-                                className="flex justify-center items-center rounded-full border-2 border-primary"
+                                className="h-16 w-16 bg-primary/30 flex justify-center items-center rounded-full border-2 border-primary"
                                 resizeMode="cover"
                             />
 
                         ) : (
                             <View
-                                style={{width: 60, height: 60, padding: 10, backgroundColor: "#ffcc0033" }}
-                                className="flex justify-center items-center rounded-full border-2 border-primary"
+                                className="flex justify-center h-16 w-16 p-2.5 bg-primary/30 items-center rounded-full border-2 border-primary"
                             >
-                                <Ionicons name="person" color="#ffcc00" size={36} />
+                                <Ionicons name="person" color="#ffcc00" size={32} />
                             </View>
                         )}
 
 
                         <View className="w-full justify-start flex flex-col">
-                            <Text className="font-GoogleSansMedium text-secondaryBlack dark:text-general">{name}</Text>
-                            <Text className="text-sm font-GoogleSansRegular text-secondaryBlack dark:text-tertiaryWhite">{email}</Text>
+                            <Text className="font-GoogleSansMedium text-base leading-5 text-secondaryBlack dark:text-general">{name}</Text>
+                            <Text className="text-sm leading-4 font-GoogleSansRegular text-secondaryBlack dark:text-tertiaryWhite">{email}</Text>
                         </View>
                     </View>
 
                     <View
-                        style={{paddingHorizontal: 16, gap: 24}}
-                        className="w-full flex-1 ">
+                        className="w-full flex-1 px-4 gap-6">
 
                         <View
-                            style={{borderRadius: 24, backgroundColor: colorScheme === "dark"? "#0a0a0a":"#ffffff"}}
-                            className="w-full ">
+                            style={{ backgroundColor: colorScheme === "dark"? "#0a0a0a":"#ffffff"}}
+                            className="w-full rounded-full">
                             <NavBar onPress={handleImagePicker} name="camera-outline" textcolor="#007BFF" color="#007BFF" title="Change profile photo" goforwardcolor="#007BFF"/>
                         </View>
 
                         <View
-                            style={{borderRadius: 24, backgroundColor: colorScheme === "dark"? "#0a0a0a":"#ffffff"}}
-                            className="w-full ">
+                            style={{backgroundColor: colorScheme === "dark"? "#0a0a0a":"#ffffff"}}
+                            className="w-full rounded-full">
                             <NavBar onPress={()=> router.push("/profile/editProfile")} name="person" textcolor={colorScheme === "dark"? "#f0f0f0" : "#444444"} color={colorScheme === "dark"? "#f0f0f0" : "#444444"} goforwardcolor={colorScheme === "dark"? "#f0f0f0" : "gray"} title="Edit profile"/>
                         </View>
 
                         <View
-                            style={{borderRadius: 24, backgroundColor: colorScheme === "dark"? "#0a0a0a":"#ffffff"}}
-                            className="w-full ">
+                            style={{backgroundColor: colorScheme === "dark"? "#0a0a0a":"#ffffff"}}
+                            className="w-full rounded-3xl">
                             <NavBar onPress={()=>router.push("/profile/rideHistory")} name="bus" title="Ride history" textcolor={colorScheme === "dark"? "#f0f0f0" : "#444444"} color={colorScheme === "dark"? "#f0f0f0" : "#444444"} goforwardcolor={colorScheme === "dark"? "#f0f0f0" : "gray"}/>
                             <View style={{width: "100%", height: 1, backgroundColor: colorScheme === "dark"? "#e4e4e411" : "#e4e4e477"}} />
                             <NavBar onPress={()=> router.push("/profile/paymentMethod")} name="card" title="Payment methods" textcolor={colorScheme === "dark"? "#f0f0f0" : "#444444"} color={colorScheme === "dark"? "#f0f0f0" : "#444444"} goforwardcolor={colorScheme === "dark"? "#f0f0f0" : "gray"}/>
@@ -98,8 +94,8 @@ const Index = () => {
                         </View>
 
                         <View
-                            style={{borderRadius: 24, backgroundColor: colorScheme === "dark"? "#0a0a0a":"#ffffff"}}
-                            className="w-full ">
+                            style={{ backgroundColor: colorScheme === "dark"? "#0a0a0a":"#ffffff"}}
+                            className="w-full rounded-3xl">
                             <NavBar onPress={()=> router.push("/profile/settings")} name="settings" title="Settings" textcolor={colorScheme === "dark"? "#f0f0f0" : "#444444"} color={colorScheme === "dark"? "#f0f0f0" : "#444444"} goforwardcolor={colorScheme === "dark"? "#f0f0f0" : "gray"}/>
                             <View style={{width: "100%", height: 1, backgroundColor: colorScheme === "dark"? "#e4e4e411" : "#e4e4e477"}} />
                             <NavBar onPress={()=>router.push("/profile/information")} name="information-circle" title="Information" textcolor={colorScheme === "dark"? "#f0f0f0" : "#444444"} color={colorScheme === "dark"? "#f0f0f0" : "#444444"} goforwardcolor={colorScheme === "dark"? "#f0f0f0" : "gray"}/>
@@ -107,20 +103,20 @@ const Index = () => {
                         </View>
 
                         <View
-                            style={{borderRadius: 24, backgroundColor: colorScheme === "dark"? "#0a0a0a":"#ffffff"}}
-                            className="w-full ">
+                            style={{backgroundColor: colorScheme === "dark"? "#0a0a0a":"#ffffff"}}
+                            className="w-full rounded-full">
                             <NavBar onPress={()=>router.push("/profile/recentEmails")} name="mail-unread" textcolor={colorScheme === "dark"? "#f0f0f0" : "#444444"} color={colorScheme === "dark"? "#f0f0f0" : "#444444"} title="Recent emails" goforwardcolor={colorScheme === "dark"? "#f0f0f0" : "gray"}/>
                         </View>
 
                         <View
-                            style={{borderRadius: 24, backgroundColor: colorScheme === "dark"? "#0a0a0a":"#ffffff"}}
-                            className="w-full ">
+                            style={{backgroundColor: colorScheme === "dark"? "#0a0a0a":"#ffffff"}}
+                            className="w-full rounded-full">
                             <NavBar onPress={()=>router.push("/profile/requestRefund")} name="swap-horizontal" textcolor={colorScheme === "dark"? "#f0f0f0" : "#444444"} color={colorScheme === "dark"? "#f0f0f0" : "#444444"} title="Request refund" goforwardcolor={colorScheme === "dark"? "#f0f0f0" : "gray"}/>
                         </View>
 
                         <View
-                            style={{borderRadius: 24, backgroundColor: colorScheme === "dark"? "#0a0a0a":"#ffffff"}}
-                            className="w-full ">
+                            style={{ backgroundColor: colorScheme === "dark"? "#0a0a0a":"#ffffff"}}
+                            className="w-full rounded-full">
                             <LogoutNavBar name="log-out" title="Logout" textcolor="red" color="red"/>
                         </View>
                     </View>

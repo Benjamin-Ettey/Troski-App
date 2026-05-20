@@ -134,20 +134,18 @@ const Index = () => {
                             {myimage ? (
                                 <View className="w-full flex justify-center items-center">
                                     <Image
-
+                                        className="h-52 w-52 rounded-full border-4 border-primary"
                                         source={{ uri: myimage }}
-                                        style={{ width: 180, height: 180, borderRadius: 999, borderWidth: 3, borderColor: "#ffcc00" }}
                                         resizeMode="cover"
                                     />
-                                    <TouchableOpacity onPress={handleDeleteImage} style={{width: 48, height: 48, backgroundColor: "#ffffff", marginTop: 100, marginLeft: 150, position: "absolute"}}
-                                          className="flex justify-center items-center rounded-full shadow-lg shadow-black/10">
-                                        <Ionicons name="trash-bin-outline" size={32} color="red"/>
+                                    <TouchableOpacity onPress={handleDeleteImage} style={{ marginTop: 100, marginLeft: 150, position: "absolute"}}
+                                          className="flex w-14 h-14 bg-general justify-center items-center rounded-full shadow-lg shadow-black/10">
+                                        <Ionicons name="trash-bin-outline" size={28} color="red"/>
                                     </TouchableOpacity>
                                 </View>
                             ) : (
                                 <View
-                                    style={{width: 180, height: 180, padding: 10, backgroundColor: "#ffcc0033" }}
-                                    className="flex justify-center items-center rounded-full border-2 border-primary"
+                                    className="flex h-52 w-52 bg-primary/20 p-3 justify-center items-center rounded-full border-2 border-primary"
                                 >
                                     <Ionicons name="person" color="#ffcc00" size={100} />
                                 </View>
@@ -156,48 +154,60 @@ const Index = () => {
 
                     </View>
 
-                 <View style={{paddingHorizontal: 16, marginBottom: 20}} className="w-full">
-                    <Text style={{fontSize: 16, paddingLeft: 10, marginBottom: 5}} className="font-GoogleSansRegular text-secondaryBlack dark:text-general">Name</Text>
-                    <View style={{borderRadius: 24, height: 48, paddingLeft: 24, backgroundColor: colorScheme === "dark"? "#0a0a0a":"#ffffff"}} className="flex justify-center items-center">
-                        <TouchableOpacity style={{ flex:1}} onPress={()=>openSheet("name")} className="w-full flex flex-row justify-between items-center">
-                            <Text className="font-GoogleSansMedium text-secondaryGray  dark:text-general">{name}</Text>
-                            <Ionicons style={{paddingRight: 16}} name="create-outline" size={18} color={colorScheme === "dark"? "#ffffff":"gray"}/>
+                 <View className="w-full mb-6 px-5">
+                    <Text
+                        className="font-GoogleSansRegular text-base pl-4 leading-5 mb-1 text-secondaryBlack dark:text-general">Name</Text>
+                    <View
+                        style={{backgroundColor: colorScheme === "dark"? "#0a0a0a":"#ffffff"}}
+                        className="flex justify-center items-center h-14 rounded-full px-5">
+                        <TouchableOpacity
+                            onPress={()=>openSheet("name")}
+                            className="w-full flex-1 flex flex-row justify-between items-center">
+                            <Text className="font-GoogleSansMedium text-base leading-5 text-secondaryGray  dark:text-general">{name}</Text>
+                            <Ionicons name="create-outline" size={18} color={colorScheme === "dark"? "#ffffff":"gray"}/>
                         </TouchableOpacity>
                  </View>
                 <Text
-                    style={{paddingLeft: 10, marginTop: 5}}
-                    className="text-xs font-GoogleSansRegular text-secondaryGray  dark:text-tertiaryGray"
+                    className="text-xs leading-4 pl-4 mt-2 font-GoogleSansRegular text-secondaryGray  dark:text-tertiaryGray"
                 >Change the full name linked to your account.</Text>
             </View>
 
 
-        <View style={{paddingHorizontal: 16, marginBottom: 20}} className="w-full">
-            <Text style={{fontSize: 16, paddingLeft: 10, marginBottom: 5}} className="font-GoogleSansRegular text-secondaryBlack dark:text-general">Email</Text>
-            <View style={{borderRadius: 24, height: 48, paddingLeft: 24, backgroundColor: colorScheme === "dark"? "#0a0a0a":"#ffffff"}} className="flex justify-center items-center">
-                <TouchableOpacity style={{ flex:1}} onPress={()=> openSheet("email")} className="w-full flex flex-row justify-between items-center">
-                    <Text className="font-GoogleSansMedium text-secondaryGray  dark:text-general">{email}</Text>
-                    <Ionicons style={{paddingRight: 16}} name="create-outline" size={18} color={colorScheme === "dark"? "#ffffff":"gray"}/>
+        <View className="w-full mb-6 px-5">
+            <Text
+                className="font-GoogleSansRegular text-base pl-4 leading-5 mb-1 text-secondaryBlack dark:text-general">Email</Text>
+            <View
+                style={{backgroundColor: colorScheme === "dark"? "#0a0a0a":"#ffffff"}}
+                className="flex justify-center items-center h-14 rounded-full px-5">
+                <TouchableOpacity
+                    onPress={()=> openSheet("email")}
+                    className="w-full flex-1 flex flex-row justify-between items-center">
+                    <Text className="font-GoogleSansMedium text-base leading-5 text-secondaryGray  dark:text-general">{email}</Text>
+                    <Ionicons name="create-outline" size={18} color={colorScheme === "dark"? "#ffffff":"gray"}/>
                 </TouchableOpacity>
             </View>
             <Text
-                style={{paddingLeft: 10, marginTop: 5}}
-                className="text-xs font-GoogleSansRegular text-secondaryGray  dark:text-tertiaryGray">Edit the email address associated with your account.
+                className="text-xs leading-4 pl-4 mt-2 font-GoogleSansRegular text-secondaryGray  dark:text-tertiaryGray">Edit the email address associated with your account.
             </Text>
         </View>
 
 
-        <View style={{paddingHorizontal: 16, marginBottom: 20}} className="w-full">
-            <Text style={{fontSize: 16, paddingLeft: 10, marginBottom: 5}} className="font-GoogleSansRegular text-secondaryBlack dark:text-general">Phone Number</Text>
-            <View style={{borderRadius: 24, height: 48, paddingLeft: 24, backgroundColor: colorScheme === "dark"? "#0a0a0a":"#ffffff"}} className="flex justify-center items-center">
-                <TouchableOpacity style={{ flex:1}} onPress={()=> router.push("/profile/editProfile/changePhoneNumber")} className="w-full flex flex-row justify-between items-center">
-                    <Text className="font-GoogleSansMedium text-secondaryGray dark:text-general">{number}</Text>
-                    <Ionicons style={{paddingRight: 16}} name="chevron-forward" size={18} color={colorScheme === "dark"? "#ffffff":"gray"}/>
+        <View className="w-full mb-6 px-5">
+            <Text
+                className="font-GoogleSansRegular text-base pl-4 leading-5 mb-1 text-secondaryBlack dark:text-general">Phone Number</Text>
+            <View
+                style={{backgroundColor: colorScheme === "dark"? "#0a0a0a":"#ffffff"}}
+                className="flex justify-center items-center h-14 rounded-full px-5">
+                <TouchableOpacity
+                    onPress={()=> router.push("/profile/editProfile/changePhoneNumber")}
+                    className="w-full flex-1 flex flex-row justify-between items-center">
+                    <Text className="font-GoogleSansMedium text-base leading-5 text-secondaryGray dark:text-general">{number}</Text>
+                    <Ionicons name="chevron-forward" size={18} color={colorScheme === "dark"? "#ffffff":"gray"}/>
                 </TouchableOpacity>
             </View>
 
             <Text
-                style={{paddingLeft: 10, marginTop: 5}}
-                className="text-xs font-GoogleSansRegular text-secondaryGray  dark:text-tertiaryGray">Update the phone number linked to your account.</Text>
+                className="text-xs leading-4 pl-4 mt-2 font-GoogleSansRegular text-secondaryGray  dark:text-tertiaryGray">Update the phone number linked to your account.</Text>
         </View>
     </>
 
@@ -220,12 +230,12 @@ const Index = () => {
                     backgroundColor: colorScheme === "dark"? "gray": "gray",
                 }}
             >
-                <BottomSheetView style={{ padding: 16, flex: 1 }}>
+                <BottomSheetView className="p-5 flex-1">
 
                     {editType === "name" && (
                         <View className="w-full flex-1 flex items-center">
                             <View className="w-full py-2">
-                                <Text className="text-xl font-GoogleSansMedium tracking-tight text-secondaryBlack dark:text-general">Change full name</Text>
+                                <Text className="text-xl leading-6 font-GoogleSansMedium tracking-tight text-secondaryBlack dark:text-general">Change full name</Text>
                             </View>
 
                             <TextInput
@@ -237,13 +247,13 @@ const Index = () => {
                                 autoComplete="name"
                                 keyboardType="default"
                                 autoFocus={true}
-                                style={{paddingLeft: 16, height: 48}}
-                                className="bg-general mb-1 dark:bg-secondaryBlack dark:text-general dark:focus:border-tertiaryGray font-GoogleSansMedium text-secondaryBlack w-full py-4 border border-tertiaryGray  rounded-xl focus:border focus:border-green-600/40"
+                                style={{paddingLeft: 16}}
+                                className="bg-general mb-1 dark:bg-secondaryBlack dark:text-general dark:focus:border-tertiaryGray font-GoogleSansMedium text-secondaryBlack w-full h-14 border border-tertiaryGray  rounded-xl focus:border focus:border-green-600/40"
 
                             />
 
                             <View className="mb-8 w-full items-start">
-                                <Text className="text-sm font-GoogleSansRegular text-secondaryBlack dark:text-tertiaryGray">Your full name should be at least 3 characters.</Text>
+                                <Text className="text-sm leading-4 font-GoogleSansRegular text-secondaryBlack dark:text-tertiaryGray">Your full name should be at least 3 characters.</Text>
 
                             </View>
 
@@ -255,7 +265,7 @@ const Index = () => {
                     {editType === "email" && (
                         <>
                         <View className="w-full py-2">
-                            <Text className="text-xl font-GoogleSansMedium tracking-tight text-secondaryBlack dark:text-general">What&apos;s your email?</Text>
+                            <Text className="text-xl leading-5 font-GoogleSansMedium tracking-tight text-secondaryBlack dark:text-general">What&apos;s your email?</Text>
                         </View>
 
                         <TextInput
@@ -267,18 +277,18 @@ const Index = () => {
                         onChangeText={handleEmailChange}
                         keyboardType="email-address"
                         autoFocus={true}
-                        style={{paddingLeft: 16, height: 48}}
-                        className="bg-general mb-1 dark:bg-secondaryBlack dark:text-general dark:focus:border-tertiaryGray font-GoogleSansMedium text-secondaryBlack w-full py-4 border border-tertiaryGray  rounded-xl focus:border focus:border-green-600/40"
+                        style={{paddingLeft: 16}}
+                        className="bg-general mb-1 dark:bg-secondaryBlack dark:text-general dark:focus:border-tertiaryGray font-GoogleSansMedium text-secondaryBlack w-full h-14 border border-tertiaryGray  rounded-xl focus:border focus:border-green-600/40"
 
                 />
                 <View className="mb-6 w-full items-start">
 
                     {error ? (
-                            <Text className="text-red-500 text-sm mt-1 font-GoogleSansMedium">
+                            <Text className="text-red-500 text-sm leading-4 mt-1 font-GoogleSansMedium">
                                 {error}
                             </Text>
                         ) :
-                        <Text className="text-sm font-GoogleSansRegular text-secondaryBlack dark:text-tertiaryGray">You&apos;ll need to verify this email later.</Text>
+                        <Text className="text-sm leading-4 font-GoogleSansRegular text-secondaryBlack dark:text-tertiaryGray">You&apos;ll need to verify this email later.</Text>
                     }
                 </View>
 

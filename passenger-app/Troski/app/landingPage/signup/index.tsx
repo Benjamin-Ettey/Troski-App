@@ -58,7 +58,7 @@ const Index = () => {
 
                     <View className="w-full flex-1 flex items-center px-6">
                         <View className="w-full py-2">
-                            <Text className="text-xl dark:text-general font-GoogleSansMedium tracking-tight">What&apos;s your email?</Text>
+                            <Text className="text-xl leading-6 dark:text-general font-GoogleSansMedium tracking-tight">What&apos;s your email?</Text>
                         </View>
 
                         <TextInput
@@ -71,17 +71,17 @@ const Index = () => {
                             keyboardType="email-address"
                             autoFocus={true}
                             style={{paddingLeft: 16}}
-                            className="bg-general dark:bg-secondaryBlack dark:text-general dark:focus:border-tertiaryGray mb-1 font-GoogleSansMedium text-secondaryBlack w-full py-4 border border-tertiaryGray  rounded-xl focus:border focus:border-green-600/40"
+                            className="bg-general dark:bg-secondaryBlack dark:text-general dark:focus:border-tertiaryGray mb-1 font-GoogleSansMedium text-secondaryBlack w-full h-14 border border-tertiaryGray  rounded-xl focus:border focus:border-green-600/40"
 
                         />
                         <View className="mb-6 w-full items-start">
 
                             {error ? (
-                                <Text className="text-red-500 text-sm mt-1 font-GoogleSansMedium">
+                                <Text className="text-red-500 text-sm leading-4 mt-1 font-GoogleSansMedium">
                                     {error}
                                 </Text>
                             ) :
-                                <Text className="text-sm font-GoogleSansRegular dark:text-tertiaryGray">You&apos;ll need to verify this email later.</Text>
+                                <Text className="text-sm leading-4 font-GoogleSansRegular dark:text-tertiaryGray">You&apos;ll need to verify this email later.</Text>
                             }
                         </View>
 

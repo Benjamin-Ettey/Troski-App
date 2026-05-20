@@ -104,22 +104,18 @@ const SelectPaymentMethod = () => {
     };
 
     return (
-        <View style={{ flex: 1, backgroundColor: colorScheme === "dark"? "#000000" : "#F5F7FA" }}>
+        <View className="flex-1" style={{ backgroundColor: colorScheme === "dark"? "#000000" : "#F5F7FA" }}>
             <ScrollView
                 className="flex-1 w-full"
                 showsHorizontalScrollIndicator={false}
                 contentContainerStyle={{ paddingBottom: 120 }}
             >
                 <View
-                    style={{ paddingHorizontal: 24, paddingTop: 16 }}
-                    className="w-full flex justify-center"
+                    className="w-full px-7 py-4 flex justify-center"
                 >
                     <TouchableOpacity
                         onPress={handleSelectWallet}
-                        className="flex flex-row justify-between items-center"
-                        style={{
-                            padding: 16,
-                        }}
+                        className="flex flex-row p-4 justify-between items-center"
                     >
                         <View
                             style={{ gap: 32 }}
@@ -128,11 +124,11 @@ const SelectPaymentMethod = () => {
                             <Ionicons name="wallet" size={32} color={colorScheme === "dark"? "white":"black"} />
 
                             <View>
-                                <Text className="font-GoogleSansBold dark:text-general">
+                                <Text className="font-GoogleSansBold dark:text-general mb-1 text-base leading-5">
                                     Pay with wallet
                                 </Text>
 
-                                <Text className="font-GoogleSansRegular dark:text-tertiaryGray">
+                                <Text className="font-GoogleSansRegular text-base leading-5 dark:text-tertiaryGray">
                                     {`GH₵ ` + tripPrice}
                                 </Text>
                             </View>
@@ -158,24 +154,16 @@ const SelectPaymentMethod = () => {
                     {paymentMethods.map((item: any, index: number) => (
                         <View
                             key={index}
-                            style={{
-                                padding: 16,
-                            }}
-                            className="w-full flex flex-row justify-between items-center"
+
+                            className="w-full p-4 flex flex-row justify-between items-center"
                         >
-                            <View style={{ flex: 1 }}>
+                            <View className="flex-1">
                                 <TouchableOpacity
                                     onPress={() => handleSelectMomo(item)}
-                                    className="flex-1 flex flex-row justify-start items-center"
-                                    style={{ gap: 24 }}
+                                    className="flex-1 gap-6 flex flex-row justify-start items-center"
                                 >
                                     <View
-                                        style={{
-                                            width: 40,
-                                            height: 40,
-                                            overflow: "hidden",
-                                        }}
-                                        className="rounded-full flex justify-center items-center bg-general"
+                                        className="rounded-full overflow-hidden w-12 h-12 flex justify-center items-center bg-general"
                                     >
                                         <Image
                                             source={getProviderLogo(item.provider)}
@@ -188,11 +176,11 @@ const SelectPaymentMethod = () => {
                                     </View>
 
                                     <View className="flex flex-col justify-start items-start">
-                                        <Text className="font-GoogleSansBold dark:text-general">
+                                        <Text className="font-GoogleSansBold dark:text-general text-base mb-1 leading-5">
                                             {item.provider}
                                         </Text>
 
-                                        <Text className="font-GoogleSansRegular dark:text-tertiaryGray">
+                                        <Text className="font-GoogleSansRegular text-base leading-4 dark:text-tertiaryGray">
                                             {item.number}
                                         </Text>
                                     </View>
@@ -216,17 +204,17 @@ const SelectPaymentMethod = () => {
                         </View>
                     ))}
 
-                    <View style={{marginTop: 16}} className="w-full flex justify-center items-center">
+                    <View className="w-full flex mt-4 justify-center items-center">
                         <TouchableOpacity
                             onPress={() =>
                                 router.navigate(
                                     "/profile/paymentMethod/setupPaymentMethod"
                                 )
                             }
-                            className="bg-secondaryBlack flex justify-center items-center rounded-full"
-                            style={{ width: "50%", padding: 10 }}
+                            className="bg-secondaryBlack flex w-48 h-10 justify-center items-center rounded-full"
+
                         >
-                            <Text className="text-general  font-GoogleSansRegular">
+                            <Text className="text-general text-base leading-5 font-GoogleSansRegular">
                                 Add another method
                             </Text>
                         </TouchableOpacity>
@@ -235,8 +223,7 @@ const SelectPaymentMethod = () => {
             </ScrollView>
 
             <View
-                style={{ bottom: 24 }}
-                className="w-full flex justify-center items-center absolute"
+                className="w-full flex bottom-10 justify-center items-center absolute"
             >
                 {!canContinue ? (
                     <DisabledPrimaryButton name="Pay" />
@@ -262,7 +249,7 @@ const SelectPaymentMethod = () => {
 
                     <Text
                         style={{ marginTop: 12 }}
-                        className="font-GoogleSansMedium text-general"
+                        className="font-GoogleSansMedium text-base leading-5 text-general"
                     >
                         Processing...
                     </Text>

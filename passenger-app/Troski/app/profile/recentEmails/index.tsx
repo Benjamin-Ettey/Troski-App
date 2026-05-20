@@ -59,18 +59,18 @@ const Index = () => {
     return (
 
 
-        <View style={{backgroundColor: colorScheme === "dark"? "#000000" : "#F5F7FA", flex: 1}} className="w-full">
+        <View style={{backgroundColor: colorScheme === "dark"? "#000000" : "#F5F7FA"}} className="w-full flex-1">
 
             {showRideHistory?
-                <View style={{flex: 1, marginTop: "-20%"}} className="w-full flex justify-center items-center">
-                    <Ionicons style={{marginBottom: 10}} name="mail-unread-outline" size={100} color="gray"/>
-                    <Text className="font-GoogleSansMedium dark:text-general">No Recent Emails.</Text>
-                    <Text style={{marginBottom: 16}} className="font-GoogleSansRegular text-center flex-shrink dark:text-tertiaryGray">All your recent emails will appear here.</Text>
+                <View style={{ marginTop: "-20%"}} className="w-full flex-1 flex justify-center items-center">
+                    <Ionicons className="mb-2" name="mail-unread-outline" size={100} color="gray"/>
+                    <Text className="font-GoogleSansMedium text-xl leading-6 tracking-tighter dark:text-general">No Recent Emails.</Text>
+                    <Text className="font-GoogleSansRegular mb-3 text-sm leading-4 text-center flex-shrink dark:text-tertiaryGray">All your recent emails will appear here.</Text>
 
                 </View>
                 :
                 <View style={{paddingLeft: 16}} className="w-full flex items-center">
-                    <View style={{borderRadius: 32, marginTop: 4}} >
+                    <View className="mt-2">
                         <SectionList
                             contentContainerStyle={{ paddingBottom: 100}}
                             sections={DATA}
@@ -78,8 +78,8 @@ const Index = () => {
 
                             renderSectionHeader={({section})=>{
                                 return(
-                                    <View style={{paddingHorizontal: 16, marginTop: 24}}>
-                                        <Text className="font-GoogleSansMedium text-xl dark:text-general">{section.date}</Text>
+                                    <View className="px-4 mt-6" >
+                                        <Text className="font-GoogleSansMedium text-xl leading-6 dark:text-general">{section.date}</Text>
                                     </View>
                                 )
                             }}
@@ -89,8 +89,7 @@ const Index = () => {
 
                                     <>
                                         <View
-                                            style={{height: 72, borderRadius: 24, paddingLeft: 20, paddingRight: 20,}}
-                                            className="w-full  flex flex-row justify-between items-center">
+                                            className="w-full h-20 px-5  flex flex-row justify-between items-center">
                                             <View>
                                                 <Ionicons name="mail-unread" size={32} color={colorScheme === "dark"? "#ffffff":"black"}/>
 
@@ -98,27 +97,23 @@ const Index = () => {
 
 
                                             <View
-                                                style={{flex: 1, gap: 2,paddingLeft: 16 }}
-                                                className="flex  flex-col justify-center items-center ">
+                                                style={{paddingLeft: 16 }}
+                                                className="flex flex-1  flex-col justify-center items-center ">
                                                 <View className="flex flex-row justify-start items-center w-full gap-2">
-                                                    <Text numberOfLines={1} className="text-xl font-GoogleSansRegular dark:text-general">
+                                                    <Text numberOfLines={1} className="text-xl leading-6 font-GoogleSansRegular dark:text-general">
                                                         {item.subject}
                                                     </Text>
 
                                                 </View>
 
-                                                <View className="w-full flex flex-row gap-2 items-center ">
+                                                <View className="w-full flex flex-row gap-2 justify-start items-center ">
                                                     <Text
-                                                        style={{paddingHorizontal: 4, fontSize: 12}}
-                                                        className=" text-secondaryBlack dark:text-tertiaryGray font-GoogleSansRegular rounded-full">{item.date}</Text>
-
-
+                                                        className=" text-secondaryBlack text-sm dark:text-tertiaryGray font-GoogleSansRegular rounded-full">{item.date}</Text>
                                                 </View>
                                             </View>
 
                                             <View
-                                                style={{width: 84, height: 32, paddingHorizontal: 2, }}
-                                                className="rounded-full flex justify-center items-center">
+                                                className="rounded-full px-4 flex justify-center items-center">
                                                 <Ionicons name="ribbon" size={24} color="#22C55E"/>
                                             </View>
 
@@ -134,11 +129,12 @@ const Index = () => {
                             }}/>
                     </View>
 
-                    <View style={{ bottom: 0, height: "15%"}} className="absolute w-full flex justify-center items-center">
+                    <View className="absolute bottom-12 w-full flex justify-center items-center">
                         <TouchableOpacity
-                            onPress={handleClearRideHistory} style={{paddingHorizontal: 12, paddingVertical: 12, backgroundColor: "#ff0000"}}
-                            className="rounded-full flex justify-center items-center">
-                            <Text style={{color: "white"}} className="font-GoogleSansMedium ">Clear Ride History</Text>
+                            onPress={handleClearRideHistory}
+                            style={{backgroundColor: "#ff0000"}}
+                            className="rounded-full px-4 py-3 flex justify-center items-center">
+                            <Text className="font-GoogleSansMedium text-general text-base leading-5">Clear Ride History</Text>
                         </TouchableOpacity>
                     </View>
 

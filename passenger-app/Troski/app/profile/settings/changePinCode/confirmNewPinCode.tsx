@@ -56,8 +56,8 @@ const ConfirmNewPinCode = () => {
 
                 <View className="w-full flex-1 flex items-center px-6">
                     <View className="w-full mb-4">
-                        <Text className="text-2xl font-GoogleSansMedium tracking-tight dark:text-general">Confirm new 6-digit PIN</Text>
-                        <Text className="text-sm font-GoogleSansRegular dark:text-tertiaryWhite">Verify your new pin code.</Text>
+                        <Text className="text-2xl leading-7 font-GoogleSansMedium tracking-tight dark:text-general">Confirm new 6-digit PIN</Text>
+                        <Text className="text-sm leading-4 font-GoogleSansRegular dark:text-tertiaryWhite">Verify your new pin code.</Text>
 
                     </View>
 
@@ -71,14 +71,14 @@ const ConfirmNewPinCode = () => {
 
                     />
                     <View className="mt-6 mb-8 w-full flex flex-col justify-center items-start">
-                        <View className="flex flex-row justify-start w-full ">
-                            <Ionicons name="lock-closed" size={10} color="gray" style={{marginRight: "2%"}} className="mt-1"/>
-                            <Text style={{flexShrink: 1}}  className="text-sm mb-1 font-GoogleSansRegular dark:text-tertiaryGray">Keep your PIN confidential. Do not share it with anyone.</Text>
+                        <View className="flex flex-row justify-start w-full gap-2">
+                            <Ionicons name="lock-closed" size={10} color="gray"  className="mt-1"/>
+                            <Text  className="text-sm mb-1 flex-shrink font-GoogleSansRegular dark:text-tertiaryGray">Keep your PIN confidential. Do not share it with anyone.</Text>
                         </View>
 
-                        <View className="flex flex-row justify-start w-full ">
-                            <Ionicons name="shield-checkmark" size={10} color="gray" style={{marginRight: "2%"}} className="mt-1"/>
-                            <Text style={{flexShrink: 1}}  className="text-sm mb-1 font-GoogleSansRegular dark:text-tertiaryGray">You will use this PIN to access your wallet and confirm transactions.</Text>
+                        <View className="flex flex-row justify-start w-full gap-2">
+                            <Ionicons name="shield-checkmark" size={10} color="gray"  className="mt-1"/>
+                            <Text  className="text-sm mb-1 flex-shrink font-GoogleSansRegular dark:text-tertiaryGray">You will use this PIN to access your wallet and confirm transactions.</Text>
                         </View>
 
 

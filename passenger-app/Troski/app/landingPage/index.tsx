@@ -3,10 +3,11 @@ import React from "react";
 import { StatusBar } from "expo-status-bar";
 import PrimaryButton from "@/components/PrimaryButton";
 import SecondaryButton from "@/components/SecondaryButton";
-import { router } from "expo-router";
+import { useRouter} from "expo-router";
 
 const Index = () => {
 
+    const router = useRouter();
 
     return (
         <View className="flex-1 bg-general">
@@ -16,24 +17,17 @@ const Index = () => {
             <Image
                 source={require("../../assets/images/landingImage.png")}
                 resizeMode="cover"
-                style={{
-                    width: "100%",
-                    height: "68%",
-                }}
+                className="w-full aspect-auto"
+
             />
 
             <View
-                className="absolute bottom-0 w-full dark:bg-secondaryBlack bg-general pt-6 pb-8"
-                style={{
-                    height: "40%",
-                    borderTopLeftRadius: 36,
-                    borderTopRightRadius: 36,
-                }}
+                className="absolute bottom-0 rounded-t-3xl w-full h-96 dark:bg-secondaryBlack bg-general pt-6 pb-14"
             >
                 <View className="flex-1 justify-between items-center">
 
 
-                    <View className="w-full items-center">
+                    <View className="max-w-64 items-center">
                         <View className="w-16 h-16 rounded-full p-2 mb-3">
                             <Image
                                 source={require("../../assets/images/favicon.png")}
@@ -46,7 +40,7 @@ const Index = () => {
                             numberOfLines={2}
                             adjustsFontSizeToFit
                             minimumFontScale={0.7}
-                            className="text-secondaryBlack dark:text-general text-4xl font-GoogleSansMedium text-center tracking-tight max-w-[80%]"
+                            className="text-secondaryBlack dark:text-general text-3xl leading-none font-GoogleSansMedium text-center tracking-tight"
                         >
                             Book your rides on the go.
                         </Text>

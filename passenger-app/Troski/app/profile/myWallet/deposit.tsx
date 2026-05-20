@@ -69,7 +69,7 @@ const Deposit = () => {
 
                 <View className="w-full flex-1 flex items-center px-6">
                     <View className="w-full py-2">
-                        <Text className="text-xl tracking-tight font-GoogleSansMedium dark:text-general">Enter phone number?</Text>
+                        <Text className="text-xl leading-6 tracking-tight font-GoogleSansMedium dark:text-general">Enter phone number?</Text>
                     </View>
 
                     <TextInput
@@ -80,23 +80,23 @@ const Deposit = () => {
                         autoCapitalize="none"
                         keyboardType="phone-pad"
                         autoFocus={true}
-                        style={{paddingLeft: 16, height: 48}}
-                        className="bg-general dark:bg-secondaryBlack mb-1 font-medium dark:text-general text-secondaryGray w-full py-4 border border-tertiaryGray  rounded-xl focus:border dark:focus:border-tertiaryGray focus:border-green-600/40"
+                        style={{paddingLeft: 16}}
+                        className=" dark:bg-secondaryBlack mb-1 font-medium dark:text-general text-secondaryGray w-full h-14 border border-tertiaryGray  rounded-xl focus:border dark:focus:border-tertiaryGray focus:border-green-600/40"
                     />
 
                     {error ? (
                         <View className="mb-6 w-full items-start">
-                            <Text className="text-sm font-GoogleSansMedium text-red-600">
+                            <Text className="text-sm leading-4 font-GoogleSansMedium text-red-600">
                                 {error}
                             </Text>
                         </View>
                     ) : <View className="mb-6 w-full items-start">
-                        <Text className="text-sm font-GoogleSansRegular dark:text-tertiaryGray">This is the number you provided when you created your account.</Text>
+                        <Text className="text-sm leading-4 font-GoogleSansRegular dark:text-tertiaryGray">This is the number you provided when you created your account.</Text>
                     </View>
                     }
 
                     <View className="w-full py-2">
-                        <Text className="text-xl tracking-tight font-GoogleSansMedium dark:text-general">Amount to be deposited?</Text>
+                        <Text className="text-xl leading-6 tracking-tight font-GoogleSansMedium dark:text-general">Amount to be deposited?</Text>
                     </View>
 
                     <TextInput
@@ -107,8 +107,8 @@ const Deposit = () => {
                         autoCorrect={false}
                         autoCapitalize="none"
                         keyboardType="phone-pad"
-                        style={{paddingLeft: 16, marginBottom: 24, height: 48}}
-                        className="bg-general dark:bg-secondaryBlack mb-1 font-medium dark:text-general text-secondaryGray w-full py-4 border border-tertiaryGray  rounded-xl focus:border dark:focus:border-tertiaryGray focus:border-green-600/40"
+                        style={{paddingLeft: 16,}}
+                        className="dark:bg-secondaryBlack mb-8 font-medium dark:text-general text-secondaryGray w-full h-14 border border-tertiaryGray  rounded-xl focus:border dark:focus:border-tertiaryGray focus:border-green-600/40"
                     />
 
                     {isDisabled?

@@ -39,8 +39,8 @@ const ConfirmPinScreen = () => {
 
                     <View className="w-full flex-1 flex items-center px-6">
                         <View className="w-full mb-4">
-                            <Text className="text-2xl dark:text-general font-GoogleSansMedium tracking-tight">Verify 6 digit pin</Text>
-                            <Text className="text-sm dark:text-tertiaryWhite font-GoogleSansRegular">Re-enter 6 digit pin code</Text>
+                            <Text className="text-2xl leading-7 dark:text-general font-GoogleSansMedium tracking-tight">Verify 6 digit pin</Text>
+                            <Text className="text-sm leading-4 dark:text-tertiaryWhite font-GoogleSansRegular">Re-enter 6 digit pin code</Text>
 
                         </View>
 
@@ -61,12 +61,12 @@ const ConfirmPinScreen = () => {
                         <View className="mt-6 mb-8 w-full flex flex-col justify-center items-start">
                             <View className="flex flex-row justify-start w-full ">
                                 <Ionicons name="lock-closed" size={10} color="gray" style={{marginRight: "2%"}} className="mt-1"/>
-                                <Text style={{flexShrink: 1}}  className="text-sm mb-1 dark:text-tertiaryGray font-GoogleSansRegular">Do not share this PIN code with anyone as this will be used to access your wallet transactions. </Text>
+                                <Text style={{flexShrink: 1}}  className="text-sm leading-4 mb-1 dark:text-tertiaryGray font-GoogleSansRegular">Do not share this PIN code with anyone as this will be used to access your wallet transactions. </Text>
                             </View>
 
                             <View className="flex flex-row justify-start w-full">
                                 <Ionicons name="pin" size={10} color="gray" style={{marginRight: "2%"}} className="mt-1"/>
-                                <Text className="text-sm mb-1 dark:text-tertiaryGray font-GoogleSansRegular">Use a pin you can easily remember.</Text>
+                                <Text className="text-sm leading-4 mb-1 dark:text-tertiaryGray font-GoogleSansRegular">Use a pin you can easily remember.</Text>
                             </View>
                         </View>
 

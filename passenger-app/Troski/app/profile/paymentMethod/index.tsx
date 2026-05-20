@@ -65,31 +65,30 @@ const Index = () => {
     return (
 
         <View
-            style={{ backgroundColor: colorScheme === "dark"? "#000000" : "#F5F7FA", flex: 1 }}
-            className="w-full"
+            style={{ backgroundColor: colorScheme === "dark"? "#000000" : "#F5F7FA"}}
+            className="w-full flex-1"
         >
 
             {!hasPaymentMethod ?
 
                 <View
-                    style={{ flex: 1, marginTop: "-20%" }}
-                    className="w-full flex justify-center items-center"
+                    style={{ marginTop: "-20%" }}
+                    className="w-full flex justify-center flex-1 items-center"
                 >
 
                     <Ionicons
-                        style={{ marginBottom: 10 }}
+                        className="mb-3"
                         name="cash-outline"
                         size={100}
                         color="gray"
                     />
 
-                    <Text className="font-GoogleSansMedium dark:text-general">
+                    <Text className="font-GoogleSansMedium text-xl leading-6 tracking-tighter dark:text-general">
                         No Payment Method
                     </Text>
 
                     <Text
-                        style={{ marginBottom: 16 }}
-                        className="font-GoogleSansRegular text-center flex-shrink dark:text-tertiaryGray"
+                        className="font-GoogleSansRegular mb-4 text-sm leading-4 text-center flex-shrink dark:text-tertiaryGray"
                     >
                         Add a payment method to see it here.
                     </Text>
@@ -98,14 +97,10 @@ const Index = () => {
                         onPress={() =>
                             router.push("/profile/paymentMethod/setupPaymentMethod")
                         }
-                        style={{
-                            paddingHorizontal: 12,
-                            paddingVertical: 12,
-                            height: 42,
-                        }}
-                        className="bg-primary rounded-full flex justify-center items-center"
+
+                        className="bg-primary px-4 h-12 rounded-full flex justify-center items-center"
                     >
-                        <Text className="font-GoogleSansMedium">
+                        <Text className="font-GoogleSansMedium text-base leading-5">
                             Setup Payment Method
                         </Text>
                     </TouchableOpacity>
@@ -118,12 +113,7 @@ const Index = () => {
                     <ScrollView>
 
                         <View
-                            style={{
-                                paddingLeft: 16,
-                                paddingRight: 16,
-                                flex: 1
-                            }}
-                            className="w-full"
+                            className="w-full flex-1 px-5"
                         >
 
                             {paymentMethods.map((item: any, index: any) => (
@@ -131,56 +121,38 @@ const Index = () => {
                                 <View key={index}>
                                     <View
                                         key={index}
-                                        style={{
-                                            height: 72,
-                                            borderRadius: 24,
-                                            paddingLeft: 20,
-                                            paddingRight: 20,
-                                        }}
-                                        className="w-full flex flex-row justify-between items-center"
+                                        className="w-full px-6 py-5 flex flex-row justify-between items-center"
                                     >
 
-                                        {/* PROVIDER LOGO */}
+
                                         <View
-                                            style={{
-                                                width: 44,
-                                                height: 44,
-                                                overflow: "hidden",
-                                            }}
-                                            className="rounded-full"
+                                            className="rounded-full w-12 h-12 overflow-hidden"
                                         >
                                             <Image
                                                 source={getProviderLogo(item.provider)}
-                                                style={{
-                                                    width: "100%",
-                                                    height: "100%",
-                                                }}
+                                                className="w-full h-full"
                                                 resizeMode="cover"
                                             />
                                         </View>
 
-                                        {/* PROVIDER DETAILS */}
-                                        <View className="flex-1" style={{paddingHorizontal: 16}}>
 
-                                            <Text className="font-GoogleSansBold dark:text-general">
+                                        <View className="flex-1 px-5" >
+
+                                            <Text className="font-GoogleSansBold text-lg leading-5 dark:text-general">
                                                 {item.provider}
                                             </Text>
 
-                                            <Text className="font-GoogleSansRegular dark:text-tertiaryGray">
+                                            <Text className="font-GoogleSansRegular text-base leading-5 dark:text-tertiaryGray">
                                                 {item.number}
                                             </Text>
 
                                         </View>
 
-                                        {/* DELETE BUTTON */}
+
                                         <TouchableOpacity
                                             onPress={() =>
                                                 handleDeletePaymentMethod(index)
                                             }
-                                            style={{
-                                                padding: 8,
-                                            }}
-                                            className="rounded-full"
                                         >
                                             <Ionicons
                                                 name="remove-circle-outline"
@@ -205,8 +177,7 @@ const Index = () => {
                     </ScrollView>
 
                     <View
-                        className="absolute flex justify-center items-center w-full"
-                        style={{ bottom: 0, height: 100 }}
+                        className="absolute flex justify-center bottom-10 items-center w-full"
                     >
                         <PrimaryButton
                             name="Add payment method"

@@ -39,7 +39,7 @@ const Index = () => {
             return;
         }
 
-        router.push("/landingPage/login/otpScreen");
+        router.push("/landingPage/login/pinScreen");
     };
 
 
@@ -57,7 +57,7 @@ const Index = () => {
 
                     <View className="w-full flex-1 flex items-center px-6">
                         <View className="w-full py-2">
-                            <Text className="text-xl tracking-tight dark:text-general font-GoogleSansMedium">Enter phone number?</Text>
+                            <Text className="text-xl leading-6 tracking-tight text-secondaryBlack dark:text-general font-GoogleSansMedium">Enter phone number?</Text>
                         </View>
 
                         <TextInput
@@ -69,19 +69,19 @@ const Index = () => {
                             keyboardType="phone-pad"
                             autoFocus={true}
                             style={{paddingLeft: 16, }}
-                            className="bg-general dark:bg-secondaryBlack mb-1 font-medium dark:text-general text-secondaryGray w-full py-4 border border-tertiaryGray   rounded-xl focus:border dark:focus:border-tertiaryGray focus:border-green-600/40"
+                            className="bg-general dark:bg-secondaryBlack mb-2 font-medium dark:text-general text-secondaryGray w-full py-4 border border-tertiaryGray   rounded-xl focus:border dark:focus:border-tertiaryGray focus:border-green-600/40"
 
                         />
 
 
                         {error ? (
                             <View className="mb-6 w-full items-start">
-                                <Text className="text-sm font-GoogleSansMedium text-red-600">
+                                <Text className="text-sm leading-none font-GoogleSansMedium text-red-600">
                                     {error}
                                 </Text>
                             </View>
                         ) : <View className="mb-6 w-full items-start">
-                            <Text className="text-sm dark:text-tertiaryGray font-GoogleSansRegular">This is the number you provided when you created your account.</Text>
+                            <Text className="text-sm leading-none text-secondaryBlack dark:text-tertiaryGray font-GoogleSansRegular">This is the number you provided when you created your account.</Text>
                         </View>}
 
                         {isDisabled?

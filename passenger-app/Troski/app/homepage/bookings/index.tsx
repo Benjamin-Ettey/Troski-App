@@ -256,16 +256,12 @@ const Index = () => {
     const listData: ListItem[] = search.trim().length > 1 ? results : rides;
 
     return (
-        <View style={{ backgroundColor: colorScheme === "dark"? "#000000" : "#F5F7FA", flex: 1 }} >
-            <View style={{ padding: 16 }}>
+        <View style={{ backgroundColor: colorScheme === "dark"? "#000000" : "#F5F7FA" }} className="flex-1">
+            <View className="p-5">
                 <TouchableOpacity onPress={() => setActiveField("pickup")}>
                     <View
+                        className="p-3 border rounded-xl flex flex-row items-center"
                         style={{
-                            padding: 12,
-                            borderWidth: 1,
-                            borderRadius: 10,
-                            flexDirection: "row",
-                            alignItems: "center",
                             borderColor: "#444444",
 
                         }}
@@ -277,12 +273,12 @@ const Index = () => {
                                 value={search}
                                 onChangeText={onChangeSearch}
                                 placeholder="Search pickup (Ghana only)"
-                                style={{ flex: 1, marginLeft: 10 }}
+                                style={{ marginLeft: 10 }}
                                 autoFocus
-                                className="font-GoogleSansRegular dark:text-general"
+                                className="font-GoogleSansRegular text-base leading-5 flex-1  text-secondaryBlack dark:text-general"
                             />
                         ) : (
-                            <Text className="font-GoogleSansRegular dark:text-general" style={{ marginLeft: 10, flex: 1 }} numberOfLines={1}>
+                            <Text className="font-GoogleSansRegular text-base leading-5 dark:text-general" style={{ marginLeft: 10}} numberOfLines={1}>
                                 {pickupPoint || "Pickup point"}
                             </Text>
                         )}
@@ -291,27 +287,22 @@ const Index = () => {
 
                 <TouchableOpacity onPress={() => setActiveField("destination")}>
                     <View
+                        className="p-3 border rounded-lg mt-3 flex flex-row items-center"
                         style={{
-                            padding: 12,
-                            borderWidth: 1,
-                            borderRadius: 10,
-                            marginTop: 10,
-                            flexDirection: "row",
-                            alignItems: "center",
                             borderColor: "#16A34A",
                         }}
                     >
                         {activeField === "destination" ? (
                             <TextInput
-                                className="font-GoogleSansRegular dark:text-general"
+                                className="font-GoogleSansRegular text-base leading-5 text-secondaryBlack flex-1 dark:text-general"
                                 value={search}
                                 onChangeText={onChangeSearch}
                                 placeholder="Search destination (Ghana only)"
-                                style={{ flex: 1 }}
                                 autoFocus
                             />
                         ) : (
-                            <Text className="font-GoogleSansRegular text-secondaryGray dark:text-tertiaryGray" style={{ flex: 1, marginLeft: 32 }} numberOfLines={1}>
+                            <Text className="font-GoogleSansRegular text-base leading-5 text-secondaryGray ml-8 dark:text-tertiaryGray flex-1"
+                                  numberOfLines={1}>
                                 {destinationPoint || "Destination"}
                             </Text>
                         )}
@@ -339,18 +330,13 @@ const Index = () => {
                         return (
                             <Pressable
                                 onPress={() => handleSelectGeo(geo)}
-                                style={{
-                                    paddingVertical: 16,
-                                    paddingHorizontal: 24,
-                                    flexDirection: "row",
-                                    alignItems: "center",
-                                }}
+                                className="py-5 px-6 flex-row items-center"
                             >
-                                <Ionicons name="location-outline" size={20} color={colorScheme === "dark"? "#ffffff": "#000000"}/>
+                                <Ionicons name="location-outline" size={24} color={colorScheme === "dark"? "#ffffff": "#000000"}/>
 
-                                <View style={{ marginLeft: 10 }}>
-                                    <Text className="font-GoogleSansMedium dark:text-general">{name}</Text>
-                                    {subtitle ? <Text className="text-secondaryGray dark:text-tertiaryGray" style={{ fontSize: 12 }}>{subtitle}</Text> : null}
+                                <View className="ml-3">
+                                    <Text className="font-GoogleSansMedium  dark:text-genera text-base leading-5">{name}</Text>
+                                    {subtitle ? <Text className="text-secondaryGray dark:text-tertiaryGray leading-4 text-sm">{subtitle}</Text> : null}
                                 </View>
                             </Pressable>
                         );
@@ -384,22 +370,16 @@ const Index = () => {
                                     setIsProcessing(false);
                                 }, 100);
                             }}
-                            style={{
-                                paddingVertical: 16,
-                                paddingHorizontal: 24,
-                                flexDirection: "row",
-                                justifyContent: "space-between",
-                                alignItems: "center",
-                            }}
+                            className="px-7 py-5 flex-row justify-between items-center"
                         >
                             <Ionicons name="bus-outline" size={24} color={colorScheme === "dark"? "#ffffff": "#000000"}/>
 
-                            <View style={{ flex: 1, paddingLeft: 24 }}>
-                                <Text style={{ fontSize: 16 }} className="font-GoogleSansRegular dark:text-general">{ride.destination}</Text>
-                                <Text style={{ fontSize: 12, color: "gray" }} className="font-GoogleSansRegular dark:text-tertiaryGray">{ride.area}</Text>
+                            <View className="flex-1 pl-4">
+                                <Text className="text-base leading-5 font-GoogleSansRegular dark:text-general">{ride.destination}</Text>
+                                <Text className="text-sm leading-4 text-tertiaryGray font-GoogleSansRegular dark:text-tertiaryGray">{ride.area}</Text>
                             </View>
 
-                            <Text style={{ fontSize: 12 }} className="font-GoogleSansRegular dark:text-tertiaryGray">{km} km</Text>
+                            <Text className="text-sm leading-4 font-GoogleSansRegular dark:text-tertiaryGray">{km} km</Text>
                         </Pressable>
                     );
                 }}

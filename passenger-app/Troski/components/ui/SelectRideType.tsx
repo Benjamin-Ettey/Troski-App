@@ -107,51 +107,41 @@ const SelectRideType = ({ routeCoords, duration, price }: SelectRideTypeProps) =
             renderItem={({ item }) => {
                 return (
                     <Pressable
-                        style={{
-                            height: 82,
-                            paddingLeft: 16,
-                            paddingRight: 16,
-                            gap: 24,
-
-
-                        }}
-                        className="w-full flex-1 flex flex-row justify-between items-center"
+                        className="w-full px-5  gap-6 flex-1 flex flex-row justify-between items-center"
                     >
 
-                        <View style={{padding: 16, borderRadius: 12}} className="w-full bg-tertiaryWhite dark:bg-secondaryGray/20 border border-secondaryGray flex flex-row justify-between items-center">
+                        <View
+                              className="w-full h-20 px-4 rounded-3xl bg-tertiaryWhite dark:bg-secondaryGray/20 border-2 border-secondaryGray flex flex-row justify-between items-center">
                         <View >
                             <Image
+                                className="w-9 h-9"
                                 source={require("../../assets/images/minibus.png")}
-                                style={{ width: 36, height: 36 }}
                             />
                         </View>
 
                         <View
-                            style={{ width: "50%" }}
-                            className="flex flex-col justify-center items-center "
+                            className="flex flex-1 px-6 flex-col justify-center items-center "
                         >
                             <View className="flex flex-row justify-start items-center w-full gap-2">
                                 <Text className="text-xl font-GoogleSansMedium dark:text-general">Troski</Text>
                             </View>
 
-                            <View className="w-full flex flex-row gap-2 items-center ">
+                            <View className="w-full flex flex-row items-center ">
                                 <Text
-                                    style={{ paddingHorizontal: 6, paddingVertical: 2, fontSize: 10 }}
-                                    className="text-white bg-black font-GoogleSansRegular rounded-full"
+                                    className="text-white px-2 py-0.5 text-xs leading-4 bg-black font-GoogleSansRegular rounded-full"
                                 >
                                     {item.speed}
                                 </Text>
                             </View>
                         </View>
 
-                        <View
-                            style={{ width: 84, height: 32, paddingHorizontal: 2 }}
-                            className="rounded-full bg-secondaryBlack flex justify-center items-center"
-                        >
-                            <Text numberOfLines={1} className="font-GoogleSansBold text-general dark:text-primary text-sm">
-                                {item.price}
-                            </Text>
-                        </View>
+                            <View
+                                className="rounded-full w-24 h-9 bg-secondaryBlack flex justify-center items-center"
+                            >
+                                <Text numberOfLines={1} className="font-GoogleSansBold text-general dark:text-primary text-sm leading-4">
+                                    {item.price}
+                                </Text>
+                            </View>
                         </View>
                     </Pressable>
                 );
