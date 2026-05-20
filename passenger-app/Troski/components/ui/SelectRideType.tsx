@@ -2,6 +2,7 @@ import { View, Text, FlatList, Pressable, Image } from "react-native";
 import React, { useEffect, useState } from "react";
 import { useAppStore } from "@/utils/store";
 import {useColorScheme} from "nativewind";
+import {Ionicons} from "@expo/vector-icons";
 
 const haversineKm = (lat1: number, lon1: number, lat2: number, lon2: number) => {
     const R = 6371;
@@ -102,6 +103,23 @@ const SelectRideType = ({ routeCoords, duration, price }: SelectRideTypeProps) =
 
     return (
         <FlatList
+            ListEmptyComponent={
+                <View className="flex-1 justify-center items-center py-20">
+                    <Ionicons
+                        name="document-text-outline"
+                        size={48}
+                        color="gray"
+                    />
+
+                    <Text className="mt-4 text-base font-GoogleSansMedium text-secondaryGray dark:text-tertiaryGray">
+                        No items found
+                    </Text>
+
+                    <Text className="mt-1 text-sm text-center px-10 font-GoogleSansRegular text-tertiaryGray">
+                        There’s nothing to display right now.
+                    </Text>
+                </View>
+            }
             data={data}
             keyExtractor={(item) => item.id.toString()}
             renderItem={({ item }) => {
