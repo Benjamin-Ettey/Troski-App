@@ -65,7 +65,7 @@ const Withdraw = () => {
 
                 <View className="w-full flex-1 flex items-center px-6">
                     <View className="w-full py-2">
-                        <Text className="text-xl leading-6 tracking-tight font-GoogleSansMedium dark:text-general">Enter amount number?</Text>
+                        <Text className="text-xl leading-6 tracking-tight font-GoogleSansMedium dark:text-general">Enter account number?</Text>
                     </View>
 
                     <TextInput
