@@ -313,6 +313,23 @@ const Index = () => {
             </View>
 
             <FlashList
+                ListEmptyComponent={
+                    <View className="flex-1 justify-center items-center py-20">
+                        <Ionicons
+                            name="document-text-outline"
+                            size={48}
+                            color="gray"
+                        />
+
+                        <Text className="mt-4 text-base font-GoogleSansMedium text-secondaryGray dark:text-tertiaryGray">
+                            No items found
+                        </Text>
+
+                        <Text className="mt-1 text-sm text-center px-10 font-GoogleSansRegular text-tertiaryGray">
+                            There’s nothing to display right now.
+                        </Text>
+                    </View>
+                }
                 data={listData}
                 keyboardShouldPersistTaps="handled"
                 getItemType={()=>"geo"}

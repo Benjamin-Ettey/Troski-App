@@ -57,6 +57,7 @@ const SettingsRoute = () => {
                                 })}
                             />
 
+
                             <Stack.Screen
                                 name="changePinCode"
                                 options={()=> ({
