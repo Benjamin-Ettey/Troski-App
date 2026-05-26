@@ -59,10 +59,12 @@ const submitApplication = async (req, res) => {
     });
   }
 
-  // Required files
+  // Required files. Selfie is what the admin uses to verify the applicant
+  // is the same person as on their Ghana Card + license.
   const uploadFields = {
     ghanaCardImage: "Ghana card",
     licenseImage: "license",
+    selfieImage: "selfie (real photo of yourself)",
   };
   const missing = Object.keys(uploadFields).filter(
     (f) => !(req.files && req.files[f] && req.files[f][0]),
@@ -207,11 +209,24 @@ const approveApplication = async (req, res) => {
     approvedAt: new Date(),
   });
 
-  // Grant the driver role on the user.
-  if (!user.roles.includes("driver")) {
-    user.roles.push("driver");
-    await user.save();
+  // Grant the driver role AND adopt the verified selfie as the user's
+  // profile photo. From this point on, passengers see this person's
+  // real face when matched with them as a driver.
+  if (!user.roles.includes("driver")) user.roles.push("driver");
+  if (application.selfieImage) {
+    // Best-effort cleanup of any previous (possibly cartoon/avatar) photo
+    if (user.profilePhotoPublicId) {
+      const cloudinary = require("cloudinary");
+      cloudinary.v2.uploader
+        .destroy(user.profilePhotoPublicId)
+        .catch((e) =>
+          console.error("Failed deleting old user profile photo", e),
+        );
+    }
+    user.profilePhoto = application.selfieImage;
+    user.profilePhotoPublicId = application.selfieImagePublicId;
   }
+  await user.save();
 
   application.status = "approved";
   application.reviewedBy = req.user.adminId;

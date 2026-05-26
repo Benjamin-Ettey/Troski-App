@@ -2,70 +2,87 @@ const express = require("express");
 const router = express.Router();
 
 const {
-  requestRide,
+  // passenger
+  listNearbyTrips,
+  requestSeat,
   getMyActiveBooking,
-  cancelBooking,
-  listAvailableTrips,
-  acceptTrip,
-  markArrivedAtPickup,
-  startTrip,
-  completeTrip,
-  cancelTripByDriver,
+  cancelMyBooking,
+  confirmBoarding,
+  // driver
+  getMyActiveTrip,
+  listIncomingRequests,
+  acceptBooking,
+  rejectBooking,
+  markBoarded,
 } = require("../controllers/tripController");
 
 const {
   authenticateUser,
   requireRole,
+  requireOnboardingComplete,
 } = require("../middleware/authMiddleware");
 
 const { validateIdParam } = require("../middleware/validationMiddleware");
 
-// ----- PASSENGER routes (any logged-in user can book; they're a passenger by default) -----
-router.post("/request", authenticateUser, requestRide);
-router.get("/my-booking", authenticateUser, getMyActiveBooking);
-router.patch("/booking/cancel", authenticateUser, cancelBooking);
+// Every trip endpoint requires a fully-onboarded user.
+const userChain = [authenticateUser, requireOnboardingComplete];
+const driverChain = [
+  authenticateUser,
+  requireOnboardingComplete,
+  requireRole("driver"),
+];
 
-// ----- DRIVER routes -----
-router.get(
-  "/available",
-  authenticateUser,
-  requireRole("driver"),
-  listAvailableTrips,
-);
+// ============================================================
+// PASSENGER (Mode B — see trotros on map, request seat, confirm boarding)
+// ============================================================
+
+// List trotros near me heading to my destination
+router.get("/nearby", ...userChain, listNearbyTrips);
+
+// Request a seat on a specific trip (the one I tapped)
+router.post("/:id/request-seat", ...userChain, validateIdParam, requestSeat);
+
+// My current booking + driver info + ETA
+router.get("/my-booking", ...userChain, getMyActiveBooking);
+
+// Cancel my booking (refunds escrow)
+router.patch("/booking/cancel", ...userChain, cancelMyBooking);
+
+// I'm in the trotro — enter the 4-digit code to confirm boarding
+router.post("/booking/confirm-boarding", ...userChain, confirmBoarding);
+
+// ============================================================
+// DRIVER
+// ============================================================
+
+// My active trip (with seats + bookings)
+router.get("/my-trip", ...driverChain, getMyActiveTrip);
+
+// Pending booking requests waiting for my decision
+router.get("/incoming-requests", ...driverChain, listIncomingRequests);
+
+// Accept a pending booking — issues the 4-digit code
 router.patch(
-  "/:id/accept",
-  authenticateUser,
-  requireRole("driver"),
+  "/booking/:id/accept",
+  ...driverChain,
   validateIdParam,
-  acceptTrip,
+  acceptBooking,
 );
+
+// Reject a pending booking — refunds the passenger
 router.patch(
-  "/:id/arrived",
-  authenticateUser,
-  requireRole("driver"),
+  "/booking/:id/reject",
+  ...driverChain,
   validateIdParam,
-  markArrivedAtPickup,
+  rejectBooking,
 );
+
+// Fallback: I'm letting them board even though they can't enter the code
 router.patch(
-  "/:id/start",
-  authenticateUser,
-  requireRole("driver"),
+  "/booking/:id/mark-boarded",
+  ...driverChain,
   validateIdParam,
-  startTrip,
-);
-router.patch(
-  "/:id/complete",
-  authenticateUser,
-  requireRole("driver"),
-  validateIdParam,
-  completeTrip,
-);
-router.patch(
-  "/:id/cancel",
-  authenticateUser,
-  requireRole("driver"),
-  validateIdParam,
-  cancelTripByDriver,
+  markBoarded,
 );
 
 module.exports = router;

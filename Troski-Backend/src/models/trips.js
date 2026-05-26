@@ -33,17 +33,17 @@ const locationSchema = new mongoose.Schema(
 const tripSchema = new mongoose.Schema(
   {
     // ----- Where -----
-    // Pickup is the CENTROID of the passenger cluster. Recomputed as
-    // bookings join/leave (while still in forming / open_for_drivers).
-    pickupLocation: { type: locationSchema, required: true },
+    // pickupLocation is the cluster centroid (Mode A) and only exists for
+    // legacy trips OR while bookings still cluster. In the new model where
+    // the driver starts a Trip alone with a destination, pickupLocation is
+    // null until passengers join.
+    pickupLocation: { type: locationSchema, required: false, default: null },
     pickupRadiusMeters: {
       type: Number,
       default: rideConfig.CLUSTER_RADIUS_METERS,
     },
 
-    // Dropoff is a named destination. Trips with the same dropoffName +
-    // overlapping pickup clusters are eligible to merge — but for v1 we
-    // do strict same-name matching, no fuzzy.
+    // The driver's destination. In the new model this is set at /go-online.
     dropoffLocation: { type: locationSchema, required: true },
 
     // ----- Who -----
@@ -64,19 +64,35 @@ const tripSchema = new mongoose.Schema(
       default: rideConfig.MIN_PASSENGERS_FOR_DRIVERS,
     },
     capacity: { type: Number, default: null }, // filled from vehicle on accept
-    activeBookingCount: { type: Number, default: 0 }, // denormalized for fast checks
+    activeBookingCount: { type: Number, default: 0 }, // app bookings only
+
+    // Non-app passengers the driver picked up off the street (paid cash).
+    // Driver maintains this with +/- buttons in the driver app. Used to
+    // compute remainingSeats = capacity - activeBookingCount - walkOnCount.
+    walkOnCount: { type: Number, default: 0, min: 0 },
 
     // ----- Status -----
+    // NEW MODEL (driver-initiated):
+    //   open         — driver is online with destination, has seats, visible on map
+    //   in_progress  — driver has at least one onboarded passenger / is en route
+    //   completed    — driver pressed "End trip" or reached destination
+    //   cancelled    — driver went offline / aborted
+    //
+    // LEGACY (demand-aggregation) values kept temporarily so the existing
+    // tripController boots while we phase in the new model:
+    //   forming, open_for_drivers, driver_assigned, at_pickup
     status: {
       type: String,
       enum: [
+        "open",
+        "in_progress",
+        "completed",
+        "cancelled",
+        // legacy:
         "forming",
         "open_for_drivers",
         "driver_assigned",
         "at_pickup",
-        "in_progress",
-        "completed",
-        "cancelled",
       ],
       default: "forming",
       index: true,

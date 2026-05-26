@@ -176,6 +176,59 @@ const completeProfile = async (req, res) => {
   res.status(StatusCodes.OK).json({ msg: "Profile completed", user });
 };
 
+// REQUIRED onboarding step. Called right after the user finishes the
+// PIN flow — the frontend pushes the photo here before letting the user
+// into the rest of the app. Profile photo can be any image (passengers).
+// On success: sets profilePhoto + flips isOnboardingComplete=true, after
+// which `requireOnboardingComplete` middleware lets the user through.
+const uploadPhoto = async (req, res) => {
+  const user = await Passenger.findById(req.user.passengerId);
+  if (!user) {
+    return res.status(StatusCodes.NOT_FOUND).json({ msg: "User not found" });
+  }
+  if (!user.isPhoneVerified) {
+    return res
+      .status(StatusCodes.FORBIDDEN)
+      .json({ msg: "Verify your phone number first" });
+  }
+
+  if (!req.file) {
+    return res
+      .status(StatusCodes.BAD_REQUEST)
+      .json({ msg: "A photo upload is required" });
+  }
+
+  try {
+    const formatted = formatImage(req.file);
+    const uploaded = await cloudinary.v2.uploader.upload(formatted, {
+      use_filename: true,
+      folder: "/Troski/Troski-Profile-Photos",
+    });
+
+    // Clean up any previous photo before swapping in the new one.
+    if (user.profilePhotoPublicId) {
+      cloudinary.v2.uploader
+        .destroy(user.profilePhotoPublicId)
+        .catch((e) => console.error("Failed deleting old profile photo", e));
+    }
+
+    user.profilePhoto = uploaded.secure_url;
+    user.profilePhotoPublicId = uploaded.public_id;
+    user.isOnboardingComplete = true;
+    await user.save();
+
+    res.status(StatusCodes.OK).json({
+      msg: "Photo uploaded. Onboarding complete.",
+      user,
+    });
+  } catch (err) {
+    console.error("uploadPhoto failed", err);
+    res
+      .status(StatusCodes.INTERNAL_SERVER_ERROR)
+      .json({ msg: "Photo upload failed. Please try again." });
+  }
+};
+
 // PIN gate — used to authorize sensitive actions (wallet ops, withdrawals…).
 const verifyPin = async (req, res) => {
   const { pinCode } = req.body;
@@ -496,6 +549,7 @@ module.exports = {
   // User (passenger + driver share this — roles differ)
   userSignUp,
   verifySignUpOTP,
+  uploadPhoto,
   completeProfile,
   verifyPin,
   requestLoginOTP,

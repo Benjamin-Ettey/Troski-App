@@ -1,43 +1,56 @@
 const mongoose = require("mongoose");
-const { create } = require("./passengers");
 
-const paymentSchema = new mongoose.Schema({
-  ride: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: "Ride",
-    required: true,
+// Payment record. Two flavors via `paymentType`:
+//   "ride_payment" — escrow hold + release for a passenger's Booking
+//                    (one Payment per Booking).
+//   "wallet_topup" — passenger added funds via Paystack.
+
+const paymentSchema = new mongoose.Schema(
+  {
+    booking: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Booking",
+      required: false,
+    },
+    trip: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Trip",
+      required: false,
+    },
+    passenger: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Passenger",
+      required: true,
+    },
+
+    paymentType: {
+      type: String,
+      enum: ["ride_payment", "wallet_topup"],
+      required: true,
+    },
+
+    phoneNumber: { type: String, required: true },
+    amount: { type: Number, required: true },
+    currency: { type: String, default: "GHS" },
+
+    paymentProvider: {
+      type: String,
+      enum: ["paystack", "wallet"],
+      default: "paystack",
+    },
+
+    paystackReference: { type: String, unique: true, sparse: true },
+
+    status: {
+      type: String,
+      enum: ["pending", "held", "completed", "failed", "cancelled", "refunded"],
+      default: "pending",
+    },
+
+    escrowReleased: { type: Boolean, default: false },
+    paidAt: { type: Date, default: null },
   },
+  { timestamps: true },
+);
 
-  amount: {
-    type: Number,
-    required: true,
-  },
-
-  paymentMethod: {
-    type: String,
-    enum: ["card", "mobile_money"],
-    default: "mobile_money",
-  },
-
-  status: {
-    type: String,
-    enum: ["pending", "completed", "failed"],
-    default: "pending",
-  },
-
-  authorizationURL: {
-    type: String,
-  },
-
-  createdAt: {
-    type: Date,
-    default: Date.now,
-  },
-
-  paidAt: {
-    type: Date,
-  },
-});
-
-const Payment = mongoose.model("Payment", paymentSchema);
-module.exports = Payment;
+module.exports = mongoose.model("Payment", paymentSchema);

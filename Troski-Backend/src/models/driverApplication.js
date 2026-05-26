@@ -27,6 +27,16 @@ const driverApplicationSchema = new mongoose.Schema(
     licenseImage: { type: String, required: true },
     licenseImagePublicId: { type: String, required: true },
 
+    // A real selfie of the applicant. Required for new applications.
+    // Admin compares this against the Ghana Card photo + license photo
+    // at review time. On approval, this URL gets copied onto the user's
+    // profilePhoto so passengers see the verified face.
+    // (Schema-level `required` is left off for backwards-compat with any
+    // existing pre-feature applications; the upload is enforced at the
+    // controller level for new submissions.)
+    selfieImage: { type: String, default: null },
+    selfieImagePublicId: { type: String, default: null },
+
     // Review state
     status: {
       type: String,

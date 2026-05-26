@@ -13,6 +13,7 @@ const {
 const {
   authenticateUser,
   authenticateAdmin,
+  requireOnboardingComplete,
 } = require("../middleware/authMiddleware");
 
 const {
@@ -24,12 +25,16 @@ const {
 const { upload } = require("../middleware/multerMiddleware");
 
 // ---------- USER-FACING ----------
+// Driver applications require a fully-onboarded user (photo uploaded) and
+// now also require a real selfie file alongside the Ghana Card + license.
 router.post(
   "/",
   authenticateUser,
+  requireOnboardingComplete,
   upload.fields([
     { name: "ghanaCardImage", maxCount: 1 },
     { name: "licenseImage", maxCount: 1 },
+    { name: "selfieImage", maxCount: 1 },
   ]),
   validateDriverApplicationInput,
   submitApplication,

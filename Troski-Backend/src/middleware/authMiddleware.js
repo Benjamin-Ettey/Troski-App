@@ -98,6 +98,30 @@ const authenticateAdmin = async (req, res, next) => {
   }
 };
 
+// Blocks any request from a user who hasn't finished onboarding (i.e.,
+// hasn't uploaded a profile photo yet). Mount AFTER authenticateUser on
+// any endpoint that requires a fully-onboarded account (Trip booking,
+// driver application, etc.). The token payload carries roles but not the
+// onboarding flag, so we do a quick DB read here — small price for safety.
+const Passenger = require("../models/passengers");
+const requireOnboardingComplete = async (req, res, next) => {
+  if (!req.user) {
+    return res
+      .status(StatusCodes.UNAUTHORIZED)
+      .json({ msg: "Authentication required" });
+  }
+  const user = await Passenger.findById(req.user.passengerId).select(
+    "isOnboardingComplete",
+  );
+  if (!user || !user.isOnboardingComplete) {
+    return res.status(StatusCodes.FORBIDDEN).json({
+      msg: "Finish onboarding first",
+      nextStep: "upload-photo",
+    });
+  }
+  next();
+};
+
 // Require the authenticated user's roles array to include `role`.
 // Use AFTER authenticateUser.
 const requireRole = (role) => (req, res, next) => {
@@ -129,6 +153,7 @@ module.exports = {
   authenticatePassenger, // legacy alias
   authenticateDriver, // legacy alias (chain)
   authenticateAdmin,
+  requireOnboardingComplete,
   requireRole,
   requireSuperAdmin,
 };

@@ -28,6 +28,12 @@ const emit = {
     safeEmit(`driver:${driverId}`, event, payload);
   },
 
+  // Per-user room. Every socket joins user:<userId> on connect, so this
+  // reaches a specific user before they've joined a trip room.
+  toUser(userId, event, payload) {
+    safeEmit(`user:${userId}`, event, payload);
+  },
+
   toTripPassengers(tripId, event, payload) {
     safeEmit(`trip:${tripId}`, event, payload);
   },

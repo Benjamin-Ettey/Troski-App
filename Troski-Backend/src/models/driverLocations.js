@@ -22,6 +22,22 @@ const driverLocationSchema = new mongoose.Schema({
   isOnline: { type: Boolean, default: false, index: true },
   socketId: { type: String, default: null },
 
+  // The destination the driver is currently heading to (set on /go-online,
+  // cleared on /go-offline). Used by the passenger "nearby trotros" query
+  // to filter to drivers whose route matches the passenger's destination.
+  destination: {
+    name: { type: String, default: null },
+    latitude: { type: Number, default: null },
+    longitude: { type: Number, default: null },
+  },
+
+  // The active Trip for this driver session (created at /go-online).
+  activeTrip: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Trip",
+    default: null,
+  },
+
   // Updated on every location push. Used to detect stale entries.
   lastUpdate: { type: Date, default: Date.now, index: true },
 });

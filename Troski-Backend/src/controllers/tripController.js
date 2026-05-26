@@ -1,96 +1,221 @@
 // ============================================================
-// TRIP CONTROLLER — demand-aggregation ride system.
+// TRIP CONTROLLER — Mode B (passenger picks driver on map).
 //
-// Passenger places a "ride order" (a Booking). The system clusters
-// nearby bookings going to the same dropoff into a single Trip. Trips
-// stay HIDDEN from drivers until they hit MIN_PASSENGERS_FOR_DRIVERS,
-// then they're broadcast to nearby drivers whose route preferences
-// include the dropoff.
+// Driver creates the Trip via /driver-location/online with a destination.
+// Passengers list nearby active trips, tap one, and request a seat. The
+// driver gets a notification with the passenger's photo + pickup and
+// either accepts (issuing a 4-digit booking code) or rejects.
+//
+// Mode A (cluster of 5+ unassigned bookings) is a separate flow added in
+// Phase 5; it shares the booking lifecycle (acceptance → onboard →
+// arrived) but starts from a different request path.
 // ============================================================
 
 const { StatusCodes } = require("http-status-codes");
+
 const Trip = require("../models/trips");
 const Booking = require("../models/bookings");
 const Driver = require("../models/drivers");
-const Vehicle = require("../models/vehicles");
+const Passenger = require("../models/passengers");
 const DriverLocation = require("../models/driverLocations");
+
 const rideConfig = require("../config/rideConfig");
-const { distanceMeters, distanceKm, centroidOf, isInGhana } = require("../utils/geo");
+const { distanceKm, isInGhana } = require("../utils/geo");
+const {
+  holdEscrow,
+  refundEscrow,
+  WalletError,
+} = require("../utils/walletService");
 const { emit } = require("../socket/emit");
 
+// Naive ETA: distance / average urban speed. Good enough for v1; swap in
+// Google Distance Matrix later when we want road-accurate numbers.
+const AVG_URBAN_SPEED_KMH = 25;
+const minutesFromKm = (km) =>
+  km == null ? null : Math.max(1, Math.round((km / AVG_URBAN_SPEED_KMH) * 60));
+
+// 4-digit booking code generator. Codes from 1000-9999 (no leading zero
+// confusion when read aloud).
+const generateBookingCode = () =>
+  String(Math.floor(1000 + Math.random() * 9000));
+
+// Lean public view of a Trip — strips internals.
+function publicTripView(trip) {
+  if (!trip) return null;
+  const t = trip.toObject ? trip.toObject() : trip;
+  return {
+    _id: t._id,
+    dropoffLocation: t.dropoffLocation,
+    status: t.status,
+    capacity: t.capacity,
+    activeBookingCount: t.activeBookingCount,
+    walkOnCount: t.walkOnCount,
+    remainingSeats:
+      (t.capacity || 0) -
+      (t.activeBookingCount || 0) -
+      (t.walkOnCount || 0),
+    farePerPassenger: t.farePerPassenger,
+    driverPayPerPassenger: t.driverPayPerPassenger,
+    platformProfitPerPassenger: t.platformProfitPerPassenger,
+    pickupZone: t.pickupZone,
+    dropoffZone: t.dropoffZone,
+    driver: t.driver || null,
+    vehicle: t.vehicle || null,
+    startedAt: t.startedAt,
+    completedAt: t.completedAt,
+  };
+}
+
 // ============================================================
-// PASSENGER-FACING
+// PASSENGER ENDPOINTS
 // ============================================================
 
-// POST /api/v1/trip/request
-// Body: { pickup: { latitude, longitude, name? }, dropoff: { latitude, longitude, name } }
-const requestRide = async (req, res) => {
-  const userId = req.user.passengerId;
-  const { pickup, dropoff } = req.body || {};
+/**
+ * GET /api/v1/trip/nearby?latitude=&longitude=&destination=
+ *
+ * Lists active Trips heading to the named destination (optional filter)
+ * whose driver is currently within DRIVER_SEARCH_RADIUS_KM of the
+ * passenger. Each result includes the driver's photo + plate so the
+ * passenger can pick visually.
+ */
+const listNearbyTrips = async (req, res) => {
+  const latitude = parseFloat(req.query.latitude);
+  const longitude = parseFloat(req.query.longitude);
+  const destinationName = (req.query.destination || "").trim();
 
-  if (
-    !pickup ||
-    !dropoff ||
-    !isInGhana(pickup.latitude, pickup.longitude) ||
-    !isInGhana(dropoff.latitude, dropoff.longitude) ||
-    !dropoff.name
-  ) {
-    return res.status(StatusCodes.BAD_REQUEST).json({
-      msg: "Valid pickup coordinates, dropoff coordinates, and dropoff name are required.",
+  if (!isInGhana(latitude, longitude)) {
+    return res
+      .status(StatusCodes.BAD_REQUEST)
+      .json({ msg: "Valid latitude and longitude query params required" });
+  }
+
+  const filter = { status: { $in: ["open", "in_progress"] } };
+  if (destinationName) filter["dropoffLocation.name"] = destinationName;
+
+  const trips = await Trip.find(filter)
+    .populate({
+      path: "driver",
+      populate: { path: "user", select: "name profilePhoto" },
+    })
+    .populate(
+      "vehicle",
+      "plateNumber vehicleColor vehicleType vehicleCapacity vehicleImage",
+    );
+
+  // Pull all relevant DriverLocations in one query.
+  const driverIds = trips.map((t) => t.driver?._id).filter(Boolean);
+  const staleCutoff = new Date(Date.now() - rideConfig.DRIVER_LOCATION_STALE_MS);
+  const locations = await DriverLocation.find({
+    driver: { $in: driverIds },
+    isOnline: true,
+    lastUpdate: { $gte: staleCutoff },
+  });
+  const locByDriver = new Map(
+    locations.map((l) => [String(l.driver), l]),
+  );
+
+  const result = [];
+  for (const trip of trips) {
+    const remaining =
+      (trip.capacity || 0) - trip.activeBookingCount - trip.walkOnCount;
+    if (remaining <= 0) continue;
+
+    const loc = locByDriver.get(String(trip.driver?._id));
+    if (!loc) continue; // driver location stale or offline
+
+    const distFromMe = distanceKm(
+      latitude,
+      longitude,
+      loc.latitude,
+      loc.longitude,
+    );
+    if (distFromMe > rideConfig.DRIVER_SEARCH_RADIUS_KM) continue;
+
+    result.push({
+      tripId: trip._id,
+      destination: trip.dropoffLocation,
+      farePerPassenger: trip.farePerPassenger,
+      remainingSeats: remaining,
+      capacity: trip.capacity,
+      appBookings: trip.activeBookingCount,
+      walkOns: trip.walkOnCount,
+      driver: {
+        name: trip.driver?.user?.name || null,
+        photo: trip.driver?.user?.profilePhoto || null,
+      },
+      vehicle: {
+        plateNumber: trip.vehicle?.plateNumber || null,
+        vehicleColor: trip.vehicle?.vehicleColor || null,
+        vehicleType: trip.vehicle?.vehicleType || null,
+        vehicleImage: trip.vehicle?.vehicleImage || null,
+      },
+      currentLocation: {
+        latitude: loc.latitude,
+        longitude: loc.longitude,
+        heading: loc.heading,
+      },
+      driverDistanceKm: parseFloat(distFromMe.toFixed(2)),
+      etaMinutes: minutesFromKm(distFromMe),
     });
   }
 
-  // A passenger can only have one active booking at a time
-  const existing = await Booking.findOne({ passenger: userId, status: "active" });
+  result.sort((a, b) => a.etaMinutes - b.etaMinutes);
+  res.status(StatusCodes.OK).json({ count: result.length, trips: result });
+};
+
+/**
+ * POST /api/v1/trip/:id/request-seat
+ * Body: { pickup: { latitude, longitude } }
+ *
+ * Passenger requests a seat on a specific Trip (Mode B direct request).
+ * Escrow is held on the passenger's wallet immediately so the driver knows
+ * the money is real when they accept.
+ */
+const requestSeat = async (req, res) => {
+  const userId = req.user.passengerId;
+  const tripId = req.params.id;
+  const { pickup } = req.body || {};
+
+  if (!pickup || !isInGhana(pickup.latitude, pickup.longitude)) {
+    return res
+      .status(StatusCodes.BAD_REQUEST)
+      .json({ msg: "Valid pickup coordinates are required" });
+  }
+
+  // One active booking at a time.
+  const existing = await Booking.findOne({
+    passenger: userId,
+    status: { $in: ["unassigned", "pending", "accepted", "onboard"] },
+  });
   if (existing) {
     return res.status(StatusCodes.BAD_REQUEST).json({
-      msg: "You already have an active ride. Cancel it before booking another.",
+      msg: "You already have an active booking. Cancel it first.",
       booking: existing,
     });
   }
 
-  // Find a Trip we can join: same dropoff name, joinable status,
-  // pickup pin within cluster radius of the trip's centroid, has room.
-  const joinable = await Trip.find({
-    "dropoffLocation.name": dropoff.name,
-    status: { $in: ["forming", "open_for_drivers", "driver_assigned"] },
-  });
-
-  let trip = null;
-  let smallestDist = Infinity;
-  for (const t of joinable) {
-    if (t.capacity && t.activeBookingCount >= t.capacity) continue;
-    const d = distanceMeters(
-      pickup.latitude,
-      pickup.longitude,
-      t.pickupLocation.latitude,
-      t.pickupLocation.longitude,
-    );
-    if (d <= t.pickupRadiusMeters && d < smallestDist) {
-      smallestDist = d;
-      trip = t;
-    }
-  }
-
-  // No matching trip → start a new one (status "forming")
+  const trip = await Trip.findById(tripId);
   if (!trip) {
-    trip = await Trip.create({
-      pickupLocation: {
-        latitude: pickup.latitude,
-        longitude: pickup.longitude,
-        name: pickup.name || null,
-      },
-      dropoffLocation: {
-        latitude: dropoff.latitude,
-        longitude: dropoff.longitude,
-        name: dropoff.name,
-      },
-      status: "forming",
-      activeBookingCount: 0,
-    });
+    return res.status(StatusCodes.NOT_FOUND).json({ msg: "Trip not found" });
+  }
+  if (!["open", "in_progress"].includes(trip.status)) {
+    return res
+      .status(StatusCodes.BAD_REQUEST)
+      .json({ msg: "This trip is no longer accepting passengers" });
+  }
+  const remaining =
+    (trip.capacity || 0) - trip.activeBookingCount - trip.walkOnCount;
+  if (remaining <= 0) {
+    return res
+      .status(StatusCodes.BAD_REQUEST)
+      .json({ msg: "Trip is full" });
+  }
+  if (!trip.farePerPassenger || trip.farePerPassenger <= 0) {
+    return res
+      .status(StatusCodes.INTERNAL_SERVER_ERROR)
+      .json({ msg: "Trip has no fare snapshot — cannot process request" });
   }
 
-  // Create the Booking
   const booking = await Booking.create({
     trip: trip._id,
     passenger: userId,
@@ -98,496 +223,552 @@ const requestRide = async (req, res) => {
       latitude: pickup.latitude,
       longitude: pickup.longitude,
     },
-    status: "active",
+    mode: "direct",
+    status: "pending",
+    fareAmount: trip.farePerPassenger,
+    paymentStatus: "unpaid",
   });
 
-  // Recompute centroid if trip is still pre-pickup (i.e., centroid is
-  // still the meeting point; once driver is en route we freeze it).
-  if (["forming", "open_for_drivers"].includes(trip.status)) {
-    const points = await Booking.find({
-      trip: trip._id,
-      status: "active",
-    }).select("requestedPickup");
-    const pickupPoints = points.map((b) => ({
-      latitude: b.requestedPickup.latitude,
-      longitude: b.requestedPickup.longitude,
-    }));
-    const c = centroidOf(pickupPoints);
-    if (c) {
-      trip.pickupLocation.latitude = c.latitude;
-      trip.pickupLocation.longitude = c.longitude;
-    }
-  }
-
-  trip.activeBookingCount += 1;
-
-  // Threshold check: promote to open_for_drivers when MIN reached
-  let justOpened = false;
-  if (
-    trip.status === "forming" &&
-    trip.activeBookingCount >= trip.minPassengers
-  ) {
-    trip.status = "open_for_drivers";
-    trip.openedAt = new Date();
-    justOpened = true;
-  }
-
-  await trip.save();
-
-  // Emit live updates
-  emit.toTripPassengers(trip._id, "trip:booking_count", {
-    tripId: trip._id,
-    count: trip.activeBookingCount,
-    threshold: trip.minPassengers,
-    status: trip.status,
-  });
-
-  if (justOpened) {
-    // Broadcast to nearby online drivers whose vehicle routes match.
-    await broadcastTripToDrivers(trip);
-  } else if (trip.status === "driver_assigned" && trip.driver) {
-    // Late joiner — let the driver know
-    emit.toDriver(trip.driver, "trip:passenger_joined", {
+  // Hold escrow. If it fails, kill the booking — don't leave a "pending"
+  // booking around that the driver might accept and then have no money.
+  try {
+    await holdEscrow({
+      userId,
+      amount: trip.farePerPassenger,
+      description: `Escrow hold for seat request on trip ${trip._id}`,
       tripId: trip._id,
       bookingId: booking._id,
-      currentCount: trip.activeBookingCount,
     });
+    booking.paymentStatus = "held";
+    await booking.save();
+  } catch (err) {
+    await Booking.deleteOne({ _id: booking._id });
+    if (err instanceof WalletError && err.code === "INSUFFICIENT_FUNDS") {
+      return res.status(StatusCodes.PAYMENT_REQUIRED).json({
+        msg: "Insufficient wallet balance. Please top up and try again.",
+        fareAmount: trip.farePerPassenger,
+      });
+    }
+    console.error("requestSeat escrow failed", err);
+    return res
+      .status(StatusCodes.INTERNAL_SERVER_ERROR)
+      .json({ msg: "Could not hold escrow. Please try again." });
   }
 
+  // Push the request to the driver with a photo + pickup. Frontend uses
+  // this to pop a "new request" card in the driver app.
+  const passenger = await Passenger.findById(userId).select(
+    "name profilePhoto",
+  );
+  emit.toDriver(trip.driver, "booking:new", {
+    bookingId: booking._id,
+    tripId: trip._id,
+    requestedPickup: booking.requestedPickup,
+    fareAmount: booking.fareAmount,
+    passenger: {
+      _id: userId,
+      name: passenger?.name || null,
+      photo: passenger?.profilePhoto || null,
+    },
+  });
+
   res.status(StatusCodes.CREATED).json({
-    msg: "Booking created",
+    msg: "Request sent. Waiting for the driver to accept.",
     booking,
-    trip: publicTripView(trip),
   });
 };
 
-// GET /api/v1/trip/my-booking
+/**
+ * GET /api/v1/trip/my-booking
+ * Returns the passenger's current active booking with driver/vehicle/
+ * location details for the in-app tracking screen.
+ */
 const getMyActiveBooking = async (req, res) => {
   const booking = await Booking.findOne({
     passenger: req.user.passengerId,
-    status: "active",
+    status: { $in: ["pending", "accepted", "onboard"] },
   }).populate("trip");
-  if (!booking) {
-    return res
-      .status(StatusCodes.NOT_FOUND)
-      .json({ msg: "No active booking" });
-  }
-  res.status(StatusCodes.OK).json({
-    booking,
-    trip: publicTripView(booking.trip),
-  });
-};
 
-// PATCH /api/v1/trip/booking/cancel
-const cancelBooking = async (req, res) => {
-  const booking = await Booking.findOne({
-    passenger: req.user.passengerId,
-    status: "active",
-  });
   if (!booking) {
     return res
       .status(StatusCodes.NOT_FOUND)
       .json({ msg: "No active booking" });
   }
 
-  const trip = await Trip.findById(booking.trip);
-  if (!trip) {
-    return res.status(StatusCodes.NOT_FOUND).json({ msg: "Trip not found" });
-  }
+  let driverInfo = null;
+  let vehicleInfo = null;
+  let currentLocation = null;
+  let etaMinutes = null;
 
-  booking.status = "cancelled";
-  booking.cancelledAt = new Date();
-  booking.cancellationReason = req.body?.reason || null;
-  await booking.save();
+  if (booking.trip?.driver) {
+    const driverProfile = await Driver.findById(booking.trip.driver)
+      .populate("user", "name profilePhoto")
+      .populate("vehicle", "plateNumber vehicleColor vehicleType vehicleImage");
 
-  trip.activeBookingCount = Math.max(0, trip.activeBookingCount - 1);
+    if (driverProfile) {
+      driverInfo = {
+        name: driverProfile.user?.name || null,
+        photo: driverProfile.user?.profilePhoto || null,
+      };
+      vehicleInfo = {
+        plateNumber: driverProfile.vehicle?.plateNumber || null,
+        vehicleColor: driverProfile.vehicle?.vehicleColor || null,
+        vehicleType: driverProfile.vehicle?.vehicleType || null,
+        vehicleImage: driverProfile.vehicle?.vehicleImage || null,
+      };
+    }
 
-  // If trip is in "forming" and now empty, kill it
-  if (trip.status === "forming" && trip.activeBookingCount === 0) {
-    trip.status = "cancelled";
-    trip.cancelledAt = new Date();
-    trip.cancellationReason = "all_passengers_left";
-    trip.cancelledBy = "all_passengers_left";
-  }
-  // If trip was open_for_drivers and dropped back below threshold, demote
-  else if (
-    trip.status === "open_for_drivers" &&
-    trip.activeBookingCount < trip.minPassengers
-  ) {
-    trip.status = "forming";
-    trip.openedAt = null;
-    emit.toAvailableDrivers("trip:removed", { tripId: trip._id });
-  }
-  // If driver already assigned and all passengers cancel, cancel the trip
-  else if (
-    ["driver_assigned", "at_pickup"].includes(trip.status) &&
-    trip.activeBookingCount === 0
-  ) {
-    trip.status = "cancelled";
-    trip.cancelledAt = new Date();
-    trip.cancellationReason = "all_passengers_left";
-    trip.cancelledBy = "all_passengers_left";
-    if (trip.driver) {
-      emit.toDriver(trip.driver, "trip:cancelled", {
-        tripId: trip._id,
-        reason: "all_passengers_left",
-      });
+    const loc = await DriverLocation.findOne({ driver: booking.trip.driver });
+    if (loc) {
+      currentLocation = {
+        latitude: loc.latitude,
+        longitude: loc.longitude,
+        heading: loc.heading,
+      };
+      // ETA only meaningful before pickup
+      if (["accepted", "pending"].includes(booking.status)) {
+        const km = distanceKm(
+          loc.latitude,
+          loc.longitude,
+          booking.requestedPickup.latitude,
+          booking.requestedPickup.longitude,
+        );
+        etaMinutes = minutesFromKm(km);
+      }
     }
   }
 
-  await trip.save();
-
-  emit.toTripPassengers(trip._id, "trip:booking_count", {
-    tripId: trip._id,
-    count: trip.activeBookingCount,
-    threshold: trip.minPassengers,
-    status: trip.status,
+  res.status(StatusCodes.OK).json({
+    booking,
+    trip: publicTripView(booking.trip),
+    driver: driverInfo,
+    vehicle: vehicleInfo,
+    currentLocation,
+    etaMinutes,
+    bookingCode: booking.bookingCode, // shown to passenger when accepted
   });
+};
+
+/**
+ * PATCH /api/v1/trip/booking/cancel
+ * Body: { reason? }
+ *
+ * Passenger cancels their own active booking. Refunds escrow.
+ */
+const cancelMyBooking = async (req, res) => {
+  const userId = req.user.passengerId;
+  const booking = await Booking.findOne({
+    passenger: userId,
+    status: { $in: ["pending", "accepted"] },
+  });
+  if (!booking) {
+    return res
+      .status(StatusCodes.NOT_FOUND)
+      .json({ msg: "No cancellable booking" });
+  }
+
+  // Refund escrow FIRST. If refund fails, leave the booking active so the
+  // passenger can retry rather than ending up cancelled with stuck escrow.
+  if (booking.paymentStatus === "held" && booking.fareAmount > 0) {
+    try {
+      await refundEscrow({
+        userId,
+        amount: booking.fareAmount,
+        description: `Refund — passenger cancelled (booking ${booking._id})`,
+        tripId: booking.trip,
+        bookingId: booking._id,
+      });
+      booking.paymentStatus = "refunded";
+    } catch (err) {
+      console.error("cancelMyBooking refund failed", err);
+      return res
+        .status(StatusCodes.INTERNAL_SERVER_ERROR)
+        .json({ msg: "Could not refund. Please contact support." });
+    }
+  }
+
+  const wasAccepted = booking.status === "accepted";
+  booking.status = "cancelled";
+  booking.cancelledAt = new Date();
+  booking.cancellationReason = req.body?.reason || "passenger cancelled";
+  booking.bookingCode = null;
+  await booking.save();
+
+  // Free the seat if it had been counted toward the trip
+  if (wasAccepted) {
+    await Trip.findByIdAndUpdate(booking.trip, {
+      $inc: { activeBookingCount: -1 },
+    });
+  }
+
+  // Notify driver
+  const trip = await Trip.findById(booking.trip).select("driver");
+  if (trip?.driver) {
+    emit.toDriver(trip.driver, "booking:cancelled", {
+      bookingId: booking._id,
+      reason: "passenger cancelled",
+    });
+  }
 
   res.status(StatusCodes.OK).json({ msg: "Booking cancelled", booking });
 };
 
-// ============================================================
-// DRIVER-FACING
-// ============================================================
-
-// GET /api/v1/trip/available
-// Driver sees trips that:
-//  - status = open_for_drivers
-//  - dropoff name matches their vehicle's routePreferences[*].to
-//  - pickup centroid is within DRIVER_SEARCH_RADIUS_KM of driver
-const listAvailableTrips = async (req, res) => {
-  const driver = await Driver.findOne({ user: req.user.passengerId }).populate(
-    "vehicle",
-  );
-  if (!driver) {
+/**
+ * POST /api/v1/trip/booking/confirm-boarding
+ * Body: { code }
+ *
+ * Passenger enters the 4-digit code their driver was given when accepting.
+ * Marks the booking as onboard and notifies the driver. The code is
+ * cleared once used.
+ */
+const confirmBoarding = async (req, res) => {
+  const { code } = req.body || {};
+  if (!code || typeof code !== "string" || !/^\d{4}$/.test(code)) {
     return res
-      .status(StatusCodes.FORBIDDEN)
-      .json({ msg: "No driver profile for this user" });
+      .status(StatusCodes.BAD_REQUEST)
+      .json({ msg: "A 4-digit booking code is required" });
   }
-  if (!driver.vehicle) {
+
+  const booking = await Booking.findOne({
+    passenger: req.user.passengerId,
+    status: "accepted",
+  });
+  if (!booking) {
+    return res.status(StatusCodes.NOT_FOUND).json({
+      msg: "No accepted booking to confirm. Has the driver accepted yet?",
+    });
+  }
+
+  if (booking.bookingCode !== code) {
     return res
-      .status(StatusCodes.FORBIDDEN)
-      .json({ msg: "Register and get a vehicle approved before going online." });
+      .status(StatusCodes.UNAUTHORIZED)
+      .json({ msg: "Invalid booking code" });
   }
 
-  const location = await DriverLocation.findOne({ driver: driver._id });
-  if (!location || !location.isOnline || !location.latitude) {
-    return res
-      .status(StatusCodes.FORBIDDEN)
-      .json({ msg: "Go online and share your location first." });
+  booking.status = "onboard";
+  booking.onboardedAt = new Date();
+  booking.bookingCode = null;
+  await booking.save();
+
+  // First passenger boards → trip moves from open to in_progress
+  const trip = await Trip.findById(booking.trip);
+  if (trip && trip.status === "open") {
+    trip.status = "in_progress";
+    trip.startedAt = new Date();
+    await trip.save();
   }
 
-  // Route preference set: just the "to" destinations the driver wants.
-  const preferredDestinations = new Set(
-    (driver.vehicle.routePreferences || []).map((r) => (r.to || "").trim()),
-  );
-
-  const candidates = await Trip.find({ status: "open_for_drivers" });
-
-  const enriched = [];
-  for (const t of candidates) {
-    if (!preferredDestinations.has((t.dropoffLocation.name || "").trim()))
-      continue;
-    const distKm = distanceKm(
-      location.latitude,
-      location.longitude,
-      t.pickupLocation.latitude,
-      t.pickupLocation.longitude,
-    );
-    if (distKm > rideConfig.DRIVER_SEARCH_RADIUS_KM) continue;
-    enriched.push({ trip: publicTripView(t), driverDistanceKm: distKm });
+  if (trip?.driver) {
+    emit.toDriver(trip.driver, "booking:onboarded", {
+      bookingId: booking._id,
+      passengerId: req.user.passengerId,
+    });
   }
 
-  enriched.sort((a, b) => a.driverDistanceKm - b.driverDistanceKm);
-
-  res.status(StatusCodes.OK).json({ count: enriched.length, trips: enriched });
+  res.status(StatusCodes.OK).json({ msg: "Boarding confirmed", booking });
 };
 
-// PATCH /api/v1/trip/:tripId/accept
-const acceptTrip = async (req, res) => {
-  const driver = await Driver.findOne({ user: req.user.passengerId }).populate(
-    "vehicle",
-  );
-  if (!driver) {
+// ============================================================
+// DRIVER ENDPOINTS
+// ============================================================
+
+/**
+ * GET /api/v1/trip/my-trip
+ * Driver's currently-active trip plus all active bookings + seat state.
+ */
+const getMyActiveTrip = async (req, res) => {
+  const driverProfile = await Driver.findOne({ user: req.user.passengerId });
+  if (!driverProfile) {
     return res
       .status(StatusCodes.FORBIDDEN)
       .json({ msg: "No driver profile" });
   }
-  if (!driver.vehicle) {
-    return res
-      .status(StatusCodes.FORBIDDEN)
-      .json({ msg: "Register and get a vehicle approved before accepting trips." });
-  }
-  if (driver.activeTrip) {
-    return res.status(StatusCodes.BAD_REQUEST).json({
-      msg: "You already have an active trip. Complete or cancel it first.",
-    });
-  }
-
-  // Atomic claim: succeed only if the trip is still open_for_drivers.
-  const trip = await Trip.findOneAndUpdate(
-    { _id: req.params.tripId, status: "open_for_drivers" },
-    {
-      $set: {
-        status: "driver_assigned",
-        driver: driver._id,
-        vehicle: driver.vehicle._id,
-        capacity: driver.vehicle.vehicleCapacity || null,
-        acceptedAt: new Date(),
-      },
-    },
-    { new: true },
-  );
-
-  if (!trip) {
-    return res.status(StatusCodes.CONFLICT).json({
-      msg: "Trip already accepted by another driver or no longer available.",
-    });
-  }
-
-  driver.activeTrip = trip._id;
-  await driver.save();
-
-  emit.toTripPassengers(trip._id, "trip:driver_assigned", {
-    tripId: trip._id,
-    driver: { id: driver._id, vehicleId: driver.vehicle._id },
-  });
-  emit.toAvailableDrivers("trip:removed", { tripId: trip._id });
-
-  res.status(StatusCodes.OK).json({
-    msg: "Trip accepted. Head to pickup.",
-    trip: publicTripView(trip),
-  });
-};
-
-// PATCH /api/v1/trip/:tripId/arrived
-// Called by driver (or automatically once GPS shows them within range).
-const markArrivedAtPickup = async (req, res) => {
-  const driver = await Driver.findOne({ user: req.user.passengerId });
-  if (!driver) return res.status(StatusCodes.FORBIDDEN).json({ msg: "No driver" });
-
-  const trip = await Trip.findOne({
-    _id: req.params.tripId,
-    driver: driver._id,
-    status: "driver_assigned",
-  });
-  if (!trip) {
+  if (!driverProfile.activeTrip) {
     return res
       .status(StatusCodes.NOT_FOUND)
-      .json({ msg: "Trip not found or not in correct state" });
+      .json({ msg: "No active trip. Go online to start one." });
   }
 
-  trip.status = "at_pickup";
-  trip.arrivedAtPickupAt = new Date();
-  await trip.save();
+  const trip = await Trip.findById(driverProfile.activeTrip);
+  if (!trip) {
+    return res.status(StatusCodes.NOT_FOUND).json({ msg: "Trip not found" });
+  }
 
-  emit.toTripPassengers(trip._id, "trip:driver_arrived", { tripId: trip._id });
+  const bookings = await Booking.find({
+    trip: trip._id,
+    status: { $in: ["pending", "accepted", "onboard"] },
+  }).populate("passenger", "name profilePhoto phoneNumber");
 
-  res
-    .status(StatusCodes.OK)
-    .json({ msg: "Marked arrived at pickup", trip: publicTripView(trip) });
+  res.status(StatusCodes.OK).json({
+    trip: publicTripView(trip),
+    bookings,
+  });
 };
 
-// PATCH /api/v1/trip/:tripId/start
-const startTrip = async (req, res) => {
-  const driver = await Driver.findOne({ user: req.user.passengerId });
-  if (!driver) return res.status(StatusCodes.FORBIDDEN).json({ msg: "No driver" });
+/**
+ * GET /api/v1/trip/incoming-requests
+ * Pending (not yet accepted/rejected) bookings on the driver's active trip.
+ */
+const listIncomingRequests = async (req, res) => {
+  const driverProfile = await Driver.findOne({ user: req.user.passengerId });
+  if (!driverProfile || !driverProfile.activeTrip) {
+    return res.status(StatusCodes.OK).json({ count: 0, bookings: [] });
+  }
 
-  const trip = await Trip.findOne({
-    _id: req.params.tripId,
-    driver: driver._id,
-    status: "at_pickup",
+  const bookings = await Booking.find({
+    trip: driverProfile.activeTrip,
+    status: "pending",
+  }).populate("passenger", "name profilePhoto phoneNumber");
+
+  res.status(StatusCodes.OK).json({ count: bookings.length, bookings });
+};
+
+/**
+ * PATCH /api/v1/trip/booking/:id/accept
+ *
+ * Driver accepts a pending booking. Generates a 4-digit code, atomically
+ * increments the trip's seat counter (refusing if it would overflow), and
+ * notifies the passenger with the code + driver info + ETA.
+ */
+const acceptBooking = async (req, res) => {
+  const driverProfile = await Driver.findOne({
+    user: req.user.passengerId,
+  }).populate("vehicle");
+  if (!driverProfile) {
+    return res
+      .status(StatusCodes.FORBIDDEN)
+      .json({ msg: "No driver profile" });
+  }
+
+  const booking = await Booking.findOne({
+    _id: req.params.id,
+    status: "pending",
   });
-  if (!trip) {
-    return res.status(StatusCodes.BAD_REQUEST).json({
-      msg: "Trip must be at_pickup before starting.",
+  if (!booking) {
+    return res.status(StatusCodes.NOT_FOUND).json({
+      msg: "Booking not found or already handled",
     });
   }
 
-  trip.status = "in_progress";
-  trip.startedAt = new Date();
-  await trip.save();
-
-  emit.toTripPassengers(trip._id, "trip:started", { tripId: trip._id });
-
-  res.status(StatusCodes.OK).json({ msg: "Trip started", trip: publicTripView(trip) });
-};
-
-// PATCH /api/v1/trip/:tripId/complete
-const completeTrip = async (req, res) => {
-  const driver = await Driver.findOne({ user: req.user.passengerId });
-  if (!driver) return res.status(StatusCodes.FORBIDDEN).json({ msg: "No driver" });
-
-  const trip = await Trip.findOne({
-    _id: req.params.tripId,
-    driver: driver._id,
-    status: "in_progress",
-  });
-  if (!trip) {
+  const trip = await Trip.findById(booking.trip);
+  if (!trip || String(trip.driver) !== String(driverProfile._id)) {
+    return res
+      .status(StatusCodes.FORBIDDEN)
+      .json({ msg: "This booking isn't on your trip" });
+  }
+  if (!["open", "in_progress"].includes(trip.status)) {
     return res
       .status(StatusCodes.BAD_REQUEST)
-      .json({ msg: "Trip is not in progress" });
+      .json({ msg: "Trip is no longer accepting bookings" });
   }
 
-  trip.status = "completed";
-  trip.completedAt = new Date();
-  await trip.save();
+  // Atomic capacity check + increment
+  const updatedTrip = await Trip.findOneAndUpdate(
+    {
+      _id: trip._id,
+      $expr: {
+        $lt: [
+          { $add: ["$activeBookingCount", "$walkOnCount"] },
+          "$capacity",
+        ],
+      },
+    },
+    { $inc: { activeBookingCount: 1 } },
+    { new: true },
+  );
+  if (!updatedTrip) {
+    return res.status(StatusCodes.BAD_REQUEST).json({
+      msg: "Vehicle is full. You cannot accept this booking.",
+    });
+  }
 
-  // Mark all still-active bookings as completed
-  await Booking.updateMany(
-    { trip: trip._id, status: "active" },
-    { $set: { status: "completed", completedAt: new Date() } },
+  const bookingCode = generateBookingCode();
+  booking.status = "accepted";
+  booking.acceptedAt = new Date();
+  booking.bookingCode = bookingCode;
+  await booking.save();
+
+  // Compute ETA from driver's current location to passenger's pickup
+  let etaMinutes = null;
+  const driverLoc = await DriverLocation.findOne({
+    driver: driverProfile._id,
+  });
+  if (driverLoc) {
+    const km = distanceKm(
+      driverLoc.latitude,
+      driverLoc.longitude,
+      booking.requestedPickup.latitude,
+      booking.requestedPickup.longitude,
+    );
+    etaMinutes = minutesFromKm(km);
+  }
+
+  const driverUser = await Passenger.findById(driverProfile.user).select(
+    "name profilePhoto",
   );
 
-  // Free up the driver
-  driver.activeTrip = null;
-  driver.completedTrips = (driver.completedTrips || 0) + 1;
-  await driver.save();
+  // Notify passenger
+  emit.toUser(booking.passenger, "booking:accepted", {
+    bookingId: booking._id,
+    bookingCode,
+    etaMinutes,
+    pickup: booking.requestedPickup,
+    driver: {
+      name: driverUser?.name || null,
+      photo: driverUser?.profilePhoto || null,
+    },
+    vehicle: {
+      plateNumber: driverProfile.vehicle?.plateNumber || null,
+      vehicleColor: driverProfile.vehicle?.vehicleColor || null,
+      vehicleType: driverProfile.vehicle?.vehicleType || null,
+    },
+    currentLocation: driverLoc
+      ? {
+          latitude: driverLoc.latitude,
+          longitude: driverLoc.longitude,
+          heading: driverLoc.heading,
+        }
+      : null,
+  });
 
-  emit.toTripPassengers(trip._id, "trip:completed", { tripId: trip._id });
-
-  // Payment release (escrow → driver) will live here once payment model
-  // is decided. Stub for now.
-
-  res
-    .status(StatusCodes.OK)
-    .json({ msg: "Trip completed", trip: publicTripView(trip) });
+  res.status(StatusCodes.OK).json({
+    msg: "Booking accepted",
+    booking: {
+      _id: booking._id,
+      bookingCode,
+      etaMinutes,
+      passenger: booking.passenger,
+      requestedPickup: booking.requestedPickup,
+      fareAmount: booking.fareAmount,
+    },
+    trip: publicTripView(updatedTrip),
+  });
 };
 
-// PATCH /api/v1/trip/:tripId/cancel
-// Driver cancels an accepted trip before pickup.
-const cancelTripByDriver = async (req, res) => {
-  const driver = await Driver.findOne({ user: req.user.passengerId });
-  if (!driver) return res.status(StatusCodes.FORBIDDEN).json({ msg: "No driver" });
-
-  const trip = await Trip.findOne({
-    _id: req.params.tripId,
-    driver: driver._id,
-    status: { $in: ["driver_assigned", "at_pickup"] },
-  });
-  if (!trip) {
+/**
+ * PATCH /api/v1/trip/booking/:id/reject
+ * Body: { reason? }
+ *
+ * Driver declines a pending booking. Refunds the held escrow.
+ */
+const rejectBooking = async (req, res) => {
+  const driverProfile = await Driver.findOne({ user: req.user.passengerId });
+  if (!driverProfile) {
     return res
-      .status(StatusCodes.BAD_REQUEST)
-      .json({ msg: "No cancellable trip" });
+      .status(StatusCodes.FORBIDDEN)
+      .json({ msg: "No driver profile" });
   }
 
-  const wasAtPickup = trip.status === "at_pickup";
-
-  // Send the trip back to open_for_drivers so another driver can pick it up
-  // (assuming it still has enough passengers).
-  trip.driver = null;
-  trip.vehicle = null;
-  trip.acceptedAt = null;
-  trip.arrivedAtPickupAt = null;
-  trip.capacity = null;
-
-  if (trip.activeBookingCount >= trip.minPassengers) {
-    trip.status = "open_for_drivers";
-    trip.openedAt = new Date();
-  } else {
-    trip.status = "forming";
-  }
-  await trip.save();
-
-  driver.activeTrip = null;
-  driver.cancelledTrips = (driver.cancelledTrips || 0) + 1;
-  await driver.save();
-
-  emit.toTripPassengers(trip._id, "trip:driver_cancelled", {
-    tripId: trip._id,
-    wasAtPickup,
+  const booking = await Booking.findOne({
+    _id: req.params.id,
+    status: "pending",
   });
-
-  if (trip.status === "open_for_drivers") {
-    await broadcastTripToDrivers(trip);
-  }
-
-  res
-    .status(StatusCodes.OK)
-    .json({ msg: "Trip released back to pool", trip: publicTripView(trip) });
-};
-
-// ============================================================
-// HELPERS
-// ============================================================
-
-// Lean public projection of a Trip — drops internal flags.
-function publicTripView(trip) {
-  if (!trip) return null;
-  const t = trip.toObject ? trip.toObject() : trip;
-  return {
-    _id: t._id,
-    pickupLocation: t.pickupLocation,
-    dropoffLocation: t.dropoffLocation,
-    status: t.status,
-    activeBookingCount: t.activeBookingCount,
-    minPassengers: t.minPassengers,
-    capacity: t.capacity,
-    driver: t.driver || null,
-    vehicle: t.vehicle || null,
-    farePerPassenger: t.farePerPassenger,
-    openedAt: t.openedAt,
-    acceptedAt: t.acceptedAt,
-    startedAt: t.startedAt,
-    completedAt: t.completedAt,
-  };
-}
-
-// Find online drivers whose vehicle prefers this trip's dropoff and who
-// are within the search radius, then push a `trip:new` event to each.
-async function broadcastTripToDrivers(trip) {
-  // Get all online drivers with fresh locations
-  const staleCutoff = new Date(Date.now() - rideConfig.DRIVER_LOCATION_STALE_MS);
-  const locations = await DriverLocation.find({
-    isOnline: true,
-    lastUpdate: { $gte: staleCutoff },
-  });
-  if (locations.length === 0) return;
-
-  const driverIds = locations.map((l) => l.driver);
-  const drivers = await Driver.find({
-    _id: { $in: driverIds },
-    activeTrip: null,
-  }).populate("vehicle");
-
-  const dropoffName = (trip.dropoffLocation.name || "").trim();
-  const locByDriver = new Map(locations.map((l) => [String(l.driver), l]));
-
-  for (const driver of drivers) {
-    if (!driver.vehicle) continue;
-    const prefersRoute = (driver.vehicle.routePreferences || []).some(
-      (r) => (r.to || "").trim() === dropoffName,
-    );
-    if (!prefersRoute) continue;
-
-    const loc = locByDriver.get(String(driver._id));
-    if (!loc) continue;
-    const distKm = distanceKm(
-      loc.latitude,
-      loc.longitude,
-      trip.pickupLocation.latitude,
-      trip.pickupLocation.longitude,
-    );
-    if (distKm > rideConfig.DRIVER_SEARCH_RADIUS_KM) continue;
-
-    emit.toDriver(driver._id, "trip:new", {
-      trip: publicTripView(trip),
-      driverDistanceKm: distKm,
+  if (!booking) {
+    return res.status(StatusCodes.NOT_FOUND).json({
+      msg: "Booking not found or already handled",
     });
   }
-}
+
+  const trip = await Trip.findById(booking.trip).select("driver");
+  if (!trip || String(trip.driver) !== String(driverProfile._id)) {
+    return res
+      .status(StatusCodes.FORBIDDEN)
+      .json({ msg: "This booking isn't on your trip" });
+  }
+
+  if (booking.paymentStatus === "held" && booking.fareAmount > 0) {
+    try {
+      await refundEscrow({
+        userId: booking.passenger,
+        amount: booking.fareAmount,
+        description: `Refund — driver rejected (booking ${booking._id})`,
+        tripId: booking.trip,
+        bookingId: booking._id,
+      });
+      booking.paymentStatus = "refunded";
+    } catch (err) {
+      console.error("rejectBooking refund failed", err);
+      // Continue — flag the booking as rejected anyway; refund reconcile
+      // can be handled by an admin or background job.
+    }
+  }
+
+  booking.status = "rejected";
+  booking.cancelledAt = new Date();
+  booking.cancellationReason = req.body?.reason || "driver rejected";
+  booking.bookingCode = null;
+  await booking.save();
+
+  emit.toUser(booking.passenger, "booking:rejected", {
+    bookingId: booking._id,
+    reason: booking.cancellationReason,
+  });
+
+  res.status(StatusCodes.OK).json({ msg: "Booking rejected", booking });
+};
+
+/**
+ * PATCH /api/v1/trip/booking/:id/mark-boarded
+ *
+ * Driver-side fallback for when the passenger can't or doesn't enter the
+ * booking code (e.g., dead phone). The driver marks them boarded directly.
+ * Same end state as the passenger's /confirm-boarding.
+ */
+const markBoarded = async (req, res) => {
+  const driverProfile = await Driver.findOne({ user: req.user.passengerId });
+  if (!driverProfile) {
+    return res
+      .status(StatusCodes.FORBIDDEN)
+      .json({ msg: "No driver profile" });
+  }
+
+  const booking = await Booking.findOne({
+    _id: req.params.id,
+    status: "accepted",
+  });
+  if (!booking) {
+    return res.status(StatusCodes.NOT_FOUND).json({
+      msg: "Booking not found or not in accepted state",
+    });
+  }
+
+  const trip = await Trip.findById(booking.trip);
+  if (!trip || String(trip.driver) !== String(driverProfile._id)) {
+    return res
+      .status(StatusCodes.FORBIDDEN)
+      .json({ msg: "This booking isn't on your trip" });
+  }
+
+  booking.status = "onboard";
+  booking.onboardedAt = new Date();
+  booking.bookingCode = null;
+  await booking.save();
+
+  if (trip.status === "open") {
+    trip.status = "in_progress";
+    trip.startedAt = new Date();
+    await trip.save();
+  }
+
+  emit.toUser(booking.passenger, "booking:onboarded", {
+    bookingId: booking._id,
+  });
+
+  res.status(StatusCodes.OK).json({ msg: "Marked boarded", booking });
+};
 
 module.exports = {
   // Passenger
-  requestRide,
+  listNearbyTrips,
+  requestSeat,
   getMyActiveBooking,
-  cancelBooking,
+  cancelMyBooking,
+  confirmBoarding,
+
   // Driver
-  listAvailableTrips,
-  acceptTrip,
-  markArrivedAtPickup,
-  startTrip,
-  completeTrip,
-  cancelTripByDriver,
+  getMyActiveTrip,
+  listIncomingRequests,
+  acceptBooking,
+  rejectBooking,
+  markBoarded,
 };

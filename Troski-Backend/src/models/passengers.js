@@ -34,6 +34,15 @@ const userSchema = new mongoose.Schema(
 
     // ----- Verification flags -----
     isPhoneVerified: { type: Boolean, default: false },
+
+    // True once the user has finished the REQUIRED onboarding:
+    //   name + phone + email + OTP-verified + PIN set + photo uploaded.
+    // Trip booking and driver-application endpoints check this and refuse
+    // if false. Set to true at /auth/upload-photo.
+    isOnboardingComplete: { type: Boolean, default: false },
+
+    // True if the OPTIONAL extras have been filled (DOB, nationality, etc.).
+    // Not gating anything — purely informational. Set by /auth/update-profile.
     isProfileComplete: { type: Boolean, default: false },
 
     // ----- OTP state -----

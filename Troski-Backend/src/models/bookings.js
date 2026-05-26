@@ -1,18 +1,25 @@
 const mongoose = require("mongoose");
 
-// A Booking is ONE PASSENGER's seat in a Trip. When a passenger places
-// a ride order, we either:
-//   - attach their Booking to an existing Trip (same dropoff + nearby
-//     pickup, status forming/open_for_drivers/driver_assigned, under capacity)
-//   - or create a new Trip in "forming" status with this Booking as the
-//     first member.
+// A Booking is ONE PASSENGER's seat in a Trip.
+//
+// Two ways to start a Booking:
+//   - "direct" (Mode B): passenger taps a driver's pin on the map and
+//     requests a seat on that specific Trip. trip is set immediately.
+//   - "cluster" (Mode A): passenger places an open request. trip is null
+//     until either the system forwards them to a nearby existing Trip
+//     (becoming a direct request behind the scenes) OR they get pooled
+//     with other passengers in the same cluster and 5+ accepts the
+//     batch — at which point trip gets set on every booking in the cluster.
 
 const bookingSchema = new mongoose.Schema(
   {
     trip: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Trip",
-      required: true,
+      // Optional: null while a "cluster" booking is unassigned (no driver yet).
+      // Set to the Trip _id once a driver claims it.
+      required: false,
+      default: null,
       index: true,
     },
     passenger: {
@@ -29,14 +36,43 @@ const bookingSchema = new mongoose.Schema(
       longitude: { type: Number, required: true },
     },
 
+    // How this booking entered the system.
+    //   "direct"  — passenger picked a specific driver on the map (Mode B)
+    //   "cluster" — passenger placed an open request, system pooled them (Mode A)
+    mode: {
+      type: String,
+      enum: ["direct", "cluster"],
+      default: "direct",
+      index: true,
+    },
+
+    // 4-digit code generated on driver acceptance. The passenger enters
+    // this in their own app at pickup to mark themselves as onboard, which
+    // gives the driver a system-level confirmation (in addition to the
+    // visual photo-match check). Cleared once onboard.
+    bookingCode: { type: String, default: null },
+
     status: {
       type: String,
-      enum: ["active", "cancelled", "completed", "no_show"],
+      enum: [
+        // new model:
+        "unassigned", // cluster booking with no Trip yet
+        "pending", // direct request awaiting driver decision
+        "accepted", // driver accepted; passenger heading to pickup
+        "onboard", // passenger physically in the vehicle
+        "arrived", // passenger reached their stop / dropped off
+        "rejected", // driver rejected the direct request
+        // legacy:
+        "active",
+        "completed",
+        "cancelled",
+        "no_show",
+      ],
       default: "active",
       index: true,
     },
 
-    // ----- Pricing snapshot at time of booking -----
+    // ----- Pricing snapshot at booking creation -----
     fareAmount: { type: Number, default: null },
     paymentStatus: {
       type: String,
@@ -44,19 +80,30 @@ const bookingSchema = new mongoose.Schema(
       default: "unpaid",
     },
 
+    // ----- Lifecycle timestamps -----
+    acceptedAt: { type: Date, default: null },
+    onboardedAt: { type: Date, default: null },
+    arrivedAt: { type: Date, default: null },
     cancelledAt: { type: Date, default: null },
     cancellationReason: { type: String, default: null },
-    completedAt: { type: Date, default: null },
+    completedAt: { type: Date, default: null }, // legacy
   },
   { timestamps: true },
 );
 
-// A passenger can only have one ACTIVE booking at a time in a given trip.
-// (They could have multiple historical bookings for the same trip if they
-// cancelled and re-joined.)
+// A passenger can only have ONE active booking at any moment. "Active" here
+// means any status that ties up the passenger's escrow or commits them to a
+// pickup. Cancelled / arrived / rejected bookings don't count.
 bookingSchema.index(
-  { trip: 1, passenger: 1, status: 1 },
-  { unique: true, partialFilterExpression: { status: "active" } },
+  { passenger: 1, status: 1 },
+  {
+    unique: true,
+    partialFilterExpression: {
+      status: {
+        $in: ["unassigned", "pending", "accepted", "onboard", "active"],
+      },
+    },
+  },
 );
 
 const Booking = mongoose.model("Booking", bookingSchema);

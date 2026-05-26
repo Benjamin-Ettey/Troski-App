@@ -6,6 +6,7 @@ const {
   // User (passenger + driver share this)
   userSignUp,
   verifySignUpOTP,
+  uploadPhoto,
   completeProfile,
   verifyPin,
   requestLoginOTP,
@@ -72,6 +73,16 @@ router.post(
   validateVerifyOtpInput,
   verifySignUpOTP,
 );
+// REQUIRED onboarding photo upload. Frontend calls this right after the
+// user finishes OTP/PIN setup. Flips isOnboardingComplete=true on success,
+// after which the rest of the app becomes usable.
+router.post(
+  "/upload-photo",
+  authenticateUser,
+  upload.single("profilePhoto"),
+  uploadPhoto,
+);
+
 router.patch(
   "/complete-profile",
   authenticateUser,
