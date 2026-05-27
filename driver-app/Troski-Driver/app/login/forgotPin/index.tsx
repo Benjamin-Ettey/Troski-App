@@ -35,11 +35,11 @@ const Index = () => {
         }
 
         if (value !== drivernumber){
-            setError('Use your registered number to sign in, or register as a driver if this is your first time.')
+            setError('Use your registered number to sign in, or create an account if this is your first time.')
             return;
         }
 
-        router.push("/");
+        router.replace("/login/forgotPin/otpScreen");
     };
 
 
@@ -50,7 +50,7 @@ const Index = () => {
             <KeyboardAwareScrollView
                 keyboardShouldPersistTaps="handled"
                 className="flex-1">
-                <StatusBar style="auto"/>
+                <StatusBar style="dark"/>
 
 
 
@@ -69,7 +69,7 @@ const Index = () => {
                         keyboardType="phone-pad"
                         autoFocus={true}
                         style={{paddingLeft: 16, }}
-                        className="bg-general mb-2 font-medium text-secondaryGray w-full py-4 border border-tertiaryGray   rounded-xl focus:border  focus:border-green-600/40"
+                        className="bg-general  mb-2 font-medium  text-secondaryGray w-full py-4 border border-tertiaryGray   rounded-xl focus:border  focus:border-green-600/40"
 
                     />
 
