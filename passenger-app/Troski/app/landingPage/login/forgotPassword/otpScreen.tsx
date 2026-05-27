@@ -80,10 +80,10 @@ const OtpScreen = () => {
                             <View className="w-full mb-4">
                                 <Text className="text-2xl leading-7 dark:text-general font-GoogleSansMedium tracking-tight">Enter OTP</Text>
                                 {via?
-                                    <Text className="text-sm leading-4 dark:text-tertiaryWhite font-GoogleSansRegular">Type in the 6-digit verification sent to <Text className="font-GoogleSansBold dark:text-tertiaryWhit">{number}</Text> in the
+                                    <Text className="text-sm leading-4 dark:text-tertiaryWhite font-GoogleSansRegular">Type in the 6-digit verification sent to <Text className="font-GoogleSansBold dark:text-tertiaryWhite">{number}</Text> in the
                                         field provided.</Text>
                                     :
-                                    <Text className="text-sm leading-4 dark:text-tertiaryWhite font-GoogleSansRegular">Type in the 6-digit verification sent to <Text className="font-GoogleSansBold dark:text-tertiaryWhit">{email}</Text> in the
+                                    <Text className="text-sm leading-4 dark:text-tertiaryWhite font-GoogleSansRegular">Type in the 6-digit verification sent to <Text className="font-GoogleSansBold dark:text-tertiaryWhite">{email}</Text> in the
                                         field provided.</Text>
                                 }
 
