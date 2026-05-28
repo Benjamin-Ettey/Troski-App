@@ -1,6 +1,6 @@
 import {View, Text, TouchableOpacity} from 'react-native'
 import React, {useState} from 'react'
-import {KeyboardAwareScrollView} from "react-native-keyboard-controller";
+import {KeyboardAwareScrollView, KeyboardToolbar} from "react-native-keyboard-controller";
 import {StatusBar} from "expo-status-bar";
 import FullNameInput from "@/components/FullNameInput";
 import EmailInput from "@/components/EmailInput";
@@ -55,7 +55,7 @@ const Index = () => {
         !termsCheckbox;
 
     const handleCreateAccount = () =>{
-
+        router.push("/register/identityVerification")
     };
 
     const router = useRouter();
@@ -67,6 +67,7 @@ const Index = () => {
 
         <View className="flex-1  bg-general">
             <KeyboardAwareScrollView
+                bottomOffset={200}
                 contentContainerStyle={{paddingBottom: 100}}
                 keyboardShouldPersistTaps="handled"
                 className="flex-1">
@@ -82,7 +83,7 @@ const Index = () => {
 
                     <View className="w-full flex flex-col justify-center items-start gap-6 pt-8">
                         <View className="w-full gap-2">
-                            <View className="w-full flex flex-row  items-baseline gap-2">
+                            <View className="w-full flex flex-row  items-center gap-2">
                                 <Text
                                     style={{paddingLeft: 8, }}
                                     className="text-base leading-none tracking-tight  text-secondaryBlack  font-GoogleSansMedium">Full Name
@@ -99,7 +100,7 @@ const Index = () => {
                         </View>
 
                         <View className="w-full gap-2">
-                            <View className="w-full flex flex-row  items-baseline gap-2">
+                            <View className="w-full flex flex-row  items-center gap-2">
                                 <Text
                                     style={{paddingLeft: 8, }}
                                     className="text-base leading-none tracking-tight  text-secondaryBlack  font-GoogleSansMedium">Email
@@ -115,7 +116,7 @@ const Index = () => {
                         </View>
 
                         <View className="w-full gap-2">
-                            <View className="w-full flex flex-row  items-baseline gap-2">
+                            <View className="w-full flex flex-row  items-center gap-2">
                                 <Text
                                     style={{paddingLeft: 8, }}
                                     className="text-base leading-none tracking-tight  text-secondaryBlack  font-GoogleSansMedium">Phone Number
@@ -129,7 +130,7 @@ const Index = () => {
                         </View>
 
                         <View className="w-full gap-2">
-                            <View className="w-full flex flex-row  items-baseline gap-2">
+                            <View className="w-full flex flex-row  items-center gap-2">
                                 <Text
                                     style={{paddingLeft: 8, }}
                                     className="text-base leading-none tracking-tight  text-secondaryBlack  font-GoogleSansMedium">City
@@ -187,6 +188,7 @@ const Index = () => {
 
 
             </KeyboardAwareScrollView>
+            <KeyboardToolbar/>
         </View>
     )
 }
