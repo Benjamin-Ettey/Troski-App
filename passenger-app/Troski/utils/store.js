@@ -55,7 +55,7 @@ export const useAppStore = create(
                 })),
 
 
-        otpEndTime: null,
+            otpEndTime: null,
 
             setOtpEndTime: (time) => set({ otpEndTime: time }),
             clearOtpEndTime: () => set({ otpEndTime: null }),
