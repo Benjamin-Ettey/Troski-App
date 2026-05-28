@@ -27,6 +27,24 @@ const RegisterLayout = () => {
                     })}
                 />
 
+                <Stack.Screen
+                    name="identityVerification"
+                    options={()=> ({
+                        headerShadowVisible: false,
+                        headerStyle: {
+                            backgroundColor: "#FFFFFF",
+                        },
+                        headerTintColor: "#000000",
+                        headerTitleAlign: "center",
+                        headerTitle: 'Identity Verification',
+                        headerLeft: ()=>(
+                            <TouchableOpacity onPress={()=>router.back()} style={{display: "flex", justifyContent: "center", alignItems: "center"}}>
+                                <Ionicons name="chevron-back" size={30} color= "black"/>
+                            </TouchableOpacity>
+                        )
+                    })}
+                />
+
             </Stack>
         </KeyboardProvider>
     )
