@@ -6,7 +6,7 @@ const DisabledPrimaryButton = ({name}: any) => {
         <TouchableOpacity
             disabled={true}
             className="w-[80%] bg-primary h-14 flex justify-center rounded-full items-center opacity-30">
-            <Text className="text-secondaryBlack font-GoogleSansBold text-base leading-5">{name}</Text>
+            <Text className="text-secondaryBlack font-GoogleSansBold text-base leading-tight">{name}</Text>
         </TouchableOpacity>
     )
 }
