@@ -27,12 +27,12 @@ const FullNameInput = ({value, onChangeText}: Props) => {
             <TextInput
                 value={value}
                 onChangeText={onChangeText}
-                style={{paddingLeft: 4, }}
+                style={{paddingLeft: 4, textAlign: "left"}}
                 keyboardType="default"
                 autoComplete="name"
                 autoFocus={true}
                 placeholder="Enter your full name"
-                className="text-base text-secondaryBlack w-full h-full flex-row justify-start items-center "
+                className="text-base text-secondaryBlack w-full h-full"
             />
             </View>
 

@@ -1,5 +1,5 @@
-import {View, Text, TouchableOpacity, Image} from 'react-native'
-import React from 'react'
+import {View, Text, TouchableOpacity, Image, Modal} from 'react-native'
+import React, {useState} from 'react'
 import {KeyboardAwareScrollView} from "react-native-keyboard-controller";
 import {StatusBar} from "expo-status-bar";
 import {useAppStore} from "@/utils/store";
@@ -9,10 +9,12 @@ import * as ImagePicker from "expo-image-picker";
 import DisabledPrimaryButton from "@/components/DisabledPrimaryButton";
 import PrimaryButton from "@/components/PrimaryButton";
 import {useRouter} from "expo-router";
+import LottieView from "lottie-react-native";
 
 const IdentityVerification = () => {
 
     const router = useRouter();
+    const [ showLoading, setShowLoading ] = useState(false);
 
     const driverlicenseid = useAppStore((state)=> state.driverlicenseid);
     const ghanacardnumber = useAppStore((state)=> state.ghanacardnumber);
@@ -85,11 +87,14 @@ const IdentityVerification = () => {
         licenseexpirydate.length !== 5;
 
 
-    const handleVerifyIdentity = () =>{
+    const handleVerifyIdentity = () => {
+        setShowLoading(true);
 
+        setTimeout(() => {
+            setShowLoading(false);
+            router.push("/register/verificationChecklist");
+        }, 3000);
     };
-
-
 
     return (
         <View className="flex-1  bg-general">
@@ -104,7 +109,7 @@ const IdentityVerification = () => {
                 <View className="w-full flex-1 flex items-center px-6">
                     <View className="w-full py-6 flex-col gap-2">
                         <Text className="text-3xl leading-none tracking-tighter text-secondaryBlack  font-GoogleSansMedium">Verify your identity</Text>
-                        <Text className="text-sm leading-none  text-secondaryBlack  font-GoogleSansRegular">
+                        <Text className="text-sm leading-none  text-secondaryGray  font-GoogleSansRegular">
                             We need a few details to confirm your identity and keep the platform secure.
                         </Text>
                     </View>
@@ -125,6 +130,7 @@ const IdentityVerification = () => {
                                 value={driverlicenseid}
                                 onChangeText={setDriverLicenseID}
                                 placeholder="Enter your Driver's License ID"
+                                autoFocus={true}
                                 error={
                                     driverlicenseid.length > 0 && driverlicenseid.length < 10
                                         ? "Please enter a valid Driver License ID"
@@ -158,13 +164,22 @@ const IdentityVerification = () => {
                         </View>
 
                         <View className="w-full gap-2">
-                            <View className="w-full flex flex-row  items-center gap-2">
+                            <View className="flex flex-col mb-2 gap-1">
+                                <View className="w-full flex flex-row  items-center gap-2">
+
+                                    <Text
+                                        style={{paddingLeft: 8, }}
+                                        className="text-base leading-none tracking-tight  text-secondaryBlack  font-GoogleSansMedium">Ghana Card Photo
+                                    </Text>
+                                    <Ionicons name="star" size={6} color="red"/>
+                                </View>
+
                                 <Text
                                     style={{paddingLeft: 8, }}
-                                    className="text-base leading-none tracking-tight  text-secondaryBlack  font-GoogleSansMedium">Ghana Card Photo
+                                    className="text-xs leading-none  text-secondaryGray/50  font-GoogleSansRegular">Upload photo of your Ghana card
                                 </Text>
-                                <Ionicons name="star" size={6} color="red"/>
                             </View>
+
 
 
                             {ghanacardphoto ? (
@@ -186,7 +201,7 @@ const IdentityVerification = () => {
                                         </TouchableOpacity>
                                     </View>
                             ) : (
-                                <View className="border-2 border-dashed border-secondaryBlack w-28 h-28 justify-center items-center p-2 rounded-2xl">
+                                <View className="border-2 border-dashed border-secondaryBlack/50 w-28 h-28 justify-center items-center p-2 rounded-2xl">
                                     <TouchableOpacity
                                         className="w-24 h-24 rounded-2xl bg-tertiaryWhite items-center justify-center"
                                         onPress={handleGhanaCardPicker}
@@ -200,12 +215,20 @@ const IdentityVerification = () => {
                         </View>
 
                         <View className="w-full gap-2">
-                            <View className="w-full flex flex-row  items-center gap-2">
+                            <View className="flex flex-col mb-2 gap-1">
+
+                                <View className="w-full flex flex-row  items-center gap-2">
+                                    <Text
+                                        style={{paddingLeft: 8, }}
+                                        className="text-base leading-none tracking-tight  text-secondaryBlack  font-GoogleSansMedium">Driver&apos; License Photo
+                                    </Text>
+                                    <Ionicons name="star" size={6} color="red"/>
+                                </View>
+
                                 <Text
                                     style={{paddingLeft: 8, }}
-                                    className="text-base leading-none tracking-tight  text-secondaryBlack  font-GoogleSansMedium">Driver&apos; License Photo
+                                    className="text-xs leading-none  text-secondaryGray/50  font-GoogleSansRegular">Upload photo of your Driver License
                                 </Text>
-                                <Ionicons name="star" size={6} color="red"/>
                             </View>
 
 
@@ -229,7 +252,7 @@ const IdentityVerification = () => {
                                 </View>
                             ) : (
 
-                                <View className="border-2 border-dashed border-secondaryBlack w-28 h-28 justify-center items-center p-2 rounded-2xl">
+                                <View className="border-2 border-dashed border-secondaryBlack/50 w-28 h-28 justify-center items-center p-2 rounded-2xl">
                                     <TouchableOpacity
                                         className="w-24 h-24 rounded-2xl bg-tertiaryWhite items-center justify-center"
                                         onPress={handleDriverLicensePicker}
@@ -290,6 +313,20 @@ const IdentityVerification = () => {
 
                 </View>
 
+
+                <Modal visible={showLoading} animationType="fade">
+                    <View className="flex-1 w-full justify-center items-center bg-general">
+                        <LottieView
+                            source={require("../../assets/video/loadingdotsblack.json")}
+                            autoPlay
+                            loop
+                            style={{
+                                width: 300,
+                                height: 300,
+                            }}
+                        />
+                    </View>
+                </Modal>
 
 
             </KeyboardAwareScrollView>

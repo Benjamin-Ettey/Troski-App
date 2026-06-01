@@ -10,7 +10,7 @@ const PrimaryButton = ({name, onPress, disabled}: any) => {
             accessible={true}
             accessibilityRole="button"
             className="w-[80%] bg-primary h-14 flex justify-center rounded-full items-center">
-            <Text className="text-secondaryBlack font-GoogleSansBold text-lg leading-5">{name}</Text>
+            <Text className="text-secondaryBlack font-GoogleSansBold text-lg leading-tight">{name}</Text>
         </TouchableOpacity>
 
         )
