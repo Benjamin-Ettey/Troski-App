@@ -52,11 +52,12 @@ const CityInput = ({ value, onChangeText }: Props) => {
                 <TextInput
                     value={value}
                     onChangeText={onChangeText}
+                    style={{paddingLeft: 4, textAlign: "left", fontSize: 16}}
                     placeholder="Enter your city"
                     placeholderTextColor="#9CA3AF"
                     autoCapitalize="words"
                     textAlignVertical="center"
-                    className="flex-1 text-base h-full justify-center text-black"
+                    className="w-full text-secondaryBlack"
                     onFocus={() => setFocused(true)}
                 />
             </View>

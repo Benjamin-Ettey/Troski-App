@@ -19,6 +19,7 @@ const LandingPageRoute = () => {
                             backgroundColor: "#FFFFFF",
                         },
                         headerTintColor: "#000000",
+                        headerTitleAlign: "center",
                         headerTitle: 'Login',
                         headerLeft: ()=>(
                             <TouchableOpacity onPress={()=>router.back()} style={{display: "flex", justifyContent: "center", alignItems: "center"}}>
@@ -36,6 +37,7 @@ const LandingPageRoute = () => {
                             backgroundColor: "#FFFFFF",
                         },
                         headerTintColor: "#000000",
+                        headerTitleAlign: "center",
                         headerTitle: 'Login',
                         headerLeft: ()=>(
                             <TouchableOpacity onPress={()=>router.back()} style={{display: "flex", justifyContent: "center", alignItems: "center"}}>

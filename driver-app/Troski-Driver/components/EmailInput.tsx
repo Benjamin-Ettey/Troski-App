@@ -28,13 +28,13 @@ const EmailInput = ({value, onChangeText}: Props) => {
             <TextInput
                 value={value}
                 onChangeText={onChangeText}
-                style={{paddingLeft: 4, }}
+                style={{paddingLeft: 4, textAlign: "left", fontSize: 16}}
                 keyboardType="email-address"
                 autoComplete="email"
                 autoCapitalize="none"
                 autoFocus={false}
                 placeholder="Enter your email address"
-                className="text-base text-secondaryBlack w-full h-full flex-row justify-start items-center "
+                className="text-secondaryBlack w-full "
             />
             </View>
 

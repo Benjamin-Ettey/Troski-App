@@ -1,12 +1,12 @@
 import {View, Text, Alert, TouchableOpacity} from 'react-native'
 import React from 'react'
 import {Ionicons} from "@expo/vector-icons";
-import {router} from "expo-router";
-import {useAppStore} from "@/utils/store";
+import {useRouter} from "expo-router";
 
 const LogoutNavBar = ({name, title} : any) => {
-    const setLoggedIn = useAppStore((state)=>state.setLoggedIn);
-    const setSeeProfile = useAppStore((state)=> state.setSeeProfile);
+
+    const router = useRouter();
+
 
     const handleLogout= ()=>{
         Alert.alert(
@@ -20,9 +20,7 @@ const LogoutNavBar = ({name, title} : any) => {
                     text: "Logout",
                     style: "destructive",
                     onPress: ()=> {
-                        setLoggedIn(false);
-                        setSeeProfile(false);
-                        router.replace("/landingPage")
+                        router.replace("/")
                     }
                 }
 

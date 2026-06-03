@@ -21,7 +21,7 @@ const PhoneNumberInput = ({ value, onChangeText }: Props) => {
             >
                 {/* Ghana Code */}
                 <View className="flex-row items-center pr-3 mr-3 border-r border-gray-300">
-                    <Text className="text-base font-medium text-black">
+                    <Text className="text-lg font-GoogleSansRegular text-black">
                         🇬🇭 +233
                     </Text>
                 </View>
@@ -30,10 +30,11 @@ const PhoneNumberInput = ({ value, onChangeText }: Props) => {
                 <TextInput
                     value={value}
                     onChangeText={onChangeText}
+                    style={{paddingLeft: 4, textAlign: "left", fontSize: 16}}
                     keyboardType="phone-pad"
                     autoFocus={false}
                     placeholder="50 352 4779"
-                    className=" text-base text-secondaryBlack flex-1 h-full flex-row justify-start items-center"
+                    className="  text-secondaryBlack w-full"
                     placeholderTextColor="#9CA3AF"
                     textAlignVertical="center"
                     maxLength={9}
