@@ -5,11 +5,13 @@ export const useAppStore = create((set)=> ({
     driverfullname: '',
     drivernumber: '',
     driverpin: '',
+    drivertemppin: '',
     driveremail: '',
     driverlicenseid: '',
     ghanacardnumber: '',
     ghanacardphoto: '',
     driverlicensephoto: '',
+    driverimage: '',
     licenseexpirydate: '',
     vehicletype: '',
     vehiclenumberplate: '',
@@ -24,6 +26,9 @@ export const useAppStore = create((set)=> ({
     mobilemoneynumber: '',
     bankaccountnumber: '',
     accountname: '',
+    hasRegistered: false,
+    isLoggedIn: false,
+
 
     routes: [{ from: '', to: '' }],
 
@@ -39,8 +44,10 @@ export const useAppStore = create((set)=> ({
     setDriverFullName: (driverfullname) => set({driverfullname}),
     setDriverNumber: (drivernumber) => set({drivernumber}),
     setDriverPin: (driverpin) => set({driverpin}),
+    setDriverTempPin: (drivertemppin) => set({drivertemppin}),
     setDriverEmail: (driveremail) => set({driveremail}),
     setDriverLicenseID: (driverlicenseid) => set({driverlicenseid}),
+    setDriverImage: (driverimage) => set({driverimage}),
     setGhanaCardNumber: (ghanacardnumber) => set({ghanacardnumber}),
     setGhanaCardPhoto: (ghanacardphoto) => set({ghanacardphoto}),
     setDriverLicensePhoto: (driverlicensephoto) => set({driverlicensephoto}),
@@ -58,7 +65,79 @@ export const useAppStore = create((set)=> ({
     setMobileMoneyNumber: (mobilemoneynumber) => set({ mobilemoneynumber }),
     setBankAccountNumber: (bankaccountnumber) => set({ bankaccountnumber }),
     setAccountName: (accountname) => set({ accountname }),
+    setHasRegistered: (hasRegistered) => set({ hasRegistered}),
+    setIsLoggedIn: (isLoggedIn) => set({ isLoggedIn}),
 
+
+    isOnline: {
+        online: true,
+    },
+
+    toggleDriverOnline: (key) =>
+        set((state) => ({
+            isOnline: {
+                ...state.isOnline,
+                [key]: !state.isOnline[key],
+            },
+        })),
+
+
+    drivernotifications: {
+        driverRideUpdates: true,
+        driverPaymentNotifications: true,
+        driverAnnouncements: true,
+    },
+
+    toggleDriverNotification: (key) =>
+        set((state) => ({
+            drivernotifications: {
+                ...state.drivernotifications,
+                [key]: !state.drivernotifications[key],
+            },
+        })),
+
+
+    resetDriverNotifications: () =>
+        set({
+            drivernotifications: {
+                driverRideUpdates: true,
+                driverPaymentNotifications: true,
+                driverAnnouncements: true,
+            },
+        }),
+
+
+    deleteDriverAccount: ()=> set({
+
+        driverRideUpdates: true,
+        driverPaymentNotifications: true,
+        driverAnnouncements: false,
+        driverfullname: '',
+        drivernumber: '',
+        driverpin: '',
+        drivertemppin: '',
+        driveremail: '',
+        driverlicenseid: '',
+        ghanacardnumber: '',
+        ghanacardphoto: '',
+        driverlicensephoto: '',
+        driverimage: '',
+        licenseexpirydate: '',
+        vehicletype: '',
+        vehiclenumberplate: '',
+        vehiclecolor: '',
+        vehiclecapacity: '',
+        vehiclephoto: '',
+        insurancecertificatephoto: '',
+        vehicleregistrationdocumentphoto: '',
+        dvlaroadworthyexpirydate: '',
+        city: '',
+        mobilemoneynumber: '',
+        bankaccountnumber: '',
+        accountname: '',
+
+
+    }),
 
 
 }))

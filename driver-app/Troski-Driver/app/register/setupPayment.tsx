@@ -1,5 +1,5 @@
-import { View, Text } from 'react-native'
-import React from 'react'
+import {View, Text, Modal} from 'react-native'
+import React, {useState} from 'react'
 import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
 import { StatusBar } from "expo-status-bar";
 import { Ionicons } from "@expo/vector-icons";
@@ -8,10 +8,13 @@ import VerificationInput from "@/components/VerificationInput";
 import { useAppStore } from "@/utils/store";
 import DisabledPrimaryButton from "@/components/DisabledPrimaryButton";
 import PrimaryButton from "@/components/PrimaryButton";
+import LottieView from "lottie-react-native";
 
 const SetupPayment = () => {
 
     const router = useRouter();
+    const [ showLoading, setShowLoading ] = useState(false);
+
 
     const mobilemoneynumber = useAppStore((state) => state.mobilemoneynumber);
     const bankaccountnumber = useAppStore((state) => state.bankaccountnumber);
@@ -26,7 +29,12 @@ const SetupPayment = () => {
         mobilemoneynumber.trim().length < 10;
 
     const handleSetupPayment = () => {
-        router.replace("/approval")
+        setShowLoading(true);
+
+        setTimeout(() => {
+            setShowLoading(false);
+            router.push("/homepage");
+        }, 3000);
     };
 
     return (
@@ -137,6 +145,21 @@ const SetupPayment = () => {
                     </View>
 
                 </View>
+
+                <Modal visible={showLoading} animationType="fade">
+                    <View className="flex-1 flex-col w-full justify-center items-center bg-general">
+                        <LottieView
+                            source={require("../../assets/video/loading.json")}
+                            autoPlay
+                            loop
+                            style={{
+                                width: 300,
+                                height: 300,
+                            }}
+                        />
+
+                    </View>
+                </Modal>
 
             </KeyboardAwareScrollView>
         </View>

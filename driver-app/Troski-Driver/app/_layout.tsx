@@ -59,6 +59,14 @@ const RootLayout = () => {
                             gestureEnabled: false,
                         }}
                     />
+
+                    <Stack.Screen
+                        name="homepage"
+                        options={{
+                            headerShown: false,
+                            gestureEnabled: false,
+                        }}
+                    />
                 </Stack>
             </Suspense>
         </ErrorBoundary>

@@ -28,7 +28,7 @@ const VerificationInput = ({
     return (
         <View className="flex-col">
             <View
-                className={`w-full h-14 bg-tertiaryGray/10 flex-row items-center rounded-2xl px-4 ${
+                className={`w-full h-14 bg-tertiaryGray/10  flex-row items-center rounded-2xl px-4 ${
                     error
                         ? "border border-red-600"
                         : "border border-transparent focus:border-green-600"
@@ -41,8 +41,8 @@ const VerificationInput = ({
                     keyboardType={keyboardType}
                     autoComplete={autoComplete}
                     autoFocus={autoFocus}
-                    style={{ paddingLeft: 4 }}
-                    className="text-base text-secondaryBlack w-full h-full"
+                    style={{paddingLeft: 4, textAlign: "left", fontSize: 16}}
+                    className="text-secondaryBlack p-4 flex-1 "
                 />
             </View>
 
