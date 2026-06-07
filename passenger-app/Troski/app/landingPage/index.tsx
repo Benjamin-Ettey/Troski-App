@@ -3,10 +3,11 @@ import React from "react";
 import { StatusBar } from "expo-status-bar";
 import PrimaryButton from "@/components/PrimaryButton";
 import SecondaryButton from "@/components/SecondaryButton";
-import { router } from "expo-router";
+import { useRouter} from "expo-router";
 
 const Index = () => {
 
+    const router = useRouter();
 
     return (
         <View className="flex-1 bg-general">
@@ -16,12 +17,12 @@ const Index = () => {
             <Image
                 source={require("../../assets/images/landingImage.png")}
                 resizeMode="cover"
-                className="w-full h-[68%]"
+                className="w-full aspect-auto"
 
             />
 
             <View
-                className="absolute bottom-0 rounded-t-3xl w-full h-[40%] dark:bg-secondaryBlack bg-general pt-6 pb-14"
+                className="absolute bottom-0 rounded-t-3xl w-full h-96 dark:bg-secondaryBlack bg-general pt-6 pb-14"
             >
                 <View className="flex-1 justify-between items-center">
 
@@ -39,7 +40,7 @@ const Index = () => {
                             numberOfLines={2}
                             adjustsFontSizeToFit
                             minimumFontScale={0.7}
-                            className="text-secondaryBlack dark:text-general text-3xl leading-8 font-GoogleSansMedium text-center tracking-tight"
+                            className="text-secondaryBlack dark:text-general text-3xl leading-none font-GoogleSansMedium text-center tracking-tight"
                         >
                             Book your rides on the go.
                         </Text>

@@ -9,6 +9,9 @@ const SearchBarButton = ({name, onPress} : any) => {
     return (
         <TouchableOpacity
             onPress={onPress}
+            accessible={true}
+            accessibilityRole="button"
+            accessibilityHint="Search for rides"
             className=" w-full bg-tertiaryWhite dark:bg-secondaryGray/40 h-14 px-6 flex flex-row gap-3 justify-start rounded-full items-center">
             <Ionicons name="search" size={20} color={colorScheme === "dark"? "#f0f0f0": "#444444"} />
             <Text className="text-secondaryGray dark:text-tertiaryWhite font-GoogleSansMedium text-lg leading-5">{name}</Text>

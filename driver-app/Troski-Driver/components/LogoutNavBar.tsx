@@ -1,12 +1,12 @@
 import {View, Text, Alert, TouchableOpacity} from 'react-native'
 import React from 'react'
 import {Ionicons} from "@expo/vector-icons";
-import {router} from "expo-router";
-import {useAppStore} from "@/utils/store";
+import {useRouter} from "expo-router";
 
 const LogoutNavBar = ({name, title} : any) => {
-    const setLoggedIn = useAppStore((state)=>state.setLoggedIn);
-    const setSeeProfile = useAppStore((state)=> state.setSeeProfile);
+
+    const router = useRouter();
+
 
     const handleLogout= ()=>{
         Alert.alert(
@@ -20,9 +20,7 @@ const LogoutNavBar = ({name, title} : any) => {
                     text: "Logout",
                     style: "destructive",
                     onPress: ()=> {
-                        setLoggedIn(false);
-                        setSeeProfile(false);
-                        router.replace("/landingPage")
+                        router.replace("/")
                     }
                 }
 
@@ -36,16 +34,14 @@ const LogoutNavBar = ({name, title} : any) => {
     return (
         <TouchableOpacity
             onPress={handleLogout}
-            style={{paddingHorizontal: 16, paddingVertical: 16,}}
-            className="flex flex-row justify-between items-center">
-            <View className="flex flex-row justify-start items-center gap-4">
-                <Ionicons name={name} size={20} color="red"/>
+            className="flex flex-row justify-between h-14 px-4 items-center">
+            <View className="flex flex-row justify-center items-center gap-4">
+                <Ionicons name={name} size={18} color="#dc2626"/>
                 <Text
-                    style={{color: "red"}}
-                    className="font-GoogleSansRegular ">{title}</Text>
+                    className="font-GoogleSansMedium text-red-600 text-base leading-5">{title}</Text>
             </View>
 
-            <Ionicons name="chevron-forward" size={20} color="red"/>
+            <Ionicons name="chevron-forward" size={18} color="#dc2626"/>
         </TouchableOpacity>
     )
 }

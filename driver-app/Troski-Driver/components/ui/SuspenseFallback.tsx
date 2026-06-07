@@ -3,7 +3,7 @@ import LottieView from "lottie-react-native";
 
 export default function SuspenseFallback() {
     return (
-        <View className="flex-1 justify-center items-center">
+        <View className="flex-1 justify-center items-center gap-2">
             <LottieView
                 source={require("../../assets/video/loadingdots.json")}
                 autoPlay
@@ -14,7 +14,7 @@ export default function SuspenseFallback() {
                 }}
             />
 
-            <Text className="mt-4 text-secondaryBlack dark:text-tertiaryWhite font-GoogleSansRegular flex-shrink">
+            <Text className="mt-4 text-secondaryBlack text-sm leading-none font-GoogleSansRegular flex-shrink">
                 Hang tight — we’re preparing your ride...
             </Text>
         </View>

@@ -89,17 +89,16 @@ const RecentNotifications = () => {
 
                                     <>
                                         <View
-                                            style={{height: 64,}}
-                                            className="w-full px-6 flex flex-row justify-between items-center">
-                                            <View className="rounded-full" style={{backgroundColor: "black", padding: 5}}>
+                                            className="w-full px-6 h-20 flex flex-row justify-between items-center">
+                                            <View className="rounded-full p-2" style={{backgroundColor: "black"}}>
                                                 <Ionicons name="notifications" size={24} color="#ffcc00"/>
 
                                             </View>
 
 
                                             <View
-                                                style={{flex: 1, gap: 2,paddingLeft: 16 }}
-                                                className="flex  flex-col justify-center items-center ">
+                                                style={{paddingLeft: 16 }}
+                                                className="flex flex-1 gap-1 flex-col justify-center items-center ">
                                                 <View className="flex flex-row justify-start items-center w-full gap-2">
                                                     <Text numberOfLines={1} className="text-xl leading-5 font-GoogleSansRegular dark:text-general">
                                                         {item.subject}

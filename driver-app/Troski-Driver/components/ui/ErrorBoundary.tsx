@@ -62,32 +62,29 @@ export class ErrorBoundary extends React.Component<Props, State> {
 
     render() {
         if (this.state.hasError) {
-            const isDark = this.state.colorScheme === "dark";
+
 
             return (
                 <View
-                    className={`flex-1 justify-center items-center px-6 ${
-                        isDark ? "bg-black" : "bg-white"
-                    }`}
+                    className="flex-1 justify-center items-center px-6 bg-general"
                 >
-                    <Text className="text-secondaryBlack dark:text-general font-GoogleSansBold text-lg">
+                    <Text className="text-secondaryBlack font-GoogleSansBold text-lg leading-none">
                         Something went wrong
                     </Text>
 
                     <Text
-                        className={`text-center mt-2 font-GoogleSansRegular ${
-                            isDark ? "text-tertiaryGray" : "text-black"
-                        }`}
+                        className="text-center text-base leading-none mt-2 font-GoogleSansRegular text-tertiaryGray"
                     >
                         An unexpected error occurred. Check your internet connection and try again.
                     </Text>
 
                     <View className="mt-5 w-full justify-center items-center">
                         <TouchableOpacity
+                            style={{height: 48}}
                             onPress={this.handleRetry}
-                            className="w-[80%] bg-primary py-4 flex justify-center rounded-full items-center"
+                            className="w-[80%] bg-primary flex justify-center rounded-full items-center"
                         >
-                            <Text className="text-secondaryBlack font-GoogleSansBold text-[16px]">
+                            <Text className="text-secondaryBlack font-GoogleSansBold text-base leading-none">
                                 Retry
                             </Text>
                         </TouchableOpacity>

@@ -32,7 +32,7 @@ const LoginRoute = () => {
                     />
 
                     <Stack.Screen
-                        name="otpScreen"
+                        name="pinScreen"
                         options={()=> ({
                             headerShadowVisible: false,
                             headerStyle: {
@@ -48,6 +48,13 @@ const LoginRoute = () => {
                                 </TouchableOpacity>
                             )
                         })}
+                    />
+
+                    <Stack.Screen
+                        name="forgotPassword"
+                        options={{
+                            headerShown: false
+                        }}
                     />
                 </Stack>
             </View>
