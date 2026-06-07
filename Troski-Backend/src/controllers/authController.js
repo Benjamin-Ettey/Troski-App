@@ -307,6 +307,121 @@ const verifyPin = async (req, res) => {
 };
 
 // ============================================================
+// FORGOT PIN — recovery via OTP to registered phone
+//
+// Flow:
+//   1. POST /auth/forgot-pin/start  { phoneNumber }
+//        → looks up the user, generates a 6-digit OTP, sends it via SMS to
+//          their REGISTERED phone (not a new one).
+//   2. POST /auth/forgot-pin/reset  { phoneNumber, otpCode, newPinCode }
+//        → verifies OTP → sets new PIN (bcrypt-hashed by the pre-save hook)
+//          → invalidates ALL PassengerToken sessions so any active token is
+//          kicked out → notifies the user.
+//
+// Both endpoints are intentionally UNAUTHENTICATED — the user is in a
+// "locked out" state. Identity is established by the OTP itself.
+// Rate-limited at the router level to stop spam / brute-force.
+// ============================================================
+
+const forgotPinStart = async (req, res) => {
+  const { phoneNumber } = req.body || {};
+  if (!phoneNumber) {
+    return res
+      .status(StatusCodes.BAD_REQUEST)
+      .json({ msg: "phoneNumber is required" });
+  }
+
+  const user = await Passenger.findOne({ phoneNumber });
+
+  // To avoid leaking "this phone is registered" / "this phone is not",
+  // we respond identically whether the account exists or not. Only the
+  // actual SMS send is gated.
+  const genericResponse = {
+    msg: "If an account exists for this phone, an OTP has been sent.",
+  };
+
+  if (!user || !user.isPhoneVerified) {
+    return res.status(StatusCodes.OK).json(genericResponse);
+  }
+
+  const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
+  user.pinResetOtp = {
+    code: createHash(otpCode),
+    expiresAt: new Date(Date.now() + 1000 * 60 * 10), // 10 min
+  };
+  await user.save();
+
+  try {
+    await sendOTPSMS({ phoneNumber: user.phoneNumber, otpCode });
+  } catch (err) {
+    console.error("forgotPinStart sendOTPSMS failed", err.message);
+    // Still respond with the generic message — the user can retry.
+  }
+
+  return res.status(StatusCodes.OK).json(genericResponse);
+};
+
+const forgotPinReset = async (req, res) => {
+  const { phoneNumber, otpCode, newPinCode } = req.body || {};
+
+  if (!phoneNumber || !otpCode || !newPinCode) {
+    return res.status(StatusCodes.BAD_REQUEST).json({
+      msg: "phoneNumber, otpCode, and newPinCode are required",
+    });
+  }
+  if (!/^\d{6}$/.test(newPinCode)) {
+    return res
+      .status(StatusCodes.BAD_REQUEST)
+      .json({ msg: "newPinCode must be 6 digits" });
+  }
+
+  const user = await Passenger.findOne({ phoneNumber });
+  if (!user) {
+    return res
+      .status(StatusCodes.UNAUTHORIZED)
+      .json({ msg: "Invalid reset request" });
+  }
+  if (
+    !user.pinResetOtp?.code ||
+    !user.pinResetOtp?.expiresAt ||
+    user.pinResetOtp.expiresAt < new Date()
+  ) {
+    return res
+      .status(StatusCodes.BAD_REQUEST)
+      .json({ msg: "OTP missing or expired. Start the reset again." });
+  }
+  if (createHash(otpCode) !== user.pinResetOtp.code) {
+    return res.status(StatusCodes.UNAUTHORIZED).json({ msg: "Invalid OTP" });
+  }
+
+  // Set new PIN (pre('save') hook bcrypt-hashes it) and clear the OTP.
+  user.pinCode = newPinCode;
+  user.pinResetOtp = { code: null, expiresAt: null };
+  await user.save();
+
+  // Invalidate ALL existing sessions for safety.
+  await PassengerToken.deleteMany({ passenger: user._id });
+
+  // Best-effort notification — they'll see it next time they log in.
+  try {
+    const { notify } = require("../utils/notify");
+    notify({
+      userId: user._id,
+      type: "system",
+      title: "PIN reset",
+      message:
+        "Your PIN was reset. If this wasn't you, contact support immediately.",
+    });
+  } catch (e) {
+    // notify() already swallows its own errors; ignore.
+  }
+
+  res.status(StatusCodes.OK).json({
+    msg: "PIN reset. Please log in again.",
+  });
+};
+
+// ============================================================
 // USER LOGIN (OTP)
 // ============================================================
 
@@ -615,6 +730,8 @@ module.exports = {
   uploadPhoto,
   completeProfile,
   verifyPin,
+  forgotPinStart,
+  forgotPinReset,
   requestLoginOTP,
   verifyLoginOTP,
   userLogout,

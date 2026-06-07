@@ -97,6 +97,15 @@ const userSchema = new mongoose.Schema(
       otpCode: { type: String, default: null }, // hashed
       otpExpiresAt: { type: Date, default: null },
     },
+
+    // ----- Forgot-PIN recovery -----
+    // OTP issued by POST /auth/forgot-pin/start; consumed by
+    // /auth/forgot-pin/reset. Separate from the login OTP slot so a
+    // simultaneous login attempt doesn't clobber the reset request.
+    pinResetOtp: {
+      code: { type: String, default: null }, // hashed
+      expiresAt: { type: Date, default: null },
+    },
   },
   { timestamps: true },
 );

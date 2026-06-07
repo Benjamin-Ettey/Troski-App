@@ -9,6 +9,8 @@ const {
   uploadPhoto,
   completeProfile,
   verifyPin,
+  forgotPinStart,
+  forgotPinReset,
   requestLoginOTP,
   verifyLoginOTP,
   userLogout,
@@ -92,6 +94,22 @@ router.patch(
   completeProfile,
 );
 router.post("/verify-pin", authenticateUser, validatePinInput, verifyPin);
+
+// Forgot PIN — unauthenticated. Both endpoints rate-limited tighter than
+// regular OTP request to discourage spam / enumeration attacks.
+const forgotPinStartLimiter = rateLimiter({
+  windowMs: 1000 * 60 * 15, // 15 min
+  max: 3,
+  message: { msg: "Too many reset attempts. Try again later." },
+});
+const forgotPinResetLimiter = rateLimiter({
+  windowMs: 1000 * 60 * 15,
+  max: 5,
+  message: { msg: "Too many invalid reset attempts. Request a new OTP." },
+});
+router.post("/forgot-pin/start", forgotPinStartLimiter, forgotPinStart);
+router.post("/forgot-pin/reset", forgotPinResetLimiter, forgotPinReset);
+
 router.post(
   "/request-otp",
   otpRequestLimiter,

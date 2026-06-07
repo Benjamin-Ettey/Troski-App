@@ -120,6 +120,32 @@
             "header": [],
             "url": "{{baseUrl}}/api/v1/auth/logout"
           }
+        },
+        {
+          "name": "Forgot PIN — Start (sends OTP to registered phone)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/api/v1/auth/forgot-pin/start",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"phoneNumber\": \"{{phoneNumber}}\"\n}"
+            },
+            "description": "Unauthenticated. Sends OTP via SMS to the registered phone (or no-ops silently if no account is found, to avoid leaking which numbers are registered). Rate-limited 3/15min."
+          }
+        },
+        {
+          "name": "Forgot PIN — Reset (verifies OTP, sets new PIN)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/api/v1/auth/forgot-pin/reset",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"phoneNumber\": \"{{phoneNumber}}\",\n  \"otpCode\": \"REPLACE_WITH_OTP\",\n  \"newPinCode\": \"654321\"\n}"
+            },
+            "description": "Unauthenticated. Verifies the OTP, sets the new PIN (bcrypt-hashed), kills ALL active sessions for the user (so any leaked token is invalidated), and sends a security notification. Rate-limited 5/15min."
+          }
         }
       ]
     },
