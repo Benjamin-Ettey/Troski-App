@@ -35,10 +35,20 @@ const { formatImage } = require("../middleware/multerMiddleware");
 // USER SIGN-UP (3 STEPS)
 // ============================================================
 
-// STEP 1 — phone, email, pin, name. Creates an unverified user and sends OTP.
+// STEP 1 — collect identity + send OTP.
+// Frontend sends ALL required fields in one body:
+//   { name, username, phoneNumber, email, pinCode, gender, dateOfBirth }
 // If a record exists but is unverified, we reuse and update it.
 const userSignUp = async (req, res) => {
-  const { phoneNumber, email, pinCode, name } = req.body;
+  const {
+    name,
+    username,
+    phoneNumber,
+    email,
+    pinCode,
+    gender,
+    dateOfBirth,
+  } = req.body;
 
   const existing = await Passenger.findOne({ phoneNumber });
 
@@ -48,18 +58,36 @@ const userSignUp = async (req, res) => {
     });
   }
 
+  // Username uniqueness check — but allow re-using if it's the same
+  // unverified user picking up where they left off.
+  const usernameTaken = await Passenger.findOne({
+    username: username.toLowerCase(),
+    phoneNumber: { $ne: phoneNumber },
+  }).select("_id");
+  if (usernameTaken) {
+    return res.status(StatusCodes.BAD_REQUEST).json({
+      msg: "That username is already taken. Please choose another.",
+    });
+  }
+
   let user;
   if (existing) {
     existing.name = name;
+    existing.username = username.toLowerCase();
     existing.email = email;
     existing.pinCode = pinCode; // re-hashed by pre('save')
+    existing.gender = gender;
+    existing.dateOfBirth = new Date(dateOfBirth);
     user = existing;
   } else {
     user = new Passenger({
       name,
+      username: username.toLowerCase(),
       phoneNumber,
       email,
       pinCode,
+      gender,
+      dateOfBirth: new Date(dateOfBirth),
       roles: ["passenger"],
       isPhoneVerified: false,
       isProfileComplete: false,
@@ -69,7 +97,18 @@ const userSignUp = async (req, res) => {
   const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
   user.otpCode = createHash(otpCode);
   user.otpExpiresAt = new Date(Date.now() + 1000 * 60 * 5);
-  await user.save();
+
+  try {
+    await user.save();
+  } catch (err) {
+    if (err.code === 11000) {
+      // Duplicate key — either username or phone race
+      return res.status(StatusCodes.BAD_REQUEST).json({
+        msg: "Username or phone number already in use.",
+      });
+    }
+    throw err;
+  }
 
   const method = (req.body.method || "sms").toLowerCase();
   if (method === "email") {
@@ -122,8 +161,19 @@ const verifySignUpOTP = async (req, res) => {
   });
 };
 
-// STEP 3 — complete-profile: profile photo (file) + date of birth.
-// Authenticated.
+// OPTIONAL profile completion. JSON only — the profile photo has its own
+// dedicated REQUIRED endpoint at /auth/upload-photo. This is for the
+// "tell us a bit more about you" screen the app shows after onboarding:
+//
+//   {
+//     dateOfBirth: "2000-01-15",
+//     gender: "female",
+//     emergencyContact: { name: "Yaa Mensah", phoneNumber: "0244000002" }
+//   }
+//
+// All three fields are optional; the user can fill any subset. Each one
+// is validated independently. Setting isProfileComplete = true is purely
+// informational (we don't gate anything on it).
 const completeProfile = async (req, res) => {
   const user = await Passenger.findById(req.user.passengerId);
   if (!user) {
@@ -135,45 +185,58 @@ const completeProfile = async (req, res) => {
       .json({ msg: "Verify your phone number first" });
   }
 
-  const { dateOfBirth } = req.body;
-  if (dateOfBirth) {
+  const { dateOfBirth, gender, emergencyContact } = req.body || {};
+
+  if (dateOfBirth !== undefined) {
     const dob = new Date(dateOfBirth);
     if (isNaN(dob.getTime())) {
       return res
         .status(StatusCodes.BAD_REQUEST)
         .json({ msg: "Invalid date of birth" });
     }
+    // 18+ check — already enforced by validateCompleteProfileInput, but
+    // double-check here in case validation is bypassed.
+    const eighteenYearsAgo = new Date();
+    eighteenYearsAgo.setFullYear(eighteenYearsAgo.getFullYear() - 18);
+    if (dob > eighteenYearsAgo) {
+      return res
+        .status(StatusCodes.BAD_REQUEST)
+        .json({ msg: "You must be at least 18 years old" });
+    }
     user.dateOfBirth = dob;
   }
 
-  // Optional profile photo (multipart "profilePhoto" field)
-  if (req.file) {
-    try {
-      const formatted = formatImage(req.file);
-      const uploaded = await cloudinary.v2.uploader.upload(formatted, {
-        use_filename: true,
-        folder: "/Troski/Troski-Profile-Photos",
+  if (gender !== undefined) {
+    const allowed = ["male", "female", "other"];
+    if (!allowed.includes(gender)) {
+      return res.status(StatusCodes.BAD_REQUEST).json({
+        msg: `gender must be one of: ${allowed.join(", ")}`,
       });
-      // Clean up any previous photo
-      if (user.profilePhotoPublicId) {
-        cloudinary.v2.uploader
-          .destroy(user.profilePhotoPublicId)
-          .catch((e) => console.error("Failed deleting old profile photo", e));
-      }
-      user.profilePhoto = uploaded.secure_url;
-      user.profilePhotoPublicId = uploaded.public_id;
-    } catch (e) {
-      console.error(e);
-      return res
-        .status(StatusCodes.INTERNAL_SERVER_ERROR)
-        .json({ msg: "Profile photo upload failed" });
     }
+    user.gender = gender;
+  }
+
+  if (emergencyContact !== undefined) {
+    if (
+      !emergencyContact ||
+      typeof emergencyContact !== "object" ||
+      !emergencyContact.name ||
+      !emergencyContact.phoneNumber
+    ) {
+      return res.status(StatusCodes.BAD_REQUEST).json({
+        msg: "emergencyContact must include both 'name' and 'phoneNumber'",
+      });
+    }
+    user.emergencyContact = {
+      name: String(emergencyContact.name).trim(),
+      phoneNumber: String(emergencyContact.phoneNumber).trim(),
+    };
   }
 
   user.isProfileComplete = true;
   await user.save();
 
-  res.status(StatusCodes.OK).json({ msg: "Profile completed", user });
+  res.status(StatusCodes.OK).json({ msg: "Profile updated", user });
 };
 
 // REQUIRED onboarding step. Called right after the user finishes the

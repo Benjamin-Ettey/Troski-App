@@ -32,7 +32,17 @@ module.exports = {
   // is considered "at pickup".
   ARRIVED_AT_PICKUP_THRESHOLD_METERS: 50,
 
-  // A driver who reaches within this many METERS of the dropoff is
-  // considered to have completed the ride.
-  ARRIVED_AT_DROPOFF_THRESHOLD_METERS: 80,
+  // A driver who reaches within this many METERS of a passenger's dropoff
+  // auto-ends THAT passenger's booking (and settles their fare).
+  ARRIVED_AT_DROPOFF_THRESHOLD_METERS: 30,
+
+  // When a passenger cancels AFTER the driver has accepted their booking,
+  // the held fare is split rather than refunded.
+  PASSENGER_CANCEL_DRIVER_SHARE: 0.7, // 70% to driver
+  PASSENGER_CANCEL_PLATFORM_SHARE: 0.3, // 30% to platform
+
+  // Refunds from Paystack-paid bookings go back to the passenger as an
+  // in-app wallet credit (cheap, instant) rather than a Paystack refund
+  // call (slow + fee). They can use it on their next ride.
+  REFUND_PAYSTACK_TO_WALLET: true,
 };

@@ -14,11 +14,36 @@ const bcrypt = require("bcryptjs");
 
 const userSchema = new mongoose.Schema(
   {
-    // ----- Identity (set at sign-up) -----
+    // ----- Identity (all set at sign-up) -----
     name: { type: String, required: true },
+
+    // Display name. Lowercased + unique. Editable later via
+    // PATCH /passenger/me/username.
+    username: {
+      type: String,
+      required: true,
+      unique: true,
+      lowercase: true,
+      trim: true,
+      minlength: 3,
+      maxlength: 30,
+      match: [
+        /^[a-z0-9._]+$/,
+        "username can only contain lowercase letters, numbers, dots, and underscores",
+      ],
+    },
+
     phoneNumber: { type: String, unique: true, required: true },
     email: { type: String, required: true },
     pinCode: { type: String, default: null },
+
+    // Required at sign-up now.
+    dateOfBirth: { type: Date, required: true },
+    gender: {
+      type: String,
+      enum: ["male", "female", "other"],
+      required: true,
+    },
 
     // ----- Roles -----
     roles: {
@@ -27,27 +52,51 @@ const userSchema = new mongoose.Schema(
       default: ["passenger"],
     },
 
-    // ----- Profile (set at /complete-profile) -----
+    // ----- Profile photo (set by REQUIRED /auth/upload-photo onboarding) -----
     profilePhoto: { type: String, default: null },
     profilePhotoPublicId: { type: String, default: null },
-    dateOfBirth: { type: Date, default: null },
+
+    // ----- Optional extras (set at /complete-profile or later) -----
+    // For SOS / safety. App will offer to call/SMS this contact in an
+    // emergency. Both fields optional, but if either is set the other
+    // should be too.
+    emergencyContact: {
+      name: { type: String, default: null },
+      phoneNumber: { type: String, default: null },
+    },
 
     // ----- Verification flags -----
     isPhoneVerified: { type: Boolean, default: false },
 
     // True once the user has finished the REQUIRED onboarding:
-    //   name + phone + email + OTP-verified + PIN set + photo uploaded.
+    //   identity fields + OTP-verified + PIN set + photo uploaded.
     // Trip booking and driver-application endpoints check this and refuse
     // if false. Set to true at /auth/upload-photo.
     isOnboardingComplete: { type: Boolean, default: false },
 
-    // True if the OPTIONAL extras have been filled (DOB, nationality, etc.).
-    // Not gating anything — purely informational. Set by /auth/update-profile.
+    // True if the OPTIONAL extras have been filled (emergency contact, etc.).
+    // Not gating anything — purely informational.
     isProfileComplete: { type: Boolean, default: false },
 
-    // ----- OTP state -----
+    // ----- OTP state (sign-up + login) -----
     otpCode: { type: String },
     otpExpiresAt: { type: Date },
+
+    // ----- Pending email / phone change (step-up auth) -----
+    // When the user requests an email or phone change, the proposed value
+    // sits here with an OTP. Confirmed via /me/change-email/verify or
+    // /me/change-phone/verify, at which point we swap the real field and
+    // clear the pending one.
+    pendingEmail: {
+      value: { type: String, default: null },
+      otpCode: { type: String, default: null }, // hashed
+      otpExpiresAt: { type: Date, default: null },
+    },
+    pendingPhoneNumber: {
+      value: { type: String, default: null },
+      otpCode: { type: String, default: null }, // hashed
+      otpExpiresAt: { type: Date, default: null },
+    },
   },
   { timestamps: true },
 );

@@ -3,7 +3,7 @@ const router = express.Router();
 
 const {
   // passenger
-  listNearbyTrips,
+  searchTrips,
   requestSeat,
   getMyActiveBooking,
   cancelMyBooking,
@@ -36,8 +36,9 @@ const driverChain = [
 // PASSENGER (Mode B — see trotros on map, request seat, confirm boarding)
 // ============================================================
 
-// List trotros near me heading to my destination
-router.get("/nearby", ...userChain, listNearbyTrips);
+// Search trotros whose route covers my pickup → drop-off (no live position
+// returned; that's revealed only after a driver accepts).
+router.post("/search", ...userChain, searchTrips);
 
 // Request a seat on a specific trip (the one I tapped)
 router.post("/:id/request-seat", ...userChain, validateIdParam, requestSeat);

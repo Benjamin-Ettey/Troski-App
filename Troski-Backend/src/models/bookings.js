@@ -29,12 +29,24 @@ const bookingSchema = new mongoose.Schema(
       index: true,
     },
 
-    // The passenger's actual pickup pin. May be slightly off from the
-    // trip's centroid (centroid is the meeting point everyone walks to).
+    // The passenger's actual pickup pin.
     requestedPickup: {
       latitude: { type: Number, required: true },
       longitude: { type: Number, required: true },
     },
+
+    // The passenger's OWN drop-off (may be enroute to the trip's final
+    // destination — they pay only for the distance they travel). Validated
+    // to be on the trip's route at request time.
+    dropoffLocation: {
+      name: { type: String, default: null },
+      latitude: { type: Number },
+      longitude: { type: Number },
+    },
+
+    // Along-route distance from this passenger's pickup to their drop-off,
+    // used to compute their fare. Snapshotted at request time.
+    fareDistanceKm: { type: Number, default: null },
 
     // How this booking entered the system.
     //   "direct"  — passenger picked a specific driver on the map (Mode B)
@@ -56,6 +68,7 @@ const bookingSchema = new mongoose.Schema(
       type: String,
       enum: [
         // new model:
+        "awaiting_payment", // paystack-paid: waiting for charge.success webhook
         "unassigned", // cluster booking with no Trip yet
         "pending", // direct request awaiting driver decision
         "accepted", // driver accepted; passenger heading to pickup
@@ -74,10 +87,32 @@ const bookingSchema = new mongoose.Schema(
 
     // ----- Pricing snapshot at booking creation -----
     fareAmount: { type: Number, default: null },
+    // Per-passenger snapshot of the payout split, computed at request time
+    // so settlement uses frozen numbers even if zonesConfig changes later.
+    driverPayAmount: { type: Number, default: null },
+    platformProfitAmount: { type: Number, default: null },
+
     paymentStatus: {
       type: String,
-      enum: ["unpaid", "held", "paid", "refunded"],
+      enum: ["unpaid", "held", "paid", "refunded", "partially_refunded"],
       default: "unpaid",
+    },
+
+    // "wallet"   — held from passenger.wallet.balance → escrowBalance
+    // "paystack" — charged from passenger's MoMo into our Paystack account
+    paymentMethod: {
+      type: String,
+      enum: ["wallet", "paystack"],
+      default: "wallet",
+    },
+
+    // Paystack charge reference (only set when paymentMethod === "paystack").
+    // Lets the webhook find the Booking when charge.success arrives.
+    paystackChargeReference: {
+      type: String,
+      default: null,
+      unique: true,
+      sparse: true,
     },
 
     // ----- Lifecycle timestamps -----
@@ -100,7 +135,14 @@ bookingSchema.index(
     unique: true,
     partialFilterExpression: {
       status: {
-        $in: ["unassigned", "pending", "accepted", "onboard", "active"],
+        $in: [
+          "awaiting_payment",
+          "unassigned",
+          "pending",
+          "accepted",
+          "onboard",
+          "active",
+        ],
       },
     },
   },

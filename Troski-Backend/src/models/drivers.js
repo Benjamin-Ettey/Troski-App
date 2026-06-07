@@ -54,6 +54,18 @@ const driverSchema = new mongoose.Schema(
     completedTrips: { type: Number, default: 0 },
     cancelledTrips: { type: Number, default: 0 },
 
+    // Cached Paystack Transfer Recipient. Created the first time the
+    // driver withdraws to a given MoMo number; reused on subsequent
+    // withdrawals so we skip the /transferrecipient call. Cleared if the
+    // driver switches MoMo numbers.
+    paystackRecipientCode: { type: String, default: null },
+    paystackRecipientNumber: { type: String, default: null },
+    paystackRecipientNetwork: {
+      type: String,
+      enum: ["mtn", "vodafone", "tigo", null],
+      default: null,
+    },
+
     // ----- Approval audit trail -----
     application: {
       type: mongoose.Schema.Types.ObjectId,

@@ -107,6 +107,13 @@ function setupSockets(httpServer, options = {}) {
             speed: speed ?? null,
           });
         }
+
+        // Auto-end check (fire-and-forget; runs even on socket-driven pushes)
+        const { checkAutoEnd } = require("../utils/autoEnd");
+        checkAutoEnd(driverId, { latitude, longitude }).catch((e) =>
+          console.error("autoEnd check failed (socket)", e),
+        );
+
         ack?.({ ok: true });
       } catch (err) {
         console.error("driver:location handler error", err);

@@ -45,7 +45,7 @@ const submitApplication = async (req, res) => {
       .json({ msg: "You are already a driver" });
   }
 
-  // Block duplicate pending/approved applications
+  // Block duplicate pending/approved applications from the SAME user
   const blocking = await DriverApplication.findOne({
     user: userId,
     status: { $in: ["pending", "approved"] },
@@ -56,6 +56,55 @@ const submitApplication = async (req, res) => {
         blocking.status === "pending"
           ? "You already have an application under review."
           : "You are already an approved driver.",
+    });
+  }
+
+  // Cross-user uniqueness: nobody ELSE can have an active application
+  // OR an approved Driver profile with the same licenseID / Ghana Card.
+  // (Partial unique indexes on the schema also enforce this at the DB
+  // level — this upfront check just gives a clean error before we upload
+  // any images to Cloudinary.)
+  const normalizedLicense = String(licenseID || "").trim().toUpperCase();
+  const normalizedGhanaCard = String(ghanaCardNumber || "")
+    .trim()
+    .toUpperCase();
+
+  const Driver = require("../models/drivers");
+
+  const [
+    licenseInOtherApp,
+    ghanaCardInOtherApp,
+    licenseOnOtherDriver,
+    ghanaCardOnOtherDriver,
+  ] = await Promise.all([
+    DriverApplication.findOne({
+      user: { $ne: userId },
+      licenseID: normalizedLicense,
+      status: { $in: ["pending", "approved"] },
+    }).select("_id"),
+    DriverApplication.findOne({
+      user: { $ne: userId },
+      ghanaCardNumber: normalizedGhanaCard,
+      status: { $in: ["pending", "approved"] },
+    }).select("_id"),
+    Driver.findOne({
+      user: { $ne: userId },
+      licenseID: normalizedLicense,
+    }).select("_id"),
+    Driver.findOne({
+      user: { $ne: userId },
+      ghanaCardNumber: normalizedGhanaCard,
+    }).select("_id"),
+  ]);
+
+  if (licenseInOtherApp || licenseOnOtherDriver) {
+    return res.status(StatusCodes.BAD_REQUEST).json({
+      msg: "This license ID is already in use by another driver. If this is an error, please contact support.",
+    });
+  }
+  if (ghanaCardInOtherApp || ghanaCardOnOtherDriver) {
+    return res.status(StatusCodes.BAD_REQUEST).json({
+      msg: "This Ghana Card number is already in use by another driver. If this is an error, please contact support.",
     });
   }
 

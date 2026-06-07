@@ -19,13 +19,21 @@ const Driver = require("../models/drivers");
 const Passenger = require("../models/passengers");
 const DriverLocation = require("../models/driverLocations");
 
+const crypto = require("crypto");
+
 const rideConfig = require("../config/rideConfig");
 const { distanceKm, isInGhana } = require("../utils/geo");
+const { computeFare } = require("../utils/fareService");
+const { evaluateEnroute } = require("../utils/routeMatching");
 const {
   holdEscrow,
   refundEscrow,
+  creditWallet,
+  settleCancellationPenalty,
   WalletError,
 } = require("../utils/walletService");
+const { chargeMobileMoney } = require("../utils/paystackUtils");
+const Payment = require("../models/payments");
 const { emit } = require("../socket/emit");
 
 // Naive ETA: distance / average urban speed. Good enough for v1; swap in
@@ -71,121 +79,162 @@ function publicTripView(trip) {
 // ============================================================
 
 /**
- * GET /api/v1/trip/nearby?latitude=&longitude=&destination=
+ * POST /api/v1/trip/search
+ * Body: { pickup: {latitude, longitude}, dropoff: {latitude, longitude, name} }
  *
- * Lists active Trips heading to the named destination (optional filter)
- * whose driver is currently within DRIVER_SEARCH_RADIUS_KM of the
- * passenger. Each result includes the driver's photo + plate so the
- * passenger can pick visually.
+ * Finds active trips whose route passes through the passenger's pickup AND
+ * drop-off (enroute), with seats available, within search radius. Returns
+ * a per-passenger fare quote + ETA + seats — but deliberately NO live
+ * driver position. The driver's exact location is only revealed after they
+ * accept a request (anti-freeloading: stops people watching trotros
+ * approach and street-hailing to dodge the fare).
  */
-const listNearbyTrips = async (req, res) => {
-  const latitude = parseFloat(req.query.latitude);
-  const longitude = parseFloat(req.query.longitude);
-  const destinationName = (req.query.destination || "").trim();
-
-  if (!isInGhana(latitude, longitude)) {
-    return res
-      .status(StatusCodes.BAD_REQUEST)
-      .json({ msg: "Valid latitude and longitude query params required" });
+const searchTrips = async (req, res) => {
+  const { pickup, dropoff } = req.body || {};
+  if (
+    !pickup ||
+    !isInGhana(pickup.latitude, pickup.longitude) ||
+    !dropoff ||
+    !isInGhana(dropoff.latitude, dropoff.longitude)
+  ) {
+    return res.status(StatusCodes.BAD_REQUEST).json({
+      msg: "Valid pickup and drop-off coordinates are required",
+    });
   }
 
-  const filter = { status: { $in: ["open", "in_progress"] } };
-  if (destinationName) filter["dropoffLocation.name"] = destinationName;
+  const trips = await Trip.find({
+    status: { $in: ["open", "in_progress"] },
+  }).populate(
+    "vehicle",
+    "plateNumber vehicleColor vehicleType vehicleCapacity vehicleImage",
+  );
 
-  const trips = await Trip.find(filter)
-    .populate({
-      path: "driver",
-      populate: { path: "user", select: "name profilePhoto" },
-    })
-    .populate(
-      "vehicle",
-      "plateNumber vehicleColor vehicleType vehicleCapacity vehicleImage",
-    );
-
-  // Pull all relevant DriverLocations in one query.
-  const driverIds = trips.map((t) => t.driver?._id).filter(Boolean);
+  const driverIds = trips.map((t) => t.driver).filter(Boolean);
   const staleCutoff = new Date(Date.now() - rideConfig.DRIVER_LOCATION_STALE_MS);
   const locations = await DriverLocation.find({
     driver: { $in: driverIds },
     isOnline: true,
     lastUpdate: { $gte: staleCutoff },
   });
-  const locByDriver = new Map(
-    locations.map((l) => [String(l.driver), l]),
-  );
+  const locByDriver = new Map(locations.map((l) => [String(l.driver), l]));
 
-  const result = [];
+  const results = [];
   for (const trip of trips) {
     const remaining =
       (trip.capacity || 0) - trip.activeBookingCount - trip.walkOnCount;
     if (remaining <= 0) continue;
 
-    const loc = locByDriver.get(String(trip.driver?._id));
-    if (!loc) continue; // driver location stale or offline
+    const loc = locByDriver.get(String(trip.driver));
+    if (!loc) continue;
 
-    const distFromMe = distanceKm(
-      latitude,
-      longitude,
+    // Driver must be reasonably near the passenger's pickup.
+    const driverToPickupKm = distanceKm(
       loc.latitude,
       loc.longitude,
+      pickup.latitude,
+      pickup.longitude,
     );
-    if (distFromMe > rideConfig.DRIVER_SEARCH_RADIUS_KM) continue;
+    if (driverToPickupKm > rideConfig.DRIVER_SEARCH_RADIUS_KM) continue;
 
-    result.push({
+    // Is the passenger's pickup+dropoff enroute for this trip?
+    const enroute = evaluateEnroute({
+      pickup,
+      dropoff,
+      encodedPolyline: trip.routePolyline,
+      driverLocation: { latitude: loc.latitude, longitude: loc.longitude },
+      finalDestination: {
+        latitude: trip.dropoffLocation.latitude,
+        longitude: trip.dropoffLocation.longitude,
+      },
+    });
+    if (!enroute.match) continue;
+
+    // Per-passenger fare for the distance THEY travel.
+    const fare = computeFare({
+      pickup,
+      dropoff,
+      distanceKmOverride: enroute.fareDistanceKm,
+    });
+    if (!fare) continue;
+
+    results.push({
       tripId: trip._id,
-      destination: trip.dropoffLocation,
-      farePerPassenger: trip.farePerPassenger,
+      finalDestination: trip.dropoffLocation,
+      yourDropoff: dropoff,
+      yourFare: fare.fare,
+      fareDistanceKm: parseFloat((enroute.fareDistanceKm || 0).toFixed(2)),
       remainingSeats: remaining,
-      capacity: trip.capacity,
-      appBookings: trip.activeBookingCount,
-      walkOns: trip.walkOnCount,
-      driver: {
-        name: trip.driver?.user?.name || null,
-        photo: trip.driver?.user?.profilePhoto || null,
-      },
       vehicle: {
-        plateNumber: trip.vehicle?.plateNumber || null,
-        vehicleColor: trip.vehicle?.vehicleColor || null,
         vehicleType: trip.vehicle?.vehicleType || null,
-        vehicleImage: trip.vehicle?.vehicleImage || null,
+        vehicleColor: trip.vehicle?.vehicleColor || null,
+        // plate intentionally withheld until acceptance
       },
-      currentLocation: {
-        latitude: loc.latitude,
-        longitude: loc.longitude,
-        heading: loc.heading,
-      },
-      driverDistanceKm: parseFloat(distFromMe.toFixed(2)),
-      etaMinutes: minutesFromKm(distFromMe),
+      // ETA for the driver to reach the passenger's pickup. Position itself
+      // is NOT included.
+      etaMinutes: minutesFromKm(driverToPickupKm),
     });
   }
 
-  result.sort((a, b) => a.etaMinutes - b.etaMinutes);
-  res.status(StatusCodes.OK).json({ count: result.length, trips: result });
+  results.sort((a, b) => a.etaMinutes - b.etaMinutes);
+  res.status(StatusCodes.OK).json({ count: results.length, trips: results });
 };
 
 /**
  * POST /api/v1/trip/:id/request-seat
- * Body: { pickup: { latitude, longitude } }
+ * Body: {
+ *   pickup: {latitude, longitude},
+ *   dropoff: {latitude, longitude, name},
+ *   paymentMethod: "wallet" | "paystack",
+ *   mobileMoney?: { phone, provider }      // required if paymentMethod === "paystack"
+ * }
  *
- * Passenger requests a seat on a specific Trip (Mode B direct request).
- * Escrow is held on the passenger's wallet immediately so the driver knows
- * the money is real when they accept.
+ * Passenger requests a seat on a specific Trip. Drop-off must be enroute;
+ * fare is computed for the distance they actually travel. Payment is taken
+ * one of two ways:
+ *
+ *   wallet   → existing escrow flow: holdEscrow on the passenger's wallet,
+ *              booking immediately becomes "pending" and visible to driver.
+ *   paystack → chargeMobileMoney against the passenger's MoMo. Booking sits
+ *              in "awaiting_payment" until the webhook confirms; only then
+ *              does it flip to "pending" and reach the driver.
  */
 const requestSeat = async (req, res) => {
   const userId = req.user.passengerId;
   const tripId = req.params.id;
-  const { pickup } = req.body || {};
+  const { pickup, dropoff, paymentMethod, mobileMoney } = req.body || {};
 
+  // ── Coordinate validation ──
   if (!pickup || !isInGhana(pickup.latitude, pickup.longitude)) {
     return res
       .status(StatusCodes.BAD_REQUEST)
       .json({ msg: "Valid pickup coordinates are required" });
   }
+  if (!dropoff || !isInGhana(dropoff.latitude, dropoff.longitude)) {
+    return res
+      .status(StatusCodes.BAD_REQUEST)
+      .json({ msg: "Valid drop-off coordinates are required" });
+  }
+
+  // ── Payment method validation ──
+  const method = paymentMethod === "paystack" ? "paystack" : "wallet";
+  if (method === "paystack") {
+    if (
+      !mobileMoney ||
+      !mobileMoney.phone ||
+      !["mtn", "vodafone", "tigo"].includes(mobileMoney.provider)
+    ) {
+      return res.status(StatusCodes.BAD_REQUEST).json({
+        msg: "paystack payment requires mobileMoney: { phone, provider } where provider is mtn/vodafone/tigo",
+      });
+    }
+  }
 
   // One active booking at a time.
   const existing = await Booking.findOne({
     passenger: userId,
-    status: { $in: ["unassigned", "pending", "accepted", "onboard"] },
+    status: {
+      $in: ["awaiting_payment", "unassigned", "pending", "accepted", "onboard"],
+    },
   });
   if (existing) {
     return res.status(StatusCodes.BAD_REQUEST).json({
@@ -206,57 +255,143 @@ const requestSeat = async (req, res) => {
   const remaining =
     (trip.capacity || 0) - trip.activeBookingCount - trip.walkOnCount;
   if (remaining <= 0) {
-    return res
-      .status(StatusCodes.BAD_REQUEST)
-      .json({ msg: "Trip is full" });
-  }
-  if (!trip.farePerPassenger || trip.farePerPassenger <= 0) {
-    return res
-      .status(StatusCodes.INTERNAL_SERVER_ERROR)
-      .json({ msg: "Trip has no fare snapshot — cannot process request" });
+    return res.status(StatusCodes.BAD_REQUEST).json({ msg: "Trip is full" });
   }
 
+  // Driver's current position for enroute evaluation.
+  const driverLoc = await DriverLocation.findOne({ driver: trip.driver });
+
+  const enroute = evaluateEnroute({
+    pickup,
+    dropoff,
+    encodedPolyline: trip.routePolyline,
+    driverLocation: driverLoc
+      ? { latitude: driverLoc.latitude, longitude: driverLoc.longitude }
+      : null,
+    finalDestination: {
+      latitude: trip.dropoffLocation.latitude,
+      longitude: trip.dropoffLocation.longitude,
+    },
+  });
+  if (!enroute.match) {
+    return res.status(StatusCodes.BAD_REQUEST).json({
+      msg: `This trip can't take you there: ${enroute.reason}`,
+    });
+  }
+
+  // Per-passenger fare. Snapshot driverPay + platformProfit on the
+  // Booking so settlement at trip-end uses frozen numbers.
+  const fare = computeFare({
+    pickup,
+    dropoff,
+    distanceKmOverride: enroute.fareDistanceKm,
+  });
+  if (!fare || !fare.fare || fare.fare <= 0) {
+    return res
+      .status(StatusCodes.BAD_REQUEST)
+      .json({ msg: "Pickup/drop-off outside the serviceable area" });
+  }
+
+  // Booking starts as 'awaiting_payment' for paystack flow; we promote it
+  // to 'pending' as soon as the wallet hold succeeds or webhook confirms.
   const booking = await Booking.create({
     trip: trip._id,
     passenger: userId,
-    requestedPickup: {
-      latitude: pickup.latitude,
-      longitude: pickup.longitude,
+    requestedPickup: { latitude: pickup.latitude, longitude: pickup.longitude },
+    dropoffLocation: {
+      name: dropoff.name || null,
+      latitude: dropoff.latitude,
+      longitude: dropoff.longitude,
     },
+    fareDistanceKm: enroute.fareDistanceKm,
     mode: "direct",
-    status: "pending",
-    fareAmount: trip.farePerPassenger,
+    status: method === "paystack" ? "awaiting_payment" : "pending",
+    fareAmount: fare.fare,
+    driverPayAmount: fare.driverPay,
+    platformProfitAmount: fare.platformProfit,
     paymentStatus: "unpaid",
+    paymentMethod: method,
   });
 
-  // Hold escrow. If it fails, kill the booking — don't leave a "pending"
-  // booking around that the driver might accept and then have no money.
-  try {
-    await holdEscrow({
-      userId,
-      amount: trip.farePerPassenger,
-      description: `Escrow hold for seat request on trip ${trip._id}`,
-      tripId: trip._id,
-      bookingId: booking._id,
-    });
-    booking.paymentStatus = "held";
+  if (method === "wallet") {
+    // ── Wallet path: hold escrow immediately ──
+    try {
+      await holdEscrow({
+        userId,
+        amount: fare.fare,
+        description: `Escrow hold for seat on trip ${trip._id}`,
+        tripId: trip._id,
+        bookingId: booking._id,
+      });
+      booking.paymentStatus = "held";
+      await booking.save();
+    } catch (err) {
+      await Booking.deleteOne({ _id: booking._id });
+      if (err instanceof WalletError && err.code === "INSUFFICIENT_FUNDS") {
+        return res.status(StatusCodes.PAYMENT_REQUIRED).json({
+          msg: "Insufficient wallet balance. Top up or use Paystack instead.",
+          fareAmount: fare.fare,
+        });
+      }
+      console.error("requestSeat (wallet) escrow failed", err);
+      return res
+        .status(StatusCodes.INTERNAL_SERVER_ERROR)
+        .json({ msg: "Could not hold escrow. Please try again." });
+    }
+  } else {
+    // ── Paystack path: charge MoMo; booking waits for webhook confirm ──
+    const reference = `RIDE_${booking._id}_${crypto
+      .randomBytes(6)
+      .toString("hex")}`;
+    booking.paystackChargeReference = reference;
     await booking.save();
-  } catch (err) {
-    await Booking.deleteOne({ _id: booking._id });
-    if (err instanceof WalletError && err.code === "INSUFFICIENT_FUNDS") {
-      return res.status(StatusCodes.PAYMENT_REQUIRED).json({
-        msg: "Insufficient wallet balance. Please top up and try again.",
-        fareAmount: trip.farePerPassenger,
+
+    // Create a Payment row up front so the webhook can resolve it even if
+    // our process dies between the charge call and getting a response.
+    const passengerUser = await Passenger.findById(userId).select(
+      "email phoneNumber",
+    );
+    await Payment.create({
+      booking: booking._id,
+      trip: trip._id,
+      passenger: userId,
+      paymentType: "ride_payment",
+      phoneNumber: mobileMoney.phone,
+      amount: fare.fare,
+      currency: "GHS",
+      paymentProvider: "paystack",
+      paystackReference: reference,
+      status: "pending",
+    });
+
+    try {
+      await chargeMobileMoney({
+        email:
+          passengerUser?.email || `${mobileMoney.phone}@troski.placeholder`,
+        amountGHS: fare.fare,
+        reference,
+        phone: mobileMoney.phone,
+        provider: mobileMoney.provider,
+      });
+    } catch (err) {
+      // Charge initiation failed — kill the booking and the Payment row.
+      console.error("requestSeat (paystack) charge init failed", err.message);
+      await Booking.deleteOne({ _id: booking._id });
+      await Payment.deleteOne({ paystackReference: reference });
+      return res.status(StatusCodes.BAD_GATEWAY).json({
+        msg: "Could not start mobile money charge. Please try again.",
       });
     }
-    console.error("requestSeat escrow failed", err);
-    return res
-      .status(StatusCodes.INTERNAL_SERVER_ERROR)
-      .json({ msg: "Could not hold escrow. Please try again." });
+
+    return res.status(StatusCodes.CREATED).json({
+      msg: "Authorize the payment on your phone to complete the booking.",
+      booking,
+      paystackReference: reference,
+      paymentStatus: "awaiting_authorization",
+    });
   }
 
-  // Push the request to the driver with a photo + pickup. Frontend uses
-  // this to pop a "new request" card in the driver app.
+  // For the wallet path we reach here with a fully held booking → tell driver.
   const passenger = await Passenger.findById(userId).select(
     "name profilePhoto",
   );
@@ -264,6 +399,7 @@ const requestSeat = async (req, res) => {
     bookingId: booking._id,
     tripId: trip._id,
     requestedPickup: booking.requestedPickup,
+    dropoff: booking.dropoffLocation,
     fareAmount: booking.fareAmount,
     passenger: {
       _id: userId,
@@ -353,13 +489,20 @@ const getMyActiveBooking = async (req, res) => {
  * PATCH /api/v1/trip/booking/cancel
  * Body: { reason? }
  *
- * Passenger cancels their own active booking. Refunds escrow.
+ * Cancellation policy:
+ *   - Booking in awaiting_payment / pending (driver hasn't accepted) →
+ *     full refund (back to wallet for wallet-paid, wallet credit for
+ *     paystack-paid).
+ *   - Booking accepted (driver committed, possibly en route) → NO refund.
+ *     The held fare is split: PASSENGER_CANCEL_DRIVER_SHARE % to the
+ *     driver, PASSENGER_CANCEL_PLATFORM_SHARE % to the platform.
+ *   - Booking onboard → not cancellable; passenger is in the vehicle.
  */
 const cancelMyBooking = async (req, res) => {
   const userId = req.user.passengerId;
   const booking = await Booking.findOne({
     passenger: userId,
-    status: { $in: ["pending", "accepted"] },
+    status: { $in: ["awaiting_payment", "pending", "accepted"] },
   });
   if (!booking) {
     return res
@@ -367,50 +510,141 @@ const cancelMyBooking = async (req, res) => {
       .json({ msg: "No cancellable booking" });
   }
 
-  // Refund escrow FIRST. If refund fails, leave the booking active so the
-  // passenger can retry rather than ending up cancelled with stuck escrow.
-  if (booking.paymentStatus === "held" && booking.fareAmount > 0) {
+  const reason = req.body?.reason || "passenger cancelled";
+  const trip = await Trip.findById(booking.trip);
+
+  // ── awaiting_payment: nothing's held yet (charge in flight). Just
+  //    mark cancelled. The webhook will refund-to-wallet if the charge
+  //    arrives after this.
+  if (booking.status === "awaiting_payment") {
+    booking.status = "cancelled";
+    booking.cancelledAt = new Date();
+    booking.cancellationReason = reason;
+    await booking.save();
+    return res.status(StatusCodes.OK).json({
+      msg: "Booking cancelled before payment was confirmed",
+      booking,
+    });
+  }
+
+  // ── pending: full refund, no penalty.
+  if (booking.status === "pending") {
     try {
-      await refundEscrow({
-        userId,
-        amount: booking.fareAmount,
-        description: `Refund — passenger cancelled (booking ${booking._id})`,
-        tripId: booking.trip,
-        bookingId: booking._id,
-      });
-      booking.paymentStatus = "refunded";
+      if (booking.paymentStatus === "held" && booking.fareAmount > 0) {
+        if (booking.paymentMethod === "wallet") {
+          await refundEscrow({
+            userId,
+            amount: booking.fareAmount,
+            description: `Refund — passenger cancelled (booking ${booking._id})`,
+            tripId: booking.trip,
+            bookingId: booking._id,
+          });
+        } else {
+          // Paystack-paid → credit wallet (money's in our Paystack
+          // account; cheaper to credit internally than to call Paystack
+          // refund API).
+          await creditWallet({
+            userId,
+            amount: booking.fareAmount,
+            description: `Refund — passenger cancelled (booking ${booking._id})`,
+            tripId: booking.trip,
+            bookingId: booking._id,
+            reference: booking.paystackChargeReference,
+          });
+        }
+        booking.paymentStatus = "refunded";
+      }
     } catch (err) {
       console.error("cancelMyBooking refund failed", err);
       return res
         .status(StatusCodes.INTERNAL_SERVER_ERROR)
         .json({ msg: "Could not refund. Please contact support." });
     }
-  }
 
-  const wasAccepted = booking.status === "accepted";
-  booking.status = "cancelled";
-  booking.cancelledAt = new Date();
-  booking.cancellationReason = req.body?.reason || "passenger cancelled";
-  booking.bookingCode = null;
-  await booking.save();
+    booking.status = "cancelled";
+    booking.cancelledAt = new Date();
+    booking.cancellationReason = reason;
+    booking.bookingCode = null;
+    await booking.save();
 
-  // Free the seat if it had been counted toward the trip
-  if (wasAccepted) {
-    await Trip.findByIdAndUpdate(booking.trip, {
-      $inc: { activeBookingCount: -1 },
+    if (trip?.driver) {
+      emit.toDriver(trip.driver, "booking:cancelled", {
+        bookingId: booking._id,
+        reason: "passenger cancelled",
+      });
+    }
+    return res.status(StatusCodes.OK).json({
+      msg: "Booking cancelled, full refund issued",
+      booking,
     });
   }
 
-  // Notify driver
-  const trip = await Trip.findById(booking.trip).select("driver");
+  // ── accepted: the penalty applies. Split fare 70/30 (or whatever
+  //    rideConfig says), no refund to passenger.
+  // We need driverProfile + driver.user for the settle helper.
+  const Driver = require("../models/drivers");
+  const driverProfile = await Driver.findById(trip.driver);
+  if (!driverProfile) {
+    return res
+      .status(StatusCodes.INTERNAL_SERVER_ERROR)
+      .json({ msg: "Driver profile missing — can't settle cancellation" });
+  }
+
+  const total = booking.fareAmount || 0;
+  const driverShare =
+    Math.round(total * rideConfig.PASSENGER_CANCEL_DRIVER_SHARE * 100) / 100;
+  const platformShare = Math.round((total - driverShare) * 100) / 100;
+
+  try {
+    if (total > 0) {
+      await settleCancellationPenalty({
+        paymentMethod: booking.paymentMethod || "wallet",
+        passengerUserId: userId,
+        driverUserId: driverProfile.user,
+        driverProfileId: driverProfile._id,
+        totalAmount: total,
+        driverShare,
+        platformShare,
+        tripId: booking.trip,
+        bookingId: booking._id,
+      });
+    }
+  } catch (err) {
+    console.error("cancelMyBooking penalty settle failed", err);
+    return res
+      .status(StatusCodes.INTERNAL_SERVER_ERROR)
+      .json({ msg: "Could not process cancellation. Please contact support." });
+  }
+
+  booking.status = "cancelled";
+  booking.cancelledAt = new Date();
+  booking.cancellationReason = reason;
+  booking.bookingCode = null;
+  booking.paymentStatus = "paid"; // money fully accounted for (to driver+platform)
+  await booking.save();
+
+  // Free the seat
+  await Trip.findByIdAndUpdate(booking.trip, {
+    $inc: { activeBookingCount: -1 },
+  });
+
   if (trip?.driver) {
     emit.toDriver(trip.driver, "booking:cancelled", {
       bookingId: booking._id,
-      reason: "passenger cancelled",
+      reason: "passenger cancelled (after accept — penalty paid out)",
+      driverShare,
     });
   }
 
-  res.status(StatusCodes.OK).json({ msg: "Booking cancelled", booking });
+  res.status(StatusCodes.OK).json({
+    msg: "Booking cancelled. Cancellation penalty applied — no refund.",
+    booking,
+    penalty: {
+      total,
+      driverShare,
+      platformShare,
+    },
+  });
 };
 
 /**
@@ -759,7 +993,7 @@ const markBoarded = async (req, res) => {
 
 module.exports = {
   // Passenger
-  listNearbyTrips,
+  searchTrips,
   requestSeat,
   getMyActiveBooking,
   cancelMyBooking,

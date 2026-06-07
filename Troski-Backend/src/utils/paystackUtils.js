@@ -81,10 +81,61 @@ const validateWebhookSignature = (rawBody, signature) => {
   return hash === signature;
 };
 
+// ── TRANSFERS (driver payouts to mobile money) ──────────────────────
+//
+// Paystack Transfer flow:
+//   1. createTransferRecipient — one-time setup per MoMo number; returns
+//      a recipient_code we cache on the Driver doc.
+//   2. initiateTransfer — fires the actual payout. Returns immediately
+//      with status: 'pending' / 'otp'. The final outcome arrives via
+//      webhook event "transfer.success" or "transfer.failed".
+//
+// NOTE: Paystack TEST mode requires an OTP for every transfer (sent to
+// the merchant's email). LIVE mode can disable OTPs once the account is
+// approved. This is an operational toggle, not a code concern.
+
+const NETWORK_TO_BANK_CODE = {
+  mtn: "MTN",
+  vodafone: "VOD",
+  tigo: "ATL",
+};
+
+const createTransferRecipient = async ({ name, accountNumber, network }) => {
+  const bankCode = NETWORK_TO_BANK_CODE[network];
+  if (!bankCode) throw new Error(`Unknown mobile money network: ${network}`);
+  const { data } = await paystackRequest.post("/transferrecipient", {
+    type: "mobile_money",
+    name,
+    account_number: accountNumber,
+    bank_code: bankCode,
+    currency: "GHS",
+  });
+  return data.data.recipient_code;
+};
+
+const initiateTransfer = async ({
+  amountGHS,
+  recipientCode,
+  reference,
+  reason,
+}) => {
+  const amountPesewas = Math.round(amountGHS * 100);
+  const { data } = await paystackRequest.post("/transfer", {
+    source: "balance",
+    amount: amountPesewas,
+    recipient: recipientCode,
+    reason: reason || "Driver withdrawal",
+    reference,
+  });
+  return data.data;
+};
+
 module.exports = {
   initializeTransaction,
   chargeMobileMoney,
   checkCharge,
   verifyTransaction,
   validateWebhookSignature,
+  createTransferRecipient,
+  initiateTransfer,
 };

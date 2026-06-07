@@ -1,0 +1,817 @@
+{
+  "info": {
+    "name": "Troski Backend — Full",
+    "description": "Complete endpoint coverage for the Troski-Backend project as of the latest build.\n\nHOW POSTMAN HANDLES AUTH:\n- Cookies (accessToken / refreshToken) are signed httpOnly cookies set by the server on verify-signup-otp / verify-otp / admin login. Postman's built-in cookie jar will keep them in the same session, so subsequent requests authenticate automatically.\n- The Paystack webhook is NOT a Postman call — Paystack hits it directly. Use Paystack's webhook tester or curl with `x-paystack-signature` header for manual testing.\n\nFLOWS:\n  Passenger sign-up → login → request ride → confirm boarding\n     1. POST /auth/sign-up               { name, phoneNumber, email, pinCode }\n     2. POST /auth/verify-signup-otp     { phoneNumber, otpCode }     (cookies set)\n     3. POST /auth/upload-photo          (multipart; required onboarding)\n     4. POST /auth/request-otp           { phoneNumber }              (next login)\n     5. POST /auth/verify-otp            { phoneNumber, otpCode }\n     6. (top up wallet OR pay each ride via paystack)\n     7. POST /trip/search                { pickup, dropoff }\n     8. POST /trip/:id/request-seat      { pickup, dropoff, paymentMethod, mobileMoney? }\n     9. POST /trip/booking/confirm-boarding  { code: '<4-digit>' }\n\n  Driver onboarding → going online → accepting passengers\n     1. (passenger flow first, ending fully onboarded)\n     2. POST /driver-application         (apply with Ghana card + license + selfie)\n     3. Admin approves application\n     4. POST /driver/vehicle             (multipart: 4 docs)\n     5. Admin approves vehicle\n     6. POST /driver-location/online     { latitude, longitude, destination }\n     7. GET  /trip/incoming-requests     (poll OR via socket)\n     8. PATCH /trip/booking/:id/accept\n     9. (drive; GPS auto-end fires at 30m from passenger drop-off)\n\n  Admin setup (one-time)\n     CLI: node src/scripts/seedSuperAdmin.js <username> <email> <password>\n     Then POST /auth/admin/login.\n",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:5000", "type": "string" },
+    { "key": "phoneNumber", "value": "0244000001", "type": "string" },
+    { "key": "pinCode", "value": "123456", "type": "string" },
+    { "key": "adminUsername", "value": "superadmin", "type": "string" },
+    { "key": "adminPassword", "value": "Password123!", "type": "string" },
+    { "key": "tripId", "value": "", "type": "string" },
+    { "key": "bookingId", "value": "", "type": "string" },
+    { "key": "applicationId", "value": "", "type": "string" },
+    { "key": "vehicleId", "value": "", "type": "string" },
+    { "key": "inviteId", "value": "", "type": "string" },
+    { "key": "inviteToken", "value": "", "type": "string" },
+    { "key": "inviteEmail", "value": "", "type": "string" },
+    { "key": "topupReference", "value": "", "type": "string" }
+  ],
+  "item": [
+    {
+      "name": "Auth — User",
+      "item": [
+        {
+          "name": "Sign Up",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/api/v1/auth/sign-up",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Ama Mensah\",\n  \"username\": \"ama.mensah\",\n  \"phoneNumber\": \"{{phoneNumber}}\",\n  \"email\": \"ama@example.com\",\n  \"pinCode\": \"{{pinCode}}\",\n  \"gender\": \"female\",\n  \"dateOfBirth\": \"2000-01-15\"\n}"
+            },
+            "description": "Required fields now include username (unique, 3-30 chars [a-z0-9._]), gender (male/female/other), and dateOfBirth (ISO, 18+). The frontend can collect these across multiple screens but must send them in ONE final POST. Creates an unverified user and sends an OTP. Rate-limited 3/10min per IP."
+          }
+        },
+        {
+          "name": "Verify Sign-up OTP",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/api/v1/auth/verify-signup-otp",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"phoneNumber\": \"{{phoneNumber}}\",\n  \"otpCode\": \"REPLACE_WITH_OTP_FROM_SMS_OR_LOGS\"\n}"
+            },
+            "description": "On success: sets accessToken + refreshToken signed cookies; you're now logged in. Rate-limited 5/10min."
+          }
+        },
+        {
+          "name": "Upload Profile Photo (REQUIRED onboarding)",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/auth/upload-photo",
+            "body": {
+              "mode": "formdata",
+              "formdata": [{ "key": "profilePhoto", "type": "file", "src": [] }]
+            },
+            "description": "Mandatory — flips isOnboardingComplete=true. Required before any trip / driver-application endpoint will accept you. Multipart with field name 'profilePhoto'."
+          }
+        },
+        {
+          "name": "Complete Profile (optional: DOB, gender, emergency contact)",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/api/v1/auth/complete-profile",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"dateOfBirth\": \"2000-01-15\",\n  \"gender\": \"female\",\n  \"emergencyContact\": {\n    \"name\": \"Yaa Mensah\",\n    \"phoneNumber\": \"0244000099\"\n  }\n}"
+            },
+            "description": "JSON only — no photo. All three fields are optional; send any subset. gender ∈ {male, female, other, prefer_not_to_say}. dateOfBirth must be 18+. Profile photo is handled exclusively by /auth/upload-photo."
+          }
+        },
+        {
+          "name": "Verify PIN (in-app sensitive-action gate)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/api/v1/auth/verify-pin",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"pinCode\": \"{{pinCode}}\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Login — Request OTP",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/api/v1/auth/request-otp",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"phoneNumber\": \"{{phoneNumber}}\",\n  \"method\": \"sms\"\n}"
+            },
+            "description": "Rate-limited 3/10min. Only verified accounts can receive a login OTP."
+          }
+        },
+        {
+          "name": "Login — Verify OTP",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/api/v1/auth/verify-otp",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"phoneNumber\": \"{{phoneNumber}}\",\n  \"otpCode\": \"REPLACE_WITH_OTP\"\n}"
+            },
+            "description": "Logs in. Sets fresh cookies."
+          }
+        },
+        {
+          "name": "Logout",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/auth/logout"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Auth — Admin",
+      "description": "Bootstrap the first super_admin via `node src/scripts/seedSuperAdmin.js <username> <email> <password>`. All further admins must be invited.",
+      "item": [
+        {
+          "name": "Admin Login",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/api/v1/auth/admin/login",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"{{adminUsername}}\",\n  \"password\": \"{{adminPassword}}\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Send Admin Invite (super_admin)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/api/v1/auth/admin/invite",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"newadmin@example.com\",\n  \"role\": \"admin\"\n}"
+            },
+            "description": "Generates a one-time secure link (48h expiry) and emails it. Only super_admin can call."
+          }
+        },
+        {
+          "name": "List Outstanding Invites",
+          "request": { "method": "GET", "url": "{{baseUrl}}/api/v1/auth/admin/invite" }
+        },
+        {
+          "name": "Verify Invite (public)",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/admin/invite/verify?token={{inviteToken}}&email={{inviteEmail}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "auth", "admin", "invite", "verify"],
+              "query": [
+                { "key": "token", "value": "{{inviteToken}}" },
+                { "key": "email", "value": "{{inviteEmail}}" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Register with Invite (public)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/api/v1/auth/admin/register-with-invite",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"token\": \"{{inviteToken}}\",\n  \"email\": \"{{inviteEmail}}\",\n  \"username\": \"newadmin\",\n  \"password\": \"StrongPass1!\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Revoke Invite",
+          "request": {
+            "method": "DELETE",
+            "url": "{{baseUrl}}/api/v1/auth/admin/invite/{{inviteId}}"
+          }
+        },
+        {
+          "name": "Admin Logout",
+          "request": { "method": "DELETE", "url": "{{baseUrl}}/api/v1/auth/admin/logout" }
+        }
+      ]
+    },
+    {
+      "name": "Driver Application",
+      "description": "A logged-in user applies to drive. Admin reviews. On approval the user gets the 'driver' role + a Driver profile, and the selfie replaces the user's profile photo.",
+      "item": [
+        {
+          "name": "Submit Application (multipart)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "  const body = pm.response.json();",
+                  "  if (body.application && body.application._id) pm.collectionVariables.set('applicationId', body.application._id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/driver-application",
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                { "key": "licenseID", "value": "ABC-12345678-1234", "type": "text" },
+                { "key": "ghanaCardNumber", "value": "GHA-123456789-1", "type": "text" },
+                { "key": "city", "value": "Accra", "type": "text" },
+                { "key": "ghanaCardImage", "type": "file", "src": [] },
+                { "key": "licenseImage", "type": "file", "src": [] },
+                { "key": "selfieImage", "type": "file", "src": [] }
+              ]
+            },
+            "description": "Three required files: ghanaCardImage, licenseImage, selfieImage (selfie becomes the user's verified profile photo on approval)."
+          }
+        },
+        {
+          "name": "Get My Application Status",
+          "request": { "method": "GET", "url": "{{baseUrl}}/api/v1/driver-application/me" }
+        },
+        {
+          "name": "List Applications (admin)",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/driver-application/admin?status=pending",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "driver-application", "admin"],
+              "query": [{ "key": "status", "value": "pending" }]
+            }
+          }
+        },
+        {
+          "name": "Get One Application (admin)",
+          "request": { "method": "GET", "url": "{{baseUrl}}/api/v1/driver-application/admin/{{applicationId}}" }
+        },
+        {
+          "name": "Approve Application (admin)",
+          "request": { "method": "PATCH", "url": "{{baseUrl}}/api/v1/driver-application/admin/{{applicationId}}/approve" }
+        },
+        {
+          "name": "Reject Application (admin)",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/api/v1/driver-application/admin/{{applicationId}}/reject",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"rejectionReason\": \"Selfie is too dark, please resubmit.\"\n}"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Driver — Profile & Vehicle",
+      "item": [
+        {
+          "name": "My Driver Profile",
+          "request": { "method": "GET", "url": "{{baseUrl}}/api/v1/driver/current" }
+        },
+        {
+          "name": "My Vehicle",
+          "request": { "method": "GET", "url": "{{baseUrl}}/api/v1/driver/vehicle" }
+        },
+        {
+          "name": "Register Vehicle (multipart)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "  const body = pm.response.json();",
+                  "  if (body.vehicle && body.vehicle._id) pm.collectionVariables.set('vehicleId', body.vehicle._id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/driver/vehicle",
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                { "key": "plateNumber", "value": "GT-1234-24", "type": "text" },
+                { "key": "vehicleType", "value": "Sprinter", "type": "text" },
+                { "key": "vehicleColor", "value": "Yellow", "type": "text" },
+                { "key": "vehicleCapacity", "value": "14", "type": "text" },
+                {
+                  "key": "routePreferences",
+                  "value": "[{\"from\":\"Madina\",\"to\":\"Tema Station\"}]",
+                  "type": "text",
+                  "description": "JSON-stringified array of {from,to} objects"
+                },
+                { "key": "vehicleImage", "type": "file", "src": [] },
+                { "key": "insuranceCertImage", "type": "file", "src": [] },
+                { "key": "vehicleRegDocImage", "type": "file", "src": [] },
+                { "key": "DVLARoadworthyImage", "type": "file", "src": [] }
+              ]
+            },
+            "description": "Driver must be approved (have a Driver profile) first. Creates Vehicle with vehicleStatus='pending'."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Driver Location & Session",
+      "description": "Driver session lifecycle. Going online creates a Trip with a destination and fetches the Google Directions polyline.",
+      "item": [
+        {
+          "name": "Go Online (create trip)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "  const body = pm.response.json();",
+                  "  if (body.trip && body.trip._id) pm.collectionVariables.set('tripId', body.trip._id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/api/v1/driver-location/online",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"latitude\": 5.6792,\n  \"longitude\": -0.1672,\n  \"destination\": {\n    \"latitude\": 5.6747,\n    \"longitude\": -0.0167,\n    \"name\": \"Tema Station\"\n  }\n}"
+            }
+          }
+        },
+        {
+          "name": "Go Offline",
+          "request": { "method": "POST", "url": "{{baseUrl}}/api/v1/driver-location/offline" }
+        },
+        {
+          "name": "Update Location (live GPS)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/api/v1/driver-location/update",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"latitude\": 5.6800,\n  \"longitude\": -0.1500,\n  \"heading\": 90,\n  \"speed\": 35\n}"
+            },
+            "description": "Triggers auto-end check: if within 30m of any onboard passenger's drop-off, that booking auto-settles."
+          }
+        },
+        {
+          "name": "Walk-on Boarded (+1 cash passenger)",
+          "request": { "method": "POST", "url": "{{baseUrl}}/api/v1/driver-location/walkon/add" }
+        },
+        {
+          "name": "Walk-on Got Off (-1 cash passenger)",
+          "request": { "method": "POST", "url": "{{baseUrl}}/api/v1/driver-location/walkon/remove" }
+        }
+      ]
+    },
+    {
+      "name": "Trip — Passenger",
+      "item": [
+        {
+          "name": "Search Nearby Trips (no live position returned)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/api/v1/trip/search",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"pickup\": { \"latitude\": 5.6792, \"longitude\": -0.1672 },\n  \"dropoff\": {\n    \"latitude\": 5.6261,\n    \"longitude\": -0.1131,\n    \"name\": \"Spintex\"\n  }\n}"
+            },
+            "description": "Returns matching trips with ETA + per-passenger fare + remaining seats — no driver pin (anti-freeloading)."
+          }
+        },
+        {
+          "name": "Request Seat (WALLET payment)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "  const body = pm.response.json();",
+                  "  if (body.booking && body.booking._id) pm.collectionVariables.set('bookingId', body.booking._id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/api/v1/trip/{{tripId}}/request-seat",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"pickup\": { \"latitude\": 5.6792, \"longitude\": -0.1672 },\n  \"dropoff\": {\n    \"latitude\": 5.6261,\n    \"longitude\": -0.1131,\n    \"name\": \"Spintex\"\n  },\n  \"paymentMethod\": \"wallet\"\n}"
+            },
+            "description": "Holds escrow from passenger.wallet.balance. Booking immediately becomes 'pending' and the driver sees it."
+          }
+        },
+        {
+          "name": "Request Seat (PAYSTACK payment)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/api/v1/trip/{{tripId}}/request-seat",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"pickup\": { \"latitude\": 5.6792, \"longitude\": -0.1672 },\n  \"dropoff\": {\n    \"latitude\": 5.6261,\n    \"longitude\": -0.1131,\n    \"name\": \"Spintex\"\n  },\n  \"paymentMethod\": \"paystack\",\n  \"mobileMoney\": {\n    \"phone\": \"0244000001\",\n    \"provider\": \"mtn\"\n  }\n}"
+            },
+            "description": "Fires chargeMobileMoney against the passenger's MoMo. Booking sits in 'awaiting_payment' until the user authorizes on their phone and the webhook fires charge.success."
+          }
+        },
+        {
+          "name": "My Active Booking",
+          "request": { "method": "GET", "url": "{{baseUrl}}/api/v1/trip/my-booking" }
+        },
+        {
+          "name": "Cancel My Booking",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/api/v1/trip/booking/cancel",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"reason\": \"Changed my mind\"\n}"
+            },
+            "description": "Policy: pending → full refund; accepted → 70/30 split (no refund); onboard → not cancellable."
+          }
+        },
+        {
+          "name": "Confirm Boarding (passenger enters 4-digit code)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/api/v1/trip/booking/confirm-boarding",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"code\": \"8421\"\n}"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Trip — Driver",
+      "item": [
+        {
+          "name": "My Active Trip",
+          "request": { "method": "GET", "url": "{{baseUrl}}/api/v1/trip/my-trip" }
+        },
+        {
+          "name": "Incoming Requests",
+          "request": { "method": "GET", "url": "{{baseUrl}}/api/v1/trip/incoming-requests" }
+        },
+        {
+          "name": "Accept Booking",
+          "request": {
+            "method": "PATCH",
+            "url": "{{baseUrl}}/api/v1/trip/booking/{{bookingId}}/accept",
+            "description": "Generates 4-digit code, increments seat counter atomically, emits booking:accepted to passenger with driver photo + plate + ETA."
+          }
+        },
+        {
+          "name": "Reject Booking",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/api/v1/trip/booking/{{bookingId}}/reject",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"reason\": \"Pickup too far off route\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Mark Boarded (driver fallback)",
+          "request": {
+            "method": "PATCH",
+            "url": "{{baseUrl}}/api/v1/trip/booking/{{bookingId}}/mark-boarded",
+            "description": "Use only if the passenger can't enter the 4-digit code themselves."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Wallet — User",
+      "item": [
+        {
+          "name": "My Wallet (balance + escrow)",
+          "request": { "method": "GET", "url": "{{baseUrl}}/api/v1/wallet" }
+        },
+        {
+          "name": "My Wallet Statement",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/wallet/transactions?limit=25",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "wallet", "transactions"],
+              "query": [{ "key": "limit", "value": "25" }]
+            }
+          }
+        },
+        {
+          "name": "Initiate Top-up",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "  const body = pm.response.json();",
+                  "  if (body.reference) pm.collectionVariables.set('topupReference', body.reference);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/api/v1/wallet/topup/initiate",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"amount\": 50\n}"
+            },
+            "description": "Returns authorizationURL. Open it in a browser / WebView to complete payment. On success Paystack hits the webhook and your wallet is credited."
+          }
+        },
+        {
+          "name": "Verify Top-up (polling fallback)",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/v1/wallet/topup/verify/{{topupReference}}",
+            "description": "Lets the frontend check 'did the top-up land?' if the user closes the app before the webhook arrives."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Wallet — Driver Withdrawals",
+      "item": [
+        {
+          "name": "Request Withdrawal (no admin approval)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/api/v1/wallet/withdraw",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"amount\": 50,\n  \"mobileMoneyNumber\": \"0244000001\",\n  \"mobileMoneyNetwork\": \"mtn\"\n}"
+            },
+            "description": "Debits wallet immediately, fires Paystack Transfer right away. Webhook (transfer.success/failed) finalizes the WithdrawalRequest. Min GHS 5."
+          }
+        },
+        {
+          "name": "My Withdrawal History",
+          "request": { "method": "GET", "url": "{{baseUrl}}/api/v1/wallet/withdrawals" }
+        }
+      ]
+    },
+    {
+      "name": "Passenger — Profile",
+      "item": [
+        {
+          "name": "My Passenger Profile",
+          "request": { "method": "GET", "url": "{{baseUrl}}/api/v1/passenger/current" }
+        },
+        {
+          "name": "Ride History (last 7 days)",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/passenger/ride-history?days=7",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "passenger", "ride-history"],
+              "query": [{ "key": "days", "value": "7", "description": "1-90; default 7" }]
+            },
+            "description": "Latest bookings with trip + driver + vehicle info populated."
+          }
+        },
+        {
+          "name": "Notifications — List",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/passenger/notifications?limit=20",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "passenger", "notifications"],
+              "query": [
+                { "key": "limit", "value": "20" },
+                { "key": "unreadOnly", "value": "true", "disabled": true }
+              ]
+            },
+            "description": "Returns recent notifications (max 100) + unreadCount. Auto-purged at 90 days."
+          }
+        },
+        {
+          "name": "Notification — Mark Read",
+          "request": { "method": "PATCH", "url": "{{baseUrl}}/api/v1/passenger/notifications/:id/read" }
+        },
+        {
+          "name": "Notifications — Mark All Read",
+          "request": { "method": "POST", "url": "{{baseUrl}}/api/v1/passenger/notifications/mark-all-read" }
+        },
+        {
+          "name": "Change Username (no extra auth)",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/api/v1/passenger/me/username",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"new.handle\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Change PIN (current PIN required)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/api/v1/passenger/me/change-pin",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"currentPinCode\": \"{{pinCode}}\",\n  \"newPinCode\": \"654321\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Change Email — Start (PIN required)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/api/v1/passenger/me/change-email/start",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"newEmail\": \"new@example.com\",\n  \"currentPinCode\": \"{{pinCode}}\"\n}"
+            },
+            "description": "Sends OTP to the NEW email. Read it from server logs (or the real inbox in production)."
+          }
+        },
+        {
+          "name": "Change Email — Verify OTP",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/api/v1/passenger/me/change-email/verify",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"otpCode\": \"REPLACE_WITH_OTP\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Change Phone — Start (PIN required)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/api/v1/passenger/me/change-phone/start",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"newPhoneNumber\": \"0244000099\",\n  \"currentPinCode\": \"{{pinCode}}\"\n}"
+            },
+            "description": "Sends OTP via SMS to the NEW number. On verify: updates user.phoneNumber, updates Wallet.phoneNumber + regenerates balanceHash, invalidates ALL existing sessions (user must log in again with the new number)."
+          }
+        },
+        {
+          "name": "Change Phone — Verify OTP",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/api/v1/passenger/me/change-phone/verify",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"otpCode\": \"REPLACE_WITH_OTP\"\n}"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Admin — Dashboard",
+      "description": "Admin must be logged in (separate cookie). All endpoints under /api/v1/admin require admin auth via the authenticateAdmin middleware mounted in server.js.",
+      "item": [
+        {
+          "name": "Current Admin",
+          "request": { "method": "GET", "url": "{{baseUrl}}/api/v1/admin/current" }
+        },
+        {
+          "name": "All Drivers",
+          "request": { "method": "GET", "url": "{{baseUrl}}/api/v1/admin/all-drivers" }
+        },
+        {
+          "name": "All Passengers",
+          "request": { "method": "GET", "url": "{{baseUrl}}/api/v1/admin/all-passengers" }
+        },
+        {
+          "name": "All Vehicles",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/all-vehicles?vehicleStatus=pending",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "admin", "all-vehicles"],
+              "query": [{ "key": "vehicleStatus", "value": "pending" }]
+            }
+          }
+        },
+        {
+          "name": "Approve Vehicle",
+          "request": { "method": "PATCH", "url": "{{baseUrl}}/api/v1/admin/vehicle/approve/{{vehicleId}}" }
+        },
+        {
+          "name": "Reject Vehicle",
+          "request": { "method": "PATCH", "url": "{{baseUrl}}/api/v1/admin/vehicle/reject/{{vehicleId}}" }
+        },
+        {
+          "name": "Get Single Driver",
+          "request": { "method": "GET", "url": "{{baseUrl}}/api/v1/admin/driver/{{applicationId}}" }
+        },
+        {
+          "name": "Update Driver",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/api/v1/admin/driver/{{applicationId}}",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"city\": \"Tema\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Delete Driver",
+          "request": { "method": "DELETE", "url": "{{baseUrl}}/api/v1/admin/driver/{{applicationId}}" }
+        },
+        {
+          "name": "Get Single Passenger",
+          "request": { "method": "GET", "url": "{{baseUrl}}/api/v1/admin/passenger/{{applicationId}}" }
+        },
+        {
+          "name": "Update Passenger",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/api/v1/admin/passenger/{{applicationId}}",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Updated Name\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Delete Passenger",
+          "request": { "method": "DELETE", "url": "{{baseUrl}}/api/v1/admin/passenger/{{applicationId}}" }
+        },
+        {
+          "name": "Get Single Vehicle",
+          "request": { "method": "GET", "url": "{{baseUrl}}/api/v1/admin/vehicle/{{vehicleId}}" }
+        },
+        {
+          "name": "Update Vehicle",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/api/v1/admin/vehicle/{{vehicleId}}",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"vehicleColor\": \"Blue\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Delete Vehicle",
+          "request": { "method": "DELETE", "url": "{{baseUrl}}/api/v1/admin/vehicle/{{vehicleId}}" }
+        }
+      ]
+    },
+    {
+      "name": "Paystack Webhook (reference only — NOT for Postman)",
+      "description": "The Paystack webhook is NOT something you call from Postman in the normal sense. Paystack POSTs to /api/v1/wallet/paystack/webhook with a JSON body and an `x-paystack-signature` header (HMAC-SHA512 of the raw body using your secret key).\n\nTo test locally:\n1. Set your webhook URL in the Paystack dashboard to https://your-tunnel.ngrok-free.app/api/v1/wallet/paystack/webhook\n2. Use a tunneling service like ngrok to expose your local server.\n3. Trigger a test event from the Paystack dashboard or use the dashboard's 'Resend webhook' button.\n\nEvents we handle:\n  - charge.success    → credits wallet (top-up) OR confirms ride payment (booking awaiting_payment → pending)\n  - charge.failed     → marks Payment failed; cancels booking if applicable\n  - transfer.success  → marks WithdrawalRequest completed\n  - transfer.failed / transfer.reversed → refunds driver wallet, marks request rejected",
+      "item": []
+    }
+  ]
+}

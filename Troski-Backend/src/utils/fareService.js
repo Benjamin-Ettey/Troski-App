@@ -22,7 +22,10 @@ const zonesConfig = require("../data/zonesConfig");
  *     breakdown: { commission, platformFee },
  *   }
  */
-function computeFare({ pickup, dropoff }) {
+// `distanceKmOverride` lets callers pass the along-route distance (from the
+// Google Directions polyline) instead of the straight-line distance — used
+// for enroute per-passenger fares.
+function computeFare({ pickup, dropoff, distanceKmOverride }) {
   const pickupTown = findNearestTown({
     latitude: pickup.latitude,
     longitude: pickup.longitude,
@@ -33,12 +36,15 @@ function computeFare({ pickup, dropoff }) {
   });
   if (!pickupTown || !dropoffTown) return null;
 
-  const dist = distanceKm(
-    pickup.latitude,
-    pickup.longitude,
-    dropoff.latitude,
-    dropoff.longitude,
-  );
+  const dist =
+    distanceKmOverride != null && distanceKmOverride >= 0
+      ? distanceKmOverride
+      : distanceKm(
+          pickup.latitude,
+          pickup.longitude,
+          dropoff.latitude,
+          dropoff.longitude,
+        );
 
   const r = calculateRouteFare({
     pickupZone: pickupTown.zoneID,

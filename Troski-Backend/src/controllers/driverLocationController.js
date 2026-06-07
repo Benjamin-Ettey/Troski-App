@@ -14,6 +14,8 @@ const Booking = require("../models/bookings");
 const { isInGhana } = require("../utils/geo");
 const { computeFare } = require("../utils/fareService");
 const { refundEscrow } = require("../utils/walletService");
+const { getRoute } = require("../utils/googleMaps");
+const { checkAutoEnd } = require("../utils/autoEnd");
 const { emit } = require("../socket/emit");
 
 // ============================================================
@@ -77,6 +79,19 @@ const goOnline = async (req, res) => {
     });
   }
 
+  // Fetch + cache the driving route (start → destination) so per-passenger
+  // enroute matching needs no further API calls. Falls back to null (then
+  // straight-line matching) if Directions is unavailable.
+  let route = null;
+  try {
+    route = await getRoute(
+      { latitude, longitude },
+      { latitude: destination.latitude, longitude: destination.longitude },
+    );
+  } catch (err) {
+    console.error("getRoute failed at go-online", err);
+  }
+
   const trip = await Trip.create({
     driver: driver._id,
     vehicle: driver.vehicle._id,
@@ -87,9 +102,12 @@ const goOnline = async (req, res) => {
     },
     pickupZone: fare.pickupZone,
     dropoffZone: fare.dropoffZone,
-    farePerPassenger: fare.fare,
+    farePerPassenger: fare.fare, // display hint: full-route fare
     driverPayPerPassenger: fare.driverPay,
     platformProfitPerPassenger: fare.platformProfit,
+    routePolyline: route?.encodedPolyline || null,
+    routeDistanceKm: route?.distanceKm || null,
+    routeDurationMinutes: route?.durationMinutes || null,
     capacity: driver.vehicle.vehicleCapacity || 14,
     activeBookingCount: 0,
     walkOnCount: 0,
@@ -262,6 +280,12 @@ const updateLocation = async (req, res) => {
       speed: speed ?? null,
     });
   }
+
+  // Auto-end check: settle any onboard booking whose drop-off we just
+  // reached, and close out the trip if everyone's home.
+  checkAutoEnd(driver._id, { latitude, longitude }).catch((err) =>
+    console.error("autoEnd check failed", err),
+  );
 
   res.status(StatusCodes.OK).json({ msg: "Location updated", location });
 };

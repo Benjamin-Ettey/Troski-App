@@ -83,10 +83,11 @@ router.post(
   uploadPhoto,
 );
 
+// Optional profile fields (DOB, gender, emergency contact). JSON only —
+// the profile photo lives on /upload-photo.
 router.patch(
   "/complete-profile",
   authenticateUser,
-  upload.single("profilePhoto"),
   validateCompleteProfileInput,
   completeProfile,
 );

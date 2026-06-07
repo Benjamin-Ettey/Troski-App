@@ -29,10 +29,22 @@ const validateIdParam = withValidationErrors([
   }),
 ]);
 
-// Sign-up step 1: name + phone + email + pin.
-// Profile photo and date of birth are collected later at /complete-profile.
+// Sign-up: name + username + phone + email + pin + gender + dateOfBirth.
+// Profile photo is still its own REQUIRED step at /auth/upload-photo.
+// Optional extras (emergencyContact) live at /auth/complete-profile.
 const validateUserSignUpInput = withValidationErrors([
   body("name").trim().notEmpty().withMessage("name is required"),
+  body("username")
+    .trim()
+    .toLowerCase()
+    .notEmpty()
+    .withMessage("username is required")
+    .isLength({ min: 3, max: 30 })
+    .withMessage("username must be 3-30 characters")
+    .matches(/^[a-z0-9._]+$/)
+    .withMessage(
+      "username can only contain lowercase letters, numbers, dots, and underscores",
+    ),
   body("phoneNumber")
     .trim()
     .notEmpty()
@@ -53,6 +65,27 @@ const validateUserSignUpInput = withValidationErrors([
     .withMessage("PIN Code should contain only numbers")
     .isLength({ min: 6, max: 6 })
     .withMessage("PIN code must be 6 digits"),
+  body("gender")
+    .trim()
+    .toLowerCase()
+    .notEmpty()
+    .withMessage("gender is required")
+    .isIn(["male", "female", "other"])
+    .withMessage("gender must be one of: male, female, other"),
+  body("dateOfBirth")
+    .notEmpty()
+    .withMessage("date of birth is required")
+    .isISO8601()
+    .withMessage("dateOfBirth must be a valid ISO date")
+    .custom((v) => {
+      const d = new Date(v);
+      const eighteenYearsAgo = new Date();
+      eighteenYearsAgo.setFullYear(eighteenYearsAgo.getFullYear() - 18);
+      if (d > eighteenYearsAgo) {
+        throw new Error("You must be at least 18 years old");
+      }
+      return true;
+    }),
 ]);
 
 // Legacy alias (router still imports this name)
@@ -125,9 +158,10 @@ const validateVerifyOtpInput = withValidationErrors([
     .withMessage("OTP code must be 6 digits"),
 ]);
 
-// Complete-profile collects profilePhoto (multipart file, validated in the
-// controller) and dateOfBirth. Both are optional individually but at least
-// one should normally be provided; we don't enforce that strictly here.
+// Complete-profile takes JSON body with optional dateOfBirth / gender /
+// emergencyContact. All optional; the user can submit any subset.
+// (The profile photo has its own dedicated endpoint at /auth/upload-photo
+// and is NOT accepted here.)
 const validateCompleteProfileInput = withValidationErrors([
   body("dateOfBirth")
     .optional({ checkFalsy: true })
@@ -139,6 +173,30 @@ const validateCompleteProfileInput = withValidationErrors([
       eighteenYearsAgo.setFullYear(eighteenYearsAgo.getFullYear() - 18);
       if (d > eighteenYearsAgo) {
         throw new Error("You must be at least 18 years old");
+      }
+      return true;
+    }),
+  body("gender")
+    .optional({ checkFalsy: true })
+    .isIn(["male", "female", "other", "prefer_not_to_say"])
+    .withMessage(
+      "gender must be one of: male, female, other, prefer_not_to_say",
+    ),
+  body("emergencyContact")
+    .optional()
+    .isObject()
+    .withMessage("emergencyContact must be an object")
+    .custom((v) => {
+      if (!v) return true;
+      if (!v.name || typeof v.name !== "string" || !v.name.trim()) {
+        throw new Error("emergencyContact.name is required when set");
+      }
+      if (
+        !v.phoneNumber ||
+        typeof v.phoneNumber !== "string" ||
+        !v.phoneNumber.trim()
+      ) {
+        throw new Error("emergencyContact.phoneNumber is required when set");
       }
       return true;
     }),

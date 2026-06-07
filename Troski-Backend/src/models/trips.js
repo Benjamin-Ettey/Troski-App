@@ -46,6 +46,14 @@ const tripSchema = new mongoose.Schema(
     // The driver's destination. In the new model this is set at /go-online.
     dropoffLocation: { type: locationSchema, required: true },
 
+    // Cached Google Directions route (start → destination), fetched once at
+    // /go-online. Used for enroute matching + per-passenger fare distance
+    // without further API calls. Null if Directions was unavailable (we
+    // then fall back to the straight-line heuristic).
+    routePolyline: { type: String, default: null },
+    routeDistanceKm: { type: Number, default: null },
+    routeDurationMinutes: { type: Number, default: null },
+
     // ----- Who -----
     driver: {
       type: mongoose.Schema.Types.ObjectId,

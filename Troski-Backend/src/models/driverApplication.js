@@ -63,6 +63,25 @@ driverApplicationSchema.index(
   { unique: true, partialFilterExpression: { status: { $in: ["pending", "approved"] } } },
 );
 
+// No two ACTIVE applications can share a licenseID or ghanaCardNumber.
+// Rejected applications are exempt so a (different) rejected applicant
+// could resubmit later if their docs were the same person, but this catches
+// two different people trying to claim the same identity.
+driverApplicationSchema.index(
+  { licenseID: 1 },
+  {
+    unique: true,
+    partialFilterExpression: { status: { $in: ["pending", "approved"] } },
+  },
+);
+driverApplicationSchema.index(
+  { ghanaCardNumber: 1 },
+  {
+    unique: true,
+    partialFilterExpression: { status: { $in: ["pending", "approved"] } },
+  },
+);
+
 const DriverApplication = mongoose.model(
   "DriverApplication",
   driverApplicationSchema,
