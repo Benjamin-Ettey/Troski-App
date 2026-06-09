@@ -7,7 +7,6 @@ const {
   userSignUp,
   verifySignUpOTP,
   uploadPhoto,
-  completeProfile,
   verifyPin,
   forgotPinStart,
   forgotPinReset,
@@ -29,7 +28,6 @@ const {
   validateUserSignUpInput,
   validateLoginInput,
   validateVerifyOtpInput,
-  validateCompleteProfileInput,
   validatePinInput,
   validateAdminInviteInput,
   validateAdminRegisterInput,
@@ -85,14 +83,6 @@ router.post(
   uploadPhoto,
 );
 
-// Optional profile fields (DOB, gender, emergency contact). JSON only —
-// the profile photo lives on /upload-photo.
-router.patch(
-  "/complete-profile",
-  authenticateUser,
-  validateCompleteProfileInput,
-  completeProfile,
-);
 router.post("/verify-pin", authenticateUser, validatePinInput, verifyPin);
 
 // Forgot PIN — unauthenticated. Both endpoints rate-limited tighter than

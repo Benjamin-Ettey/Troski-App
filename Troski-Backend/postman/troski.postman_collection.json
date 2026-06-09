@@ -63,19 +63,6 @@
           }
         },
         {
-          "name": "Complete Profile (optional: DOB, gender, emergency contact)",
-          "request": {
-            "method": "PATCH",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "url": "{{baseUrl}}/api/v1/auth/complete-profile",
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"dateOfBirth\": \"2000-01-15\",\n  \"gender\": \"female\",\n  \"emergencyContact\": {\n    \"name\": \"Yaa Mensah\",\n    \"phoneNumber\": \"0244000099\"\n  }\n}"
-            },
-            "description": "JSON only — no photo. All three fields are optional; send any subset. gender ∈ {male, female, other, prefer_not_to_say}. dateOfBirth must be 18+. Profile photo is handled exclusively by /auth/upload-photo."
-          }
-        },
-        {
           "name": "Verify PIN (in-app sensitive-action gate)",
           "request": {
             "method": "POST",

@@ -36,8 +36,6 @@ const userSchema = new mongoose.Schema(
     phoneNumber: { type: String, unique: true, required: true },
     email: { type: String, required: true },
     pinCode: { type: String, default: null },
-
-    // Required at sign-up now.
     dateOfBirth: { type: Date, required: true },
     gender: {
       type: String,
@@ -51,19 +49,9 @@ const userSchema = new mongoose.Schema(
       enum: ["passenger", "driver"],
       default: ["passenger"],
     },
-
-    // ----- Profile photo (set by REQUIRED /auth/upload-photo onboarding) -----
+    
     profilePhoto: { type: String, default: null },
     profilePhotoPublicId: { type: String, default: null },
-
-    // ----- Optional extras (set at /complete-profile or later) -----
-    // For SOS / safety. App will offer to call/SMS this contact in an
-    // emergency. Both fields optional, but if either is set the other
-    // should be too.
-    emergencyContact: {
-      name: { type: String, default: null },
-      phoneNumber: { type: String, default: null },
-    },
 
     // ----- Verification flags -----
     isPhoneVerified: { type: Boolean, default: false },
@@ -126,11 +114,19 @@ userSchema.methods.hasRole = function (role) {
   return Array.isArray(this.roles) && this.roles.includes(role);
 };
 
+// Strip all sensitive / internal-only fields before returning the user
+// over the wire. Anything stored for security plumbing (PIN, OTPs,
+// pending change requests) is hidden — only safe, displayable fields
+// reach the client.
 userSchema.methods.toJSON = function () {
   const obj = this.toObject();
   delete obj.pinCode;
   delete obj.otpCode;
   delete obj.otpExpiresAt;
+  delete obj.pendingEmail;
+  delete obj.pendingPhoneNumber;
+  delete obj.pinResetOtp;
+  delete obj.__v;
   return obj;
 };
 

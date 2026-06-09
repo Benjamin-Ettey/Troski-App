@@ -6,6 +6,18 @@ const formatPhoneNumber = (phoneNumber) => {
   return phoneNumber;
 };
 
+// Canonicalize a Ghana phone number to LOCAL format "0XXXXXXXXX" for
+// storage in the DB. Accepts "+233...", "233...", "0..." with optional
+// spaces/dashes/parens. Stored format is always 10 digits starting with 0
+// so duplicate-detection works regardless of how the user typed it.
+const normalizePhoneNumber = (input) => {
+  if (!input) return input;
+  let p = String(input).replace(/[\s\-()]/g, "");
+  if (p.startsWith("+233")) p = "0" + p.slice(4);
+  else if (p.startsWith("233")) p = "0" + p.slice(3);
+  return p;
+};
+
 const ghanaCapitalCities = {
   GreaterAccra: "Accra",
   Ashanti: "Kumasi",
@@ -4417,6 +4429,7 @@ const ghanaTownCoordinatesData = [
 
 module.exports = {
   formatPhoneNumber,
+  normalizePhoneNumber,
   ghanaCapitalCities,
   ghanaLocations,
   ghanaTownCoordinatesData,
