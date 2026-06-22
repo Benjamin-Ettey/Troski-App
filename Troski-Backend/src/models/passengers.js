@@ -34,7 +34,13 @@ const userSchema = new mongoose.Schema(
     },
 
     phoneNumber: { type: String, unique: true, required: true },
-    email: { type: String, required: true, unique: true },
+    email: {
+      type: String,
+      required: true,
+      unique: true,
+      lowercase: true,
+      trim: true,
+    },
     pinCode: { type: String, default: null },
     dateOfBirth: { type: Date, required: true },
     gender: {

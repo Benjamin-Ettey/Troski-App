@@ -72,6 +72,18 @@ const userSignUp = async (req, res) => {
     });
   }
 
+  // Email uniqueness check — same rule: allow same unverified user to
+  // re-use their own email, block anyone else.
+  const emailTaken = await Passenger.findOne({
+    email,
+    phoneNumber: { $ne: phoneNumber },
+  }).select("_id");
+  if (emailTaken) {
+    return res.status(StatusCodes.BAD_REQUEST).json({
+      msg: "That email is already in use. Please use a different one.",
+    });
+  }
+
   let user;
   if (existing) {
     existing.name = name;
