@@ -1,14 +1,23 @@
 const jwt = require("jsonwebtoken");
 
-const createJWT = ({ payload }) => {
-  return jwt.sign(payload, process.env.JWT_SECRET);
+const ACCESS_TOKEN_EXPIRY = "15m";
+const REFRESH_TOKEN_EXPIRY = "30d";
+
+const createJWT = ({ payload, expiresIn }) => {
+  return jwt.sign(payload, process.env.JWT_SECRET, { expiresIn });
 };
 
 const isTokenValid = (token) => jwt.verify(token, process.env.JWT_SECRET);
 
 const attachPassengerCookiesToResponse = ({ res, passenger, refreshToken }) => {
-  const accessTokenJWT = createJWT({ payload: { passenger } });
-  const refreshTokenJWT = createJWT({ payload: { passenger, refreshToken } });
+  const accessTokenJWT = createJWT({
+    payload: { passenger },
+    expiresIn: ACCESS_TOKEN_EXPIRY,
+  });
+  const refreshTokenJWT = createJWT({
+    payload: { passenger, refreshToken },
+    expiresIn: REFRESH_TOKEN_EXPIRY,
+  });
 
   const fifteenMins = 1000 * 60 * 15;
   const longerExp = 1000 * 60 * 60 * 24 * 30;
@@ -29,8 +38,14 @@ const attachPassengerCookiesToResponse = ({ res, passenger, refreshToken }) => {
 };
 
 const attachDriverCookiesToResponse = ({ res, driver, refreshToken }) => {
-  const accessTokenJWT = createJWT({ payload: { driver } });
-  const refreshTokenJWT = createJWT({ payload: { driver, refreshToken } });
+  const accessTokenJWT = createJWT({
+    payload: { driver },
+    expiresIn: ACCESS_TOKEN_EXPIRY,
+  });
+  const refreshTokenJWT = createJWT({
+    payload: { driver, refreshToken },
+    expiresIn: REFRESH_TOKEN_EXPIRY,
+  });
 
   const fifteenMins = 1000 * 60 * 15;
   const longerExp = 1000 * 60 * 60 * 24 * 30;
@@ -51,8 +66,14 @@ const attachDriverCookiesToResponse = ({ res, driver, refreshToken }) => {
 };
 
 const attachAdminCookiesToResponse = ({ res, admin, refreshToken }) => {
-  const accessTokenJWT = createJWT({ payload: { admin } });
-  const refreshTokenJWT = createJWT({ payload: { admin, refreshToken } });
+  const accessTokenJWT = createJWT({
+    payload: { admin },
+    expiresIn: ACCESS_TOKEN_EXPIRY,
+  });
+  const refreshTokenJWT = createJWT({
+    payload: { admin, refreshToken },
+    expiresIn: REFRESH_TOKEN_EXPIRY,
+  });
 
   const fifteenMins = 1000 * 60 * 15;
   const longerExp = 1000 * 60 * 60 * 24 * 30;
