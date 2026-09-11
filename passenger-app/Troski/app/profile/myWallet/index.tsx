@@ -66,60 +66,60 @@ const Index = () => {
 
     return (
         <View style={{backgroundColor: colorScheme === "dark"? "#000000" : "#F5F7FA", flex: 1}} className="w-full">
-            <View style={{height: "30%", marginBottom: 16 }} className="w-full flex flex-col justify-center items-center">
-                <View style={{ marginBottom: 10, paddingHorizontal: 10, paddingVertical: 5}} className="rounded-full bg-secondaryBlack flex flex-row justify-center items-center">
-                    <Ionicons style={{marginRight: 8}} name="wallet-outline" size={16} color="white"/>
-                    <Text style={{fontSize: 16}}  className=" font-GoogleSansMedium  text-general text-center flex-shrink ">Total Balance</Text>
+            <View
+                className="w-full mb-3 flex flex-col justify-center items-center">
+                <View
+                      className="rounded-full mb-3 px-3 py-2 bg-secondaryBlack flex flex-row justify-center items-center">
+                    <Ionicons className="mr-2" name="wallet-outline" size={16} color="white"/>
+                    <Text
+                        className="text-base leading-5 font-GoogleSansMedium  text-general text-center flex-shrink ">Total Balance</Text>
                 </View>
 
                 <Text
-                    style={{fontSize: 40, marginBottom: 30}}
-                    className=" font-GoogleSansMedium text-center flex-shrink dark:text-general">GH₵10.50
+                    className="font-GoogleSansMedium text-5xl leading-loose text-center flex-shrink dark:text-general">GH₵10.50
                 </Text>
                 <View
-                    style={{gap: 48}}
-                    className="w-full flex flex-row justify-center items-center">
+                    className="w-full flex gap-14 mb-8 flex-row justify-center items-center">
                     <View>
                         <TouchableOpacity
                             onPress={()=>router.push("/profile/myWallet/deposit")}
-                            className="rounded-full bg-primary flex justify-center items-center"
-                            style={{width: 60, height: 60, marginBottom: 10}}>
+                            className="rounded-full bg-primary h-16 w-16 mb-2 flex justify-center items-center"
+                            >
                             <Ionicons name="add-circle-outline" size={32}/>
                         </TouchableOpacity>
-                        <Text className="font-GoogleSansMedium text-center flex-shrink dark:text-tertiaryGray">Deposit</Text>
+                        <Text className="font-GoogleSansMedium text-base leading-5 text-center flex-shrink dark:text-tertiaryGray">Deposit</Text>
                     </View>
                     <View>
                         <TouchableOpacity
                             onPress={()=>router.push("/profile/myWallet/withdraw")}
-
-                            className="rounded-full bg-primary flex justify-center items-center"
-                            style={{width: 60, height: 60, marginBottom: 10}}>
+                            className="rounded-full bg-primary h-16 w-16 mb-2 flex justify-center items-center"
+                            >
                             <Ionicons name="cash-outline" size={32}/>
                         </TouchableOpacity>
-                        <Text className="font-GoogleSansMedium text-center flex-shrink dark:text-tertiaryGray">Withdraw</Text>
+                        <Text className="font-GoogleSansMedium text-base leading-5 text-center flex-shrink dark:text-tertiaryGray">Withdraw</Text>
 
                     </View>
                 </View>
             </View>
 
 
-            <View style={{paddingLeft: 20}} className="w-full flex flex-row items-center">
-                <Text style={{fontSize: 16, paddingRight: 20}} className="font-GoogleSansMedium dark:text-general">Transaction History</Text>
+            <View style={{paddingLeft: 20}} className="w-full flex flex-row justify-between flex-row items-center">
+                <Text className="font-GoogleSansMedium text-lg leading-5 dark:text-general">Transaction History</Text>
                 <View style={{height: 1, width: "50%"}} className="bg-tertiaryGray dark:bg-secondaryGray"/>
             </View>
 
-            <View style={{flex: 1}} className="w-full items-center">
+            <View className="w-full items-center flex-1">
                 {showRideHistory?
-                    <View style={{flex: 1}} className="w-full flex justify-center items-center">
-                        <Ionicons style={{marginBottom: 10}} name="list-outline" size={100} color="gray"/>
-                        <Text className="font-GoogleSansMedium dark:text-general">No Transaction History</Text>
-                        <Text style={{marginBottom: 16}} className="font-GoogleSansRegular text-center flex-shrink dark:text-tertiaryGray">Your transaction history will appear here.</Text>
+                    <View className="w-full flex flex-1 justify-center items-center">
+                        <Ionicons className="mb-3" name="list-outline" size={100} color="gray"/>
+                        <Text className="font-GoogleSansMedium text-xl leading-6 tracking-tighter dark:text-general">No Transaction History</Text>
+                        <Text style={{marginBottom: 16}} className="font-GoogleSansRegular text-sm leading-4 text-center flex-shrink dark:text-tertiaryGray">Your transaction history will appear here.</Text>
 
 
                     </View>
                     :
                     <View style={{paddingLeft: 16}} className="w-full flex items-center">
-                        <View style={{borderRadius: 32, marginTop: 4}} >
+                        <View className="mt-2" >
                             <SectionList
                                 contentContainerStyle={{paddingBottom: 100}}
                                 sections={DATA}
@@ -127,8 +127,8 @@ const Index = () => {
 
                                 renderSectionHeader={({section})=>{
                                     return(
-                                        <View style={{paddingHorizontal: 16, marginTop: 24}}>
-                                            <Text className="font-GoogleSansMedium text-xl dark:text-general">{section.date}</Text>
+                                        <View >
+                                            <Text className="font-GoogleSansMedium mt-8 text-xl leading-6 dark:text-general">{section.date}</Text>
                                         </View>
                                     )
                                 }}
@@ -138,8 +138,7 @@ const Index = () => {
 
                                         <>
                                             <View
-                                                style={{height: 72, borderRadius: 24, paddingLeft: 20, paddingRight: 20,}}
-                                                className="w-full  flex flex-row justify-between items-center">
+                                                className="w-full px-5 h-20 flex flex-row justify-between items-center">
                                                 <View>
                                                     <Ionicons name="receipt-outline" size={32} color={colorScheme === "dark"? "#ffffff":"black"}/>
 
@@ -147,32 +146,29 @@ const Index = () => {
 
 
                                                 <View
-                                                    style={{width: "50%", gap: 2, }}
-                                                    className="flex  flex-col justify-center items-center ">
-                                                    <View className="flex flex-row justify-start items-center w-full gap-2">
-                                                        <Text className="text-xl font-GoogleSansRegular dark:text-general">
+                                                    className="flex gap-1 w-48 flex-col justify-center items-center ">
+                                                    <View className="flex w-full flex-row justify-start items-center gap-2">
+                                                        <Text numberOfLines={1} className="text-xl max-w-24 leading-5 font-GoogleSansRegular dark:text-general">
                                                             {item.from}
                                                         </Text>
 
                                                         <Ionicons name="arrow-forward" size={12} color= {colorScheme === "dark"? "#e4e4e4":"black"}/>
 
-                                                        <Text className="text-xl font-GoogleSansRegular dark:text-general">
+                                                        <Text numberOfLines={1} className="text-xl max-w-24 leading-5 font-GoogleSansRegular dark:text-general">
                                                             {item.to}
                                                         </Text>
                                                     </View>
 
-                                                    <View className="w-full flex flex-row gap-2 items-center ">
+                                                    <View className="flex w-full flex-row gap-2 justify-start items-center ">
                                                         <Text
-                                                            style={{paddingHorizontal: 4, fontSize: 12}}
-                                                            className=" text-secondaryBlack font-GoogleSansRegular dark:text-tertiaryWhite rounded-full">{item.date}</Text>
+                                                            className=" text-secondaryBlack text-sm leading-4 font-GoogleSansRegular dark:text-tertiaryWhite rounded-full">{item.date}</Text>
 
 
                                                     </View>
                                                 </View>
 
                                                 <View
-                                                    style={{width: 84, height: 32, paddingHorizontal: 2}}
-                                                    className="rounded-full bg-primary flex justify-center items-center">
+                                                    className="rounded-full px-3 h-9 bg-primary flex justify-center items-center">
                                                     <Text numberOfLines={1} className="font-GoogleSansBold text-sm">{item.price}</Text>
                                                 </View>
 
@@ -188,11 +184,11 @@ const Index = () => {
                                 }}/>
                         </View>
 
-                        <View style={{ bottom: 0, height: "15%"}} className="absolute w-full flex justify-center items-center">
+                        <View className="absolute bottom-0 h-32 w-full flex justify-center items-center">
                             <TouchableOpacity onPress={handleClearRideHistory}
-                                style={{paddingHorizontal: 12, paddingVertical: 12, backgroundColor: "#ff0000"}}
-                                className=" rounded-full flex justify-center items-center">
-                                <Text style={{color: "white"}} className="font-GoogleSansMedium">Clear Ride History</Text>
+                                style={{ backgroundColor: "#ff0000"}}
+                                className=" rounded-full flex h-12 px-4 justify-center items-center">
+                                <Text className="font-GoogleSansMedium text-base leading-5 text-general">Clear Ride History</Text>
                             </TouchableOpacity>
                         </View>
 

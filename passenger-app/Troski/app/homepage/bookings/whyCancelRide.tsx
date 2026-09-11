@@ -30,13 +30,13 @@ const WhyCancelRide = () => {
             <SafeAreaView>
                 <Modal visible>
 
-                    <View style={{backgroundColor: colorScheme === "dark"? "#000000" : "#F5F7FA"}} className="flex-1 flex ">
+                    <View style={{backgroundColor: colorScheme === "dark"? "#000000" : "#ffffff"}} className="flex-1 flex ">
                         <View style={{ marginTop: "15%", padding: 16 }} className="w-full">
                             <Text className="text-xl tracking-tight font-GoogleSansMedium dark:text-general">
                                 Why did you cancel ride?
                             </Text>
 
-                            <Text className="mt-2 text-gray-500 font-GoogleSansRegular dark:text-tertiaryGray">
+                            <Text className="mt-2 text-secondaryGray font-GoogleSansRegular dark:text-tertiaryGray">
                                 Select a reason to help us improve your experience.
                             </Text>
                         </View>

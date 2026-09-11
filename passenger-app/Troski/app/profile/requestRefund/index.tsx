@@ -54,21 +54,18 @@ const RequestRefund = () => {
                     <View className="items-center gap-4 justify-center">
                         <View
                             style={{
-                                width: 80,
-                                height: 80,
-                                borderRadius: 40,
                                 backgroundColor: "#22C55E20",
                             }}
-                            className="items-center justify-center"
+                            className="items-center justify-center w-20 h-20 rounded-full"
                         >
                             <Ionicons name="checkmark-circle" size={48} color="#22C55E" />
                         </View>
 
-                        <Text className="font-GoogleSansMedium text-xl text-center dark:text-general">
+                        <Text className="font-GoogleSansMedium text-xl leading-6 text-center dark:text-general">
                             Refund request submitted
                         </Text>
 
-                        <Text className="font-GoogleSansRegular text-center text-gray-600 text-sm dark:text-tertiaryGray">
+                        <Text className="font-GoogleSansRegular text-center text-gray-600 text-sm leading-4 dark:text-tertiaryGray">
                             Our support team will review your request and respond within 24-48 hours
                         </Text>
                     </View>
@@ -105,15 +102,14 @@ const RequestRefund = () => {
                             numberOfLines={5}
                             maxLength={500}
                             style={{
-                                paddingHorizontal: 14,
-                                paddingVertical: 12,
+
                                 textAlignVertical: "top",
                             }}
-                            className="bg-general dark:bg-secondaryBlack dark:text-general border border-gray-200 rounded-xl font-GoogleSansRegular text-sm"
+                            className="bg-general px-5 py-4 dark:bg-secondaryBlack dark:text-general border border-gray-200 rounded-xl font-GoogleSansRegular text-sm"
                         />
 
                         <View className="flex flex-row justify-between items-center mt-2">
-                            <Text className="text-xs text-secondaryGray font-GoogleSansRegular">
+                            <Text className="text-xs leading-4 text-secondaryGray font-GoogleSansRegular">
                                 {description.length}/500 characters
                             </Text>
                         </View>
@@ -130,14 +126,12 @@ const RequestRefund = () => {
 
                         <View className="flex-1 flex justify-start items-start flex-col">
                             <Text
-                                className="font-GoogleSansMedium flex-1 flex-shrink dark:text-tertiaryWhite"
-                                style={{ lineHeight: 18 }}
+                                className="font-GoogleSansMedium mb-1 text-base leading-5 flex-1 flex-shrink dark:text-tertiaryWhite"
                             >
                                 Refund Notice
                             </Text>
                             <Text
-                                className="font-GoogleSansRegular text-xs text-secondaryGray flex-1 dark:text-tertiaryGray"
-                                style={{ lineHeight: 18 }}
+                                className="font-GoogleSansRegular text-xs leading-4 text-secondaryGray flex-1 dark:text-tertiaryGray"
                             >
                                 Refund requests are reviewed within 24-48 hours. Once approved, the
                                 amount will be credited to your wallet.
@@ -148,7 +142,6 @@ const RequestRefund = () => {
 
                     <View
                         className="flex justify-center items-center px-6 py-4 "
-                        style={{ elevation: 10 }}
                     >
                         {isDisabled ? (
                             <DisabledPrimaryButton name="Submit refund request" />

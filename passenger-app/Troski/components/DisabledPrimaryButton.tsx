@@ -5,9 +5,8 @@ const DisabledPrimaryButton = ({name}: any) => {
     return (
         <TouchableOpacity
             disabled={true}
-            style={{opacity: 0.3}}
-            className=" w-[80%] bg-primary py-4 flex justify-center rounded-full items-center">
-            <Text className="text-secondaryBlack font-GoogleSansBold text-[16px]">{name}</Text>
+            className="w-[80%] bg-primary h-14 flex justify-center rounded-full items-center opacity-30">
+            <Text className="text-secondaryBlack font-GoogleSansBold text-base leading-5">{name}</Text>
         </TouchableOpacity>
     )
 }

@@ -34,9 +34,12 @@ const Notifications = () => {
     return (
         <View style={{backgroundColor: colorScheme === "dark"? "#000000" : "#F5F7FA"}} className="flex-1">
             <ScrollView>
-                <View style={{paddingHorizontal: 16, marginBottom: 20}} className="w-full py-2">
-                    <Text style={{fontSize: 16, paddingLeft: 10, marginBottom: 5}} className="font-GoogleSansRegular dark:text-general">Ride Notifications</Text>
-                    <View style={{borderRadius: 24, height: 48, paddingLeft: 24, backgroundColor: colorScheme === "dark"? "#0a0a0a":"#ffffff"}} className="flex flex-row justify-center items-center">
+                <View className="w-full mb-6 px-5">
+                    <Text
+                        className="font-GoogleSansRegular text-base pl-4 leading-5 mb-1 text-secondaryBlack dark:text-general">Ride Notifications</Text>
+                    <View
+                        style={{backgroundColor: colorScheme === "dark"? "#0a0a0a":"#ffffff"}}
+                        className="flex justify-center items-center h-14 rounded-full px-5">
                         <TouchableOpacity
                             className="w-full flex flex-row justify-between items-center">
                             <Text className="font-GoogleSansMedium text-secondaryGray dark:text-tertiaryWhite">Ride Update Notifications</Text>
@@ -44,21 +47,21 @@ const Notifications = () => {
                                 value={notifications.rideUpdates}
                                 onValueChange={()=>toggleNotification("rideUpdates")}
                                 trackColor={{ false: "#d1d5db", true: "#22C55E"}}
-                                style={{marginRight: 16}}/>
+                                />
 
                         </TouchableOpacity>
 
                     </View>
                     <Text
-                        style={{paddingLeft: 10, marginTop: 5}}
-                        className="text-xs font-GoogleSansRegular dark:text-tertiaryGray"
+                        className="text-xs leading-4 pl-4 mt-2 font-GoogleSansRegular text-secondaryGray  dark:text-tertiaryGray"
                     >Receive ride status updates and important trip notifications.</Text>
                 </View>
 
 
-                <View style={{paddingHorizontal: 16, marginBottom: 20}} className="w-full">
-                    <Text style={{fontSize: 16, paddingLeft: 10, marginBottom: 5}} className="font-GoogleSansRegular dark:text-general">Payment Notifications</Text>
-                    <View style={{borderRadius: 24, height: 48, paddingLeft: 24, backgroundColor: colorScheme === "dark"? "#0a0a0a":"#ffffff"}} className="flex flex-row justify-center items-center">
+                <View className="w-full mb-6 px-5">
+                    <Text className="font-GoogleSansRegular text-base pl-4 leading-5 mb-1 text-secondaryBlack dark:text-general">Payment Notifications</Text>
+                    <View style={{backgroundColor: colorScheme === "dark"? "#0a0a0a":"#ffffff"}}
+                          className="flex flex-row rounded-full px-5 justify-center h-14 items-center">
                         <TouchableOpacity
                             style={{ flex:1}}
                             className="w-full flex flex-row justify-between items-center">
@@ -67,49 +70,52 @@ const Notifications = () => {
                                 value={notifications.paymentNotifications}
                                 onValueChange={()=>toggleNotification("paymentNotifications")}
                                 trackColor={{ false: "#d1d5db", true: "#22C55E"}}
-                                style={{marginRight: 16}}/>
+                                />
                         </TouchableOpacity>
                     </View>
                     <Text
-                        style={{paddingLeft: 10, marginTop: 5}}
-                        className="text-xs font-GoogleSansRegular dark:text-tertiaryGray">Receive notifications for payments, deposits, and withdrawals.
+                        className="text-xs leading-4 pl-4 mt-2 font-GoogleSansRegular text-secondaryGray  dark:text-tertiaryGray"
+                    >Receive notifications for payments, deposits, and withdrawals.
                     </Text>
                 </View>
 
-                <View style={{paddingHorizontal: 16, marginBottom: 20}} className="w-full">
-                    <Text style={{fontSize: 16, paddingLeft: 10, marginBottom: 5}} className="font-GoogleSansRegular dark:text-general">Promotions & Announcements</Text>
-                    <View style={{borderRadius: 24, height: 48, paddingLeft: 24, backgroundColor: colorScheme === "dark"? "#0a0a0a":"#ffffff"}} className="flex flex-row justify-center items-center">
+                <View className="w-full mb-6 px-5">
+                    <Text
+                        className="font-GoogleSansRegular text-base pl-4 leading-5 mb-1 text-secondaryBlack dark:text-general">Promotions & Announcements</Text>
+                    <View style={{ backgroundColor: colorScheme === "dark"? "#0a0a0a":"#ffffff"}}
+                          className="flex flex-row rounded-full px-5 h-14 justify-center items-center">
                         <TouchableOpacity
-                            style={{ flex:1}}
-                            className="w-full flex flex-row justify-between items-center">
+                            className="w-full flex-1 flex flex-row justify-between items-center">
                             <Text className="font-GoogleSansMedium text-secondaryGray dark:text-tertiaryWhite">Announcements</Text>
                             <Switch
                                 value={notifications.announcements}
                                 onValueChange={()=>toggleNotification("announcements")}
                                 trackColor={{ false: "#d1d5db", true: "#22C55E"}}
-                                style={{marginRight: 16}}/>
+                                />
                         </TouchableOpacity>
                     </View>
                     <Text
-                        style={{paddingLeft: 10, marginTop: 5}}
-                        className="text-xs font-GoogleSansRegular dark:text-tertiaryGray">Receive updates on offers, promotions, and important announcements.
+                        className="text-xs leading-4 pl-4 mt-2 font-GoogleSansRegular text-secondaryGray  dark:text-tertiaryGray"
+                    >Receive updates on offers, promotions, and important announcements.
                     </Text>
                 </View>
 
-                <View style={{paddingHorizontal: 16, marginBottom: 20}} className="w-full">
-                    <Text style={{fontSize: 16, paddingLeft: 10, marginBottom: 5}} className="font-GoogleSansRegular dark:text-general">Reset Notifications</Text>
-                    <View style={{borderRadius: 24, height: 48, paddingLeft: 24, backgroundColor: colorScheme === "dark"? "#0a0a0a":"#ffffff"}} className="flex justify-center items-center">
-                        <TouchableOpacity style={{ flex:1, }}
+                <View className="w-full mb-6 px-5">
+                    <Text className="font-GoogleSansRegular text-base pl-4 leading-5 mb-1 text-secondaryBlack dark:text-general">Reset Notifications</Text>
+                    <View style={{backgroundColor: colorScheme === "dark"? "#0a0a0a":"#ffffff"}}
+                          className="flex h-14 px-5 rounded-full justify-center items-center">
+                        <TouchableOpacity
                                           onPress={handleResetNotification}
-                                          className="w-full flex flex-row justify-between items-center">
+                                          className="w-full flex-1 flex flex-row justify-between items-center">
                             <Text style={{color: "#ff0000"}} className="font-GoogleSansMedium ">Reset all notifications</Text>
-                            <Ionicons style={{paddingRight: 16}} name="trash-bin-outline" size={18} color="#ff0000"/>
+                            <Ionicons name="trash-bin-outline" size={18} color="#ff0000"/>
                         </TouchableOpacity>
                     </View>
 
                     <Text
-                        style={{paddingLeft: 10, marginTop: 5, color: "#ff0000"}}
-                        className="text-xs font-GoogleSansRegular">Reset all notification settings to default values.</Text>
+                        style={{ color: "#ff0000"}}
+                        className="text-xs leading-4 pl-4 mt-2 font-GoogleSansRegular"
+                    >Reset all notification settings to default values.</Text>
                 </View>
             </ScrollView>
         </View>

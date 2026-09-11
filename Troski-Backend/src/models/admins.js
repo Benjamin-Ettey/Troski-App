@@ -15,7 +15,27 @@ const adminSchema = new mongoose.Schema({
 
   role: {
     type: String,
+    enum: ["admin", "super_admin"],
     default: "admin",
+  },
+
+  email: {
+    type: String,
+    required: true,
+    unique: true,
+    lowercase: true,
+    trim: true,
+  },
+
+  invitedBy: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Admin",
+    default: null,
+  },
+
+  createdAt: {
+    type: Date,
+    default: Date.now,
   },
 });
 

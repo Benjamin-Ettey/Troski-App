@@ -68,7 +68,7 @@ const SelectRide = () => {
     const bottomSheetRef = useRef<BottomSheet>(null);
     const mapRef = useRef<MapView>(null);
 
-    const snapPoints = useMemo(() => ["50%", "80%"], []);
+    const snapPoints = useMemo(() => ["50%"], []);
 
     const pickupCoordsRaw = useAppStore((s) => s.pickupCoords);
     const destinationCoordsRaw = useAppStore((s) => s.destinationCoords);
@@ -234,7 +234,7 @@ const SelectRide = () => {
 
             <BottomSheet
                 ref={bottomSheetRef}
-                index={1}
+                index={0}
                 snapPoints={snapPoints}
                 enablePanDownToClose={false}
                 backgroundStyle={{
@@ -249,68 +249,69 @@ const SelectRide = () => {
                     }
                 }}
             >
-                <BottomSheetView>
-                    <View>
-                        <View style={{ paddingBottom: 16, gap: 12 }} className="w-full flex flex-col justify-center items-center">
-                            <Text className="font-GoogleSansMedium dark:text-general">Choose a ride</Text>
-                            <View style={{height: 1}} className="w-full bg-tertiaryWhite dark:bg-secondaryGray"/>
+                <BottomSheetView
+                    className="flex-1"
+                >
+                    <View className="flex-1 pb-80">
+                        <View className="w-full gap-4 pb-4 flex flex-col justify-center items-center">
+                            <Text className="font-GoogleSansMedium text-base leading-5 dark:text-general">
+                                Choose a ride
+                            </Text>
+
+                            <View
+                                style={{ height: 1 }}
+                                className="w-full bg-tertiaryWhite dark:bg-secondaryGray"
+                            />
                         </View>
-                        <SelectRideType duration={durationMinutes ? `${durationMinutes} min` : durationText} price={tripPrice} />
+
+                        <SelectRideType
+                            duration={durationMinutes ? `${durationMinutes} min` : durationText} price={tripPrice}
+                        />
+                    </View>
+
+                    <View
+                        className="absolute justify-center items-center bottom-0 left-0 right-0 px-4 pb-10"
+                    >
+                        <PrimaryButton
+                            name="Select Troski"
+                            disabled={false}
+                            onPress={() =>
+                                router.push("/homepage/bookings/numberOfPassengers")
+                            }
+                        />
                     </View>
                 </BottomSheetView>
             </BottomSheet>
 
-            <View style={{ bottom: 30 }} className="w-full absolute flex items-center justify-center">
-                <PrimaryButton name="Select Troski" disabled={false} onPress={() => router.push("/homepage/bookings/numberOfPassengers")} />
-            </View>
+
 
             <View
-                style={{
-                    position: "absolute",
-                    top: 40,
-                    left: 0,
-                    right: 0,
-                    height: 56,
-                    zIndex: 20,
-                    paddingHorizontal: 12,
-                    justifyContent: "center",
-                }}
-                className="w-full flex-row items-center"
+
+                className="w-full absolute top-12 left-0 pl-4 right-0 flex-row justify-center items-center"
             >
                 <TouchableOpacity
                     onPress={() => router.back()}
-                    className="flex justify-center items-center"
+                    className="flex justify-center items-center rounded-full p-2"
                     style={{
                         backgroundColor: colorScheme === "dark"? "black":"white",
-                        padding: 8,
-                        borderRadius: 999,
-                        elevation: 5,
-                        marginRight: 12,
+
                     }}
                 >
                     <Ionicons name="chevron-back" size={28} color={colorScheme === "dark"? "white":"black"} />
                 </TouchableOpacity>
 
-                <View style={{ flex: 1, alignItems: "center", justifyContent: "center", paddingHorizontal: 8 }} pointerEvents="none">
+                <View
+                    className="flex-1 items-center justify-center px-2"
+                    pointerEvents="none">
                     <View
-                        style={{
-                            flexDirection: "row",
-                            alignItems: "center",
-                            justifyContent: "center",
-                            width: "100%",
-                            paddingHorizontal: 10,
-                            paddingVertical: 12
-                        }}
-                        className="rounded-full bg-general dark:bg-secondaryBlack"
+                        className="rounded-full bg-general w-full h-12 flex-row justify-center items-center dark:bg-secondaryBlack"
                     >
                         <Text
                             numberOfLines={1}
+                            className="text-base leading-5 font-GoogleSansMedium max-w-24 text-right"
                             style={{
                                 color: colorScheme === "dark"? "white":"black",
-                                fontWeight: "600",
-                                fontSize: 14,
-                                maxWidth: "40%",
-                                textAlign: "right",
+
                             }}
                         >
                             {pickupPoint || "Pickup"}
@@ -320,12 +321,9 @@ const SelectRide = () => {
 
                         <Text
                             numberOfLines={1}
+                            className="text-base leading-5 font-GoogleSansMedium max-w-24 text-left"
                             style={{
                                 color: colorScheme === "dark"? "#ffcc00":"black",
-                                fontWeight: "600",
-                                fontSize: 14,
-                                maxWidth: "40%",
-                                textAlign: "left",
                             }}
                         >
                             {destinationPoint || "Destination"}

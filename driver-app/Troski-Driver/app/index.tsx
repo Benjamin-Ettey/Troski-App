@@ -1,14 +1,77 @@
-import {View, Text} from 'react-native'
-import React from 'react'
-import "../global.css"
+import { View, Text, Image } from "react-native";
+import React from "react";
+import { StatusBar } from "expo-status-bar";
+import PrimaryButton from "@/components/PrimaryButton";
+import SecondaryButton from "@/components/SecondaryButton";
+import { useRouter} from "expo-router";
 
 const Index = () => {
 
-    return (
-        <View>
-            <Text className="font-ManropeBold text-xl tracking-tighter">Edit this index.js for the driver screen based on the UI!</Text>
+    const router = useRouter();
 
+    return (
+        <View className="flex-1 bg-general">
+            <StatusBar style="light" />
+
+
+            <Image
+                source={require("../assets/images/landingImage.webp")}
+                resizeMode="cover"
+                className="w-full h-[600px]"
+
+            />
+
+            <View
+                className="absolute bottom-0 rounded-t-3xl w-full h-96 bg-general pt-8 pb-14"
+            >
+                <View className="flex-1 justify-between items-center">
+
+
+                    <View className="max-w-64 items-center">
+                        <View className="w-16 h-16 rounded-full p-2 mb-3">
+                            <Image
+                                source={require("../assets/images/favicon.png")}
+                                resizeMode="contain"
+                                style={{ width: "100%", height: "100%" }}
+                            />
+                        </View>
+
+                        <Text
+                            numberOfLines={2}
+                            adjustsFontSizeToFit
+                            minimumFontScale={0.7}
+                            className="text-secondaryBlack text-3xl leading-tight font-GoogleSansMedium text-center tracking-tight"
+                        >
+                            Troski Driver
+                        </Text>
+
+                        <Text
+                            numberOfLines={1}
+                            adjustsFontSizeToFit
+                            minimumFontScale={0.7}
+                            className="text-secondaryBlack text-base leading-tight font-GoogleSansRegular text-center "
+                        >
+                            Drive smarter, earn more.
+                        </Text>
+                    </View>
+
+
+                    <View className="w-full items-center gap-3">
+                        <PrimaryButton
+                            disabled={false}
+                            name="Register"
+                            onPress={() => router.push("/register")}
+                        />
+
+                        <SecondaryButton
+                            title="Login"
+                            onPress={() => router.push("/login")}
+                        />
+                    </View>
+                </View>
+            </View>
         </View>
-    )
-}
-export default Index
+    );
+};
+
+export default Index;

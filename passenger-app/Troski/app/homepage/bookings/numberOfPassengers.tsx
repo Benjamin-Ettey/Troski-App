@@ -69,7 +69,7 @@ const NumberOfPassengers = () => {
     const mapRef = useRef<MapView>(null);
 
     const paymentMethods = useAppStore((s) => s.paymentMethods);
-    const snapPoints = useMemo(() => ["50%", "80%"], []);
+    const snapPoints = useMemo(() => ["50%"], []);
 
     const pickupCoordsRaw = useAppStore((s) => s.pickupCoords);
     const destinationCoordsRaw = useAppStore((s) => s.destinationCoords);
@@ -297,7 +297,7 @@ const NumberOfPassengers = () => {
 
             <BottomSheet
                 ref={bottomSheetRef}
-                index={1}
+                index={0}
                 snapPoints={snapPoints}
                 enablePanDownToClose={false}
                 backgroundStyle={{
@@ -312,123 +312,100 @@ const NumberOfPassengers = () => {
                     }
                 }}
             >
-                <BottomSheetView>
+                <BottomSheetView className="pb-14">
                     <View>
-                        <View style={{ paddingBottom: 16, gap: 12 }} className="w-full flex flex-col justify-center items-center">
-                            <Text className="font-GoogleSansMedium dark:text-general">Number of passengers</Text>
+                        <View
+                              className="w-full flex flex-col gap-4 pb-4 justify-center items-center">
+                            <Text className="font-GoogleSansMedium text-base leading-5 dark:text-general">Number of passengers</Text>
                             <View style={{height: 1}} className="w-full bg-tertiaryWhite dark:bg-secondaryGray"/>
                         </View>
                         <SelectRideType duration={durationMinutes ? `${durationMinutes} min` : durationText} price={formattedPrice} />
+
+
+
+                            <View className="mt-28 flex flex-row items-center justify-between px-14 mb-24" >
+                                <TouchableOpacity
+                                    onPress={() => changePassengerCount(-1)}
+                                    disabled={passengerCount <= 1 || isProcessingPassengers}
+                                    style={{
+                                        backgroundColor: passengerCount <= 1 ? "#ddd" : "#e4e4e4",
+
+                                    }}
+                                    className="rounded-full h-14 w-14 justify-center items-center"
+                                >
+                                    <Ionicons name="remove" size={16} style={{ color: passengerCount <= 1 ? "#999" : "#000" }}/>
+                                </TouchableOpacity>
+
+                                <View className=" flex justify-center items-center" >
+                                    <Text className="text-secondaryBlack dark:text-general font-GoogleSansBold text-4xl">{passengerCount}</Text>
+                                </View>
+
+                                <TouchableOpacity
+                                    onPress={() => changePassengerCount(1)}
+                                    disabled={passengerCount >= maxPassengers || isProcessingPassengers}
+                                    style={{
+                                        backgroundColor: passengerCount >= maxPassengers ? "#ddd" : "#e4e4e4",
+                                    }}
+                                    className="rounded-full h-14 w-14 justify-center items-center"
+                                >
+                                    <Ionicons name="add" size={16} style={{ color: passengerCount >= maxPassengers ? "#999" : "#000" }}/>
+                                </TouchableOpacity>
+                            </View>
+
+
+                        <View className="w-full absolute bottom-0 flex items-center justify-center">
+
+
+                            <PrimaryButton
+                                name="Continue"
+                                disabled={false}
+                                onPress={() => {
+                                    const totalPrice = baseFareNumeric * passengerCount;
+                                    useAppStore.getState().setFinalTripPrice(totalPrice);
+
+                                    if (paymentMethods.length === 0) {
+                                        router.push("/profile/paymentMethod/setupPaymentMethod");
+                                    } else {
+                                        router.push("/homepage/bookings/selectPaymentMethod");
+                                    }
+                                }}
+                            />
+                        </View>
+
+
                     </View>
+
                 </BottomSheetView>
             </BottomSheet>
 
-            <View style={{ bottom: 30 }} className="w-full absolute flex items-center justify-center">
-                <View style={{ height: 100 }} className="w-full">
-                    <View style={{bottom: 32, flex: 1, flexDirection: "row", alignItems: "center", justifyContent: "center", paddingHorizontal: 16 }}>
-                        <TouchableOpacity
-                            onPress={() => changePassengerCount(-1)}
-                            disabled={passengerCount <= 1 || isProcessingPassengers}
-                            style={{
-                                width: 48,
-                                height: 48,
-                                backgroundColor: passengerCount <= 1 ? "#ddd" : "#e4e4e4",
-                                alignItems: "center",
-                                justifyContent: "center",
-                                marginRight: 16,
-                                elevation: 3,
-                            }}
-                            className="rounded-full"
-                        >
-                            <Ionicons name="remove" size={16} style={{ fontSize: 24, color: passengerCount <= 1 ? "#999" : "#000" }}/>
-                        </TouchableOpacity>
-
-                        <View className="rounded-full bg-primary" style={{ minWidth: 80, minHeight: 80, alignItems: "center", justifyContent: "center" }}>
-                            <Text className="text-secondaryBlack font-GoogleSansBold" style={{ fontSize: 28, fontWeight: "700"}}>{passengerCount}</Text>
-                        </View>
-
-                        <TouchableOpacity
-                            onPress={() => changePassengerCount(1)}
-                            disabled={passengerCount >= maxPassengers || isProcessingPassengers}
-                            style={{
-                                width: 48,
-                                height: 48,
-                                backgroundColor: passengerCount >= maxPassengers ? "#ddd" : "#e4e4e4",
-                                alignItems: "center",
-                                justifyContent: "center",
-                                marginLeft: 16,
-                                elevation: 3,
-                            }}
-                            className="rounded-full"
-                        >
-                            <Ionicons name="add" size={16} style={{ fontSize: 24, color: passengerCount >= maxPassengers ? "#999" : "#000" }}/>
-                        </TouchableOpacity>
-                    </View>
-                </View>
-
-                <PrimaryButton
-                    name="Continue"
-                    disabled={false}
-                    onPress={() => {
-                        const totalPrice = baseFareNumeric * passengerCount;
-                        useAppStore.getState().setFinalTripPrice(totalPrice);
-
-                        if (paymentMethods.length === 0) {
-                            router.push("/profile/paymentMethod/setupPaymentMethod");
-                        } else {
-                            router.push("/homepage/bookings/selectPaymentMethod");
-                        }
-                    }}
-                />
-            </View>
 
             <View
-                style={{
-                    position: "absolute",
-                    top: 40,
-                    left: 0,
-                    right: 0,
-                    height: 56,
-                    zIndex: 20,
-                    paddingHorizontal: 12,
-                    justifyContent: "center",
-                }}
-                className="w-full flex-row items-center"
+
+                className="w-full absolute top-12 left-0 pl-4 right-0 flex-row justify-center items-center"
             >
                 <TouchableOpacity
                     onPress={() => router.back()}
-                    className="flex justify-center items-center"
+                    className="flex justify-center items-center rounded-full p-2"
                     style={{
                         backgroundColor: colorScheme === "dark"? "black":"white",
-                        padding: 8,
-                        borderRadius: 999,
-                        elevation: 5,
-                        marginRight: 12,
+
                     }}
                 >
                     <Ionicons name="chevron-back" size={28} color={colorScheme === "dark"? "white":"black"} />
                 </TouchableOpacity>
 
-                <View style={{ flex: 1, alignItems: "center", justifyContent: "center", paddingHorizontal: 8 }} pointerEvents="none">
+                <View
+                    className="flex-1 items-center justify-center px-2"
+                    pointerEvents="none">
                     <View
-                        style={{
-                            flexDirection: "row",
-                            alignItems: "center",
-                            justifyContent: "center",
-                            width: "100%",
-                            paddingHorizontal: 10,
-                            paddingVertical: 12
-                        }}
-                        className="rounded-full bg-general dark:bg-secondaryBlack"
+                        className="rounded-full bg-general w-full h-12 flex-row justify-center items-center dark:bg-secondaryBlack"
                     >
                         <Text
                             numberOfLines={1}
+                            className="text-base leading-5 font-GoogleSansMedium max-w-24 text-right"
                             style={{
                                 color: colorScheme === "dark"? "white":"black",
-                                fontWeight: "600",
-                                fontSize: 14,
-                                maxWidth: "40%",
-                                textAlign: "right",
+
                             }}
                         >
                             {pickupPoint || "Pickup"}
@@ -438,12 +415,9 @@ const NumberOfPassengers = () => {
 
                         <Text
                             numberOfLines={1}
+                            className="text-base leading-5 font-GoogleSansMedium max-w-24 text-left"
                             style={{
                                 color: colorScheme === "dark"? "#ffcc00":"black",
-                                fontWeight: "600",
-                                fontSize: 14,
-                                maxWidth: "40%",
-                                textAlign: "left",
                             }}
                         >
                             {destinationPoint || "Destination"}
