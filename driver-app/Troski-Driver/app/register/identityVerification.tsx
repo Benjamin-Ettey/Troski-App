@@ -1,4 +1,4 @@
-import {View, Text, TouchableOpacity, Image, Modal} from 'react-native'
+import {View, Text, TouchableOpacity, Image, Modal, ActivityIndicator} from 'react-native'
 import React, {useState} from 'react'
 import {KeyboardAwareScrollView} from "react-native-keyboard-controller";
 import {StatusBar} from "expo-status-bar";
@@ -30,42 +30,67 @@ const IdentityVerification = () => {
     const setLicenseExpiryDate = useAppStore((state)=> state.setLicenseExpiryDate);
 
 
+    const [uploadingGhanaCard, setUploadingGhanaCard] = useState(false);
+    const [uploadingDriverLicense, setUploadingDriverLicense] = useState(false);
 
     const handleGhanaCardPicker = async () => {
+        try {
+            setUploadingGhanaCard(true);
 
-        const permission = await ImagePicker.requestMediaLibraryPermissionsAsync()
-        if (!permission.granted){
-            alert("Permission to access gallery is required!")
-            return
-        }
+            const permission =
+                await ImagePicker.requestMediaLibraryPermissionsAsync();
 
-        const result = await ImagePicker.launchImageLibraryAsync({
-            mediaTypes: ["images"],
-            quality: 1,
-            allowsEditing: true,
-        });
-        if (!result.canceled){
-            setGhanaCardPhoto(result.assets[0].uri)
+            if (!permission.granted) {
+                alert("Permission to access gallery is required!");
+                return;
+            }
+
+            const result = await ImagePicker.launchImageLibraryAsync({
+                mediaTypes: ["images"],
+                quality: 1,
+                allowsEditing: true,
+            });
+
+            if (!result.canceled) {
+                setGhanaCardPhoto(result.assets[0].uri);
+            }
+        } catch (error) {
+            console.log(error);
+        } finally {
+            setUploadingGhanaCard(false);
         }
     };
+
 
     const handleDriverLicensePicker = async () => {
+        try {
+            setUploadingDriverLicense(true);
 
-        const permission = await ImagePicker.requestMediaLibraryPermissionsAsync()
-        if (!permission.granted){
-            alert("Permission to access gallery is required!")
-            return
-        }
+            const permission =
+                await ImagePicker.requestMediaLibraryPermissionsAsync();
 
-        const result = await ImagePicker.launchImageLibraryAsync({
-            mediaTypes: ["images"],
-            quality: 1,
-            allowsEditing: true,
-        });
-        if (!result.canceled){
-            setDriverLicensePhoto(result.assets[0].uri)
+            if (!permission.granted) {
+                alert("Permission to access gallery is required!");
+                return;
+            }
+
+            const result = await ImagePicker.launchImageLibraryAsync({
+                mediaTypes: ["images"],
+                quality: 1,
+                allowsEditing: true,
+            });
+
+            if (!result.canceled) {
+                setDriverLicensePhoto(result.assets[0].uri);
+            }
+        } catch (error) {
+            console.log(error);
+        } finally {
+            setUploadingDriverLicense(false);
         }
     };
+
+
 
     const formatExpiryDate = (text: string) => {
         const cleaned = text.replace(/\D/g, "");
@@ -108,8 +133,8 @@ const IdentityVerification = () => {
 
                 <View className="w-full flex-1 flex items-center px-6">
                     <View className="w-full py-6 flex-col gap-2">
-                        <Text className="text-3xl leading-none tracking-tighter text-secondaryBlack  font-GoogleSansMedium">Verify your identity</Text>
-                        <Text className="text-sm leading-none  text-secondaryGray  font-GoogleSansRegular">
+                        <Text className="text-3xl leading-tight tracking-tighter text-secondaryBlack  font-GoogleSansMedium">Verify your identity</Text>
+                        <Text className="text-sm leading-tight  text-secondaryGray  font-GoogleSansRegular">
                             We need a few details to confirm your identity and keep the platform secure.
                         </Text>
                     </View>
@@ -120,7 +145,7 @@ const IdentityVerification = () => {
                             <View className="w-full flex flex-row  items-center gap-2">
                                 <Text
                                     style={{paddingLeft: 8, }}
-                                    className="text-base leading-none tracking-tight  text-secondaryBlack  font-GoogleSansMedium">Driver License ID
+                                    className="text-base leading-tight tracking-tight  text-secondaryBlack  font-GoogleSansMedium">Driver License ID
                                 </Text>
                                 <Ionicons name="star" size={6} color="red"/>
                             </View>
@@ -144,7 +169,7 @@ const IdentityVerification = () => {
                             <View className="w-full flex flex-row  items-center gap-2">
                                 <Text
                                     style={{paddingLeft: 8, }}
-                                    className="text-base leading-none tracking-tight  text-secondaryBlack  font-GoogleSansMedium">Ghana Card Number
+                                    className="text-base leading-tight tracking-tight  text-secondaryBlack  font-GoogleSansMedium">Ghana Card Number
                                 </Text>
                                 <Ionicons name="star" size={6} color="red"/>
                             </View>
@@ -169,47 +194,55 @@ const IdentityVerification = () => {
 
                                     <Text
                                         style={{paddingLeft: 8, }}
-                                        className="text-base leading-none tracking-tight  text-secondaryBlack  font-GoogleSansMedium">Ghana Card Photo
+                                        className="text-base leading-tight tracking-tight  text-secondaryBlack  font-GoogleSansMedium">Ghana Card Photo
                                     </Text>
                                     <Ionicons name="star" size={6} color="red"/>
                                 </View>
 
                                 <Text
                                     style={{paddingLeft: 8, }}
-                                    className="text-xs leading-none  text-secondaryGray/50  font-GoogleSansRegular">Upload photo of your Ghana card
+                                    className="text-xs leading-tight  text-secondaryGray/50  font-GoogleSansRegular">Upload photo of your Ghana card
                                 </Text>
                             </View>
 
 
 
                             {ghanacardphoto ? (
-                                    <View className="border-2 border-dashed border-secondaryBlack w-28 h-28 justify-center items-center p-2 rounded-2xl">
+                                <View className="border-2 border-dashed border-secondaryBlack w-28 h-28 justify-center items-center p-2 rounded-2xl">
+                                    <TouchableOpacity
+                                        className="w-24 h-24 rounded-2xl bg-tertiaryWhite"
+                                        onPress={handleGhanaCardPicker}
+                                        disabled={uploadingGhanaCard}
+                                    >
+                                        <Image
+                                            source={{ uri: ghanacardphoto }}
+                                            className="w-full h-full rounded-2xl"
+                                            resizeMode="cover"
+                                        />
 
-                                        <TouchableOpacity
-                                            className="w-24 h-24 rounded-2xl bg-tertiaryWhite"
-                                            onPress={handleGhanaCardPicker}
-                                        >
-                                            <Image
-                                                source={{ uri: ghanacardphoto }}
-                                                className="w-full h-full rounded-2xl"
-                                                resizeMode="cover"
-                                            />
-
-                                            <View className="absolute bottom-1 right-1 ">
+                                        <View className="absolute bottom-1 right-1">
+                                            {uploadingGhanaCard ? (
+                                                <ActivityIndicator size="small" color="#000" />
+                                            ) : (
                                                 <Ionicons name="create" size={24} color="black" />
-                                            </View>
-                                        </TouchableOpacity>
-                                    </View>
+                                            )}
+                                        </View>
+                                    </TouchableOpacity>
+                                </View>
                             ) : (
                                 <View className="border-2 border-dashed border-secondaryBlack/50 w-28 h-28 justify-center items-center p-2 rounded-2xl">
                                     <TouchableOpacity
                                         className="w-24 h-24 rounded-2xl bg-tertiaryWhite items-center justify-center"
                                         onPress={handleGhanaCardPicker}
+                                        disabled={uploadingGhanaCard}
                                     >
-                                        <Ionicons name="add-circle" size={32} color="#ffcc00" />
+                                        {uploadingGhanaCard ? (
+                                            <ActivityIndicator size="small" color="#ffcc00" />
+                                        ) : (
+                                            <Ionicons name="add-circle" size={32} color="#ffcc00" />
+                                        )}
                                     </TouchableOpacity>
                                 </View>
-
                             )}
 
                         </View>
@@ -220,24 +253,24 @@ const IdentityVerification = () => {
                                 <View className="w-full flex flex-row  items-center gap-2">
                                     <Text
                                         style={{paddingLeft: 8, }}
-                                        className="text-base leading-none tracking-tight  text-secondaryBlack  font-GoogleSansMedium">Driver&apos; License Photo
+                                        className="text-base leading-tight tracking-tight  text-secondaryBlack  font-GoogleSansMedium">Driver&apos; License Photo
                                     </Text>
                                     <Ionicons name="star" size={6} color="red"/>
                                 </View>
 
                                 <Text
                                     style={{paddingLeft: 8, }}
-                                    className="text-xs leading-none  text-secondaryGray/50  font-GoogleSansRegular">Upload photo of your Driver License
+                                    className="text-xs leading-tight  text-secondaryGray/50  font-GoogleSansRegular">Upload photo of your Driver License
                                 </Text>
                             </View>
 
 
                             {driverlicensephoto ? (
                                 <View className="border-2 border-dashed border-secondaryBlack w-28 h-28 justify-center items-center p-2 rounded-2xl">
-
                                     <TouchableOpacity
                                         className="w-24 h-24 rounded-2xl bg-tertiaryWhite"
                                         onPress={handleDriverLicensePicker}
+                                        disabled={uploadingDriverLicense}
                                     >
                                         <Image
                                             source={{ uri: driverlicensephoto }}
@@ -245,22 +278,29 @@ const IdentityVerification = () => {
                                             resizeMode="cover"
                                         />
 
-                                        <View className="absolute bottom-1 right-1 ">
-                                            <Ionicons name="create" size={24} color="black" />
+                                        <View className="absolute bottom-1 right-1">
+                                            {uploadingDriverLicense ? (
+                                                <ActivityIndicator size="small" color="#000" />
+                                            ) : (
+                                                <Ionicons name="create" size={24} color="black" />
+                                            )}
                                         </View>
                                     </TouchableOpacity>
                                 </View>
                             ) : (
-
                                 <View className="border-2 border-dashed border-secondaryBlack/50 w-28 h-28 justify-center items-center p-2 rounded-2xl">
                                     <TouchableOpacity
                                         className="w-24 h-24 rounded-2xl bg-tertiaryWhite items-center justify-center"
                                         onPress={handleDriverLicensePicker}
+                                        disabled={uploadingDriverLicense}
                                     >
-                                        <Ionicons name="add-circle" size={32} color="#ffcc00" />
+                                        {uploadingDriverLicense ? (
+                                            <ActivityIndicator size="small" color="#ffcc00" />
+                                        ) : (
+                                            <Ionicons name="add-circle" size={32} color="#ffcc00" />
+                                        )}
                                     </TouchableOpacity>
                                 </View>
-
                             )}
 
                         </View>
@@ -269,7 +309,7 @@ const IdentityVerification = () => {
                             <View className="w-full flex flex-row  items-center gap-2">
                                 <Text
                                     style={{paddingLeft: 8, }}
-                                    className="text-base leading-none tracking-tight  text-secondaryBlack  font-GoogleSansMedium">Expiry date of license
+                                    className="text-base leading-tight tracking-tight  text-secondaryBlack  font-GoogleSansMedium">Expiry date of license
                                 </Text>
                                 <Ionicons name="star" size={6} color="red"/>
                             </View>
@@ -314,7 +354,8 @@ const IdentityVerification = () => {
                 </View>
 
 
-                <Modal visible={showLoading} animationType="fade">
+                <Modal statusBarTranslucent visible={showLoading} animationType="fade">
+                    <StatusBar style="dark"/>
                     <View className="flex-1 w-full justify-center items-center bg-general">
                         <LottieView
                             source={require("../../assets/video/loadingdotsblack.json")}

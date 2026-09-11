@@ -1,5 +1,5 @@
-import {View, Text, TouchableOpacity, Image} from 'react-native'
-import React from 'react'
+import {View, Text, TouchableOpacity, Image, ActivityIndicator} from 'react-native'
+import React, {useState} from 'react'
 import {KeyboardAwareScrollView} from "react-native-keyboard-controller";
 import {StatusBar} from "expo-status-bar";
 import {Ionicons} from "@expo/vector-icons";
@@ -22,40 +22,64 @@ const VehicleDocuments = () => {
     const setVehicleRegistrationDocumentPhoto = useAppStore((state) => state.setVehicleRegistrationDocumentPhoto);
     const setDvlaRoadworthyExpiryDate = useAppStore((state) => state.setDvlaRoadworthyExpiryDate);
 
+    const [uploadingInsurance, setUploadingInsurance] = useState(false);
+    const [uploadingRegistration, setUploadingRegistration] = useState(false);
+
 
     const handleInsuranceCertificatePhoto = async () => {
+        try {
+            setUploadingInsurance(true);
 
-        const permission = await ImagePicker.requestMediaLibraryPermissionsAsync()
-        if (!permission.granted){
-            alert("Permission to access gallery is required!")
-            return
-        }
+            const permission =
+                await ImagePicker.requestMediaLibraryPermissionsAsync();
 
-        const result = await ImagePicker.launchImageLibraryAsync({
-            mediaTypes: ["images"],
-            quality: 1,
-            allowsEditing: true,
-        });
-        if (!result.canceled){
-            setInsuranceCertificatePhoto(result.assets[0].uri)
+            if (!permission.granted) {
+                alert("Permission to access gallery is required!");
+                return;
+            }
+
+            const result = await ImagePicker.launchImageLibraryAsync({
+                mediaTypes: ["images"],
+                quality: 1,
+                allowsEditing: true,
+            });
+
+            if (!result.canceled) {
+                setInsuranceCertificatePhoto(result.assets[0].uri);
+            }
+        } catch (error) {
+            console.log(error);
+        } finally {
+            setUploadingInsurance(false);
         }
     };
 
+
+
+
     const handleVehicleRegistrationDocumentPhoto = async () => {
 
-        const permission = await ImagePicker.requestMediaLibraryPermissionsAsync()
-        if (!permission.granted){
-            alert("Permission to access gallery is required!")
-            return
-        }
+        try {
+            setUploadingRegistration(true);
 
-        const result = await ImagePicker.launchImageLibraryAsync({
-            mediaTypes: ["images"],
-            quality: 1,
-            allowsEditing: true,
-        });
-        if (!result.canceled){
-            setVehicleRegistrationDocumentPhoto(result.assets[0].uri)
+            const permission = await ImagePicker.requestMediaLibraryPermissionsAsync()
+            if (!permission.granted){
+                alert("Permission to access gallery is required!")
+                return
+            }
+
+            const result = await ImagePicker.launchImageLibraryAsync({
+                mediaTypes: ["images"],
+                quality: 1,
+                allowsEditing: true,
+            });
+            if (!result.canceled){
+                setVehicleRegistrationDocumentPhoto(result.assets[0].uri)
+            }
+        } catch (error) {
+            console.log(error);
+        } finally {
+            setUploadingRegistration(false);
         }
     };
 
@@ -95,21 +119,28 @@ const VehicleDocuments = () => {
 
                 <View className="w-full flex-1 flex items-center px-6 mt-4" >
 
+                    <View className="w-full mb-10 flex-col gap-2">
+                        <Text className="text-3xl leading-tight tracking-tighter text-secondaryBlack  font-GoogleSansMedium">Provide your vehicle information</Text>
+                        <Text className="text-sm leading-tight  text-secondaryGray  font-GoogleSansRegular">
+                            Please provide your insurance information, vehicle registration document, and license expiry date.
+                        </Text>
+                    </View>
+
 
                     <View className="w-full gap-2">
                         <View className="flex flex-col mb-2 gap-1">
-                            <View className="w-full flex flex-row  items-center gap-2">
+                            <View className="w-full flex flex-row items-center gap-2">
 
                                 <Text
                                     style={{paddingLeft: 8, }}
-                                    className="text-base leading-none tracking-tight  text-secondaryBlack  font-GoogleSansMedium">Insurance certificate
+                                    className="text-base leading-tight tracking-tight  text-secondaryBlack  font-GoogleSansMedium">Insurance certificate
                                 </Text>
                                 <Ionicons name="star" size={6} color="red"/>
                             </View>
 
                             <Text
                                 style={{paddingLeft: 8, }}
-                                className="text-xs leading-none  text-secondaryGray/50  font-GoogleSansRegular">Upload photo of your insurance certificate
+                                className="text-xs leading-tight  text-secondaryGray/50  font-GoogleSansRegular">Upload photo of your insurance certificate
                             </Text>
                         </View>
 
@@ -117,10 +148,10 @@ const VehicleDocuments = () => {
 
                         {insurancecertificatephoto ? (
                             <View className="border-2 border-dashed border-secondaryBlack w-28 h-28 justify-center items-center p-2 rounded-2xl">
-
                                 <TouchableOpacity
                                     className="w-24 h-24 rounded-2xl bg-tertiaryWhite"
                                     onPress={handleInsuranceCertificatePhoto}
+                                    disabled={uploadingInsurance}
                                 >
                                     <Image
                                         source={{ uri: insurancecertificatephoto }}
@@ -128,8 +159,12 @@ const VehicleDocuments = () => {
                                         resizeMode="cover"
                                     />
 
-                                    <View className="absolute bottom-1 right-1 ">
-                                        <Ionicons name="create" size={24} color="black" />
+                                    <View className="absolute bottom-1 right-1">
+                                        {uploadingInsurance ? (
+                                            <ActivityIndicator size="small" color="#000" />
+                                        ) : (
+                                            <Ionicons name="create" size={24} color="black" />
+                                        )}
                                     </View>
                                 </TouchableOpacity>
                             </View>
@@ -138,11 +173,15 @@ const VehicleDocuments = () => {
                                 <TouchableOpacity
                                     className="w-24 h-24 rounded-2xl bg-tertiaryWhite items-center justify-center"
                                     onPress={handleInsuranceCertificatePhoto}
+                                    disabled={uploadingInsurance}
                                 >
-                                    <Ionicons name="add-circle" size={32} color="#ffcc00" />
+                                    {uploadingInsurance ? (
+                                        <ActivityIndicator size="small" color="#ffcc00" />
+                                    ) : (
+                                        <Ionicons name="add-circle" size={32} color="#ffcc00" />
+                                    )}
                                 </TouchableOpacity>
                             </View>
-
                         )}
 
                     </View>
@@ -153,14 +192,14 @@ const VehicleDocuments = () => {
 
                                 <Text
                                     style={{paddingLeft: 8, }}
-                                    className="text-base leading-none tracking-tight  text-secondaryBlack  font-GoogleSansMedium">Vehicle registration document
+                                    className="text-base leading-tight tracking-tight  text-secondaryBlack  font-GoogleSansMedium">Vehicle registration document
                                 </Text>
                                 <Ionicons name="star" size={6} color="red"/>
                             </View>
 
                             <Text
                                 style={{paddingLeft: 8, }}
-                                className="text-xs leading-none  text-secondaryGray/50  font-GoogleSansRegular">Upload photo of your registration document
+                                className="text-xs leading-tight  text-secondaryGray/50  font-GoogleSansRegular">Upload photo of your registration document
                             </Text>
                         </View>
 
@@ -179,8 +218,12 @@ const VehicleDocuments = () => {
                                         resizeMode="cover"
                                     />
 
-                                    <View className="absolute bottom-1 right-1 ">
-                                        <Ionicons name="create" size={24} color="black" />
+                                    <View className="absolute bottom-1 right-1">
+                                        {uploadingRegistration ? (
+                                            <ActivityIndicator size="small" color="#000" />
+                                        ) : (
+                                            <Ionicons name="create" size={24} color="black" />
+                                        )}
                                     </View>
                                 </TouchableOpacity>
                             </View>
@@ -190,7 +233,11 @@ const VehicleDocuments = () => {
                                     className="w-24 h-24 rounded-2xl bg-tertiaryWhite items-center justify-center"
                                     onPress={handleVehicleRegistrationDocumentPhoto}
                                 >
-                                    <Ionicons name="add-circle" size={32} color="#ffcc00" />
+                                    {uploadingRegistration ? (
+                                        <ActivityIndicator size="small" color="#ffcc00" />
+                                    ) : (
+                                        <Ionicons name="add-circle" size={32} color="#ffcc00" />
+                                    )}
                                 </TouchableOpacity>
                             </View>
 
@@ -203,7 +250,7 @@ const VehicleDocuments = () => {
                         <View className="w-full flex flex-row  items-center gap-2">
                             <Text
                                 style={{paddingLeft: 8, }}
-                                className="text-base leading-none tracking-tight  text-secondaryBlack  font-GoogleSansMedium">Expiry date of license
+                                className="text-base leading-tight tracking-tight  text-secondaryBlack  font-GoogleSansMedium">Expiry date of license
                             </Text>
                             <Ionicons name="star" size={6} color="red"/>
                         </View>

@@ -29,7 +29,7 @@ const Index = () => {
 
     return (
         <View className="flex-1 bg-general">
-            <StatusBar style="light"/>
+            <StatusBar style="dark"/>
 
             <MapView style={{ width: "100%", height: "100%"}}/>
 
@@ -44,10 +44,9 @@ const Index = () => {
             >
                 <TouchableOpacity
                     onPress={() => router.push("/homepage/profile")}
-                    className="bg-white dark:bg-secondaryBlack"
+                    className="bg-white rounded-full"
                     style={{
                         padding: 10,
-                        borderRadius: 20,
                         elevation: 5,
                         left: 20,
                     }}
@@ -56,7 +55,7 @@ const Index = () => {
                 </TouchableOpacity>
 
                 <Pressable
-                    className="flex flex-row bg-white dark:bg-secondaryBlack justify-between items-center rounded-full"
+                    className="flex flex-row bg-white justify-between items-center rounded-full"
                     style={{
                         padding: 10,
                         elevation: 5,
@@ -96,7 +95,7 @@ const Index = () => {
                             className="flex flex-col gap-2 "
                             style={{ paddingHorizontal: 16, paddingVertical: 8, height: 300 }}>
 
-                            <Text style={{paddingLeft: 12}} className="text-xl leading-6 tracking-tight text-secondaryBlack  font-GoogleSansMedium">Earnings</Text>
+                            <Text style={{paddingLeft: 12}} className="text-xl leading-tight tracking-tight text-secondaryBlack  font-GoogleSansMedium">Earnings</Text>
 
                             <EarningNavBar/>
                         </View>
@@ -105,11 +104,11 @@ const Index = () => {
 
 
                         <View style={{height: 300}} className="w-full flex flex-col   items-center gap-4 px-4">
-                            <Text className="text-xl leading-6 tracking-tight mt-4 text-secondaryBlack  font-GoogleSansMedium">Incoming Ride Request</Text>
+                            <Text className="text-xl leading-tight tracking-tight mt-4 text-secondaryBlack  font-GoogleSansMedium">Incoming Ride Request</Text>
 
                             <Pressable
 
-                                className="w-full h-20 rounded-3xl px-4 mb-4 gap-4 bg-tertiaryWhite dark:bg-secondaryGray/40 flex flex-col justify-center items-center"
+                                className="w-full h-20 rounded-3xl px-4 mb-4 gap-4 bg-tertiaryWhite  flex flex-col justify-center items-center"
                             >
                                 <View className="flex w-full flex-row justify-between items-center gap-4">
 
@@ -127,7 +126,7 @@ const Index = () => {
                                                 <Text
                                                     numberOfLines={1}
                                                     ellipsizeMode="tail"
-                                                    className="text-lg leading-5 font-GoogleSansRegular max-w-[80px] text-secondaryBlack dark:text-tertiaryGray"
+                                                    className="text-lg leading-tight font-GoogleSansRegular max-w-[80px] text-secondaryBlack "
                                                 >
                                                     Kasoa
                                                 </Text>
@@ -137,7 +136,7 @@ const Index = () => {
                                                 <Text
                                                     numberOfLines={1}
                                                     ellipsizeMode="tail"
-                                                    className="text-lg leading-5 font-GoogleSansRegular max-w-[80px] text-secondaryBlack dark:text-tertiaryGray"
+                                                    className="text-lg leading-tight font-GoogleSansRegular max-w-[80px] text-secondaryBlack "
                                                 >
                                                     Accra
                                                 </Text>
@@ -145,14 +144,14 @@ const Index = () => {
 
                                             <View className="w-full flex flex-row items-center mt-1">
                                                 <Text
-                                                    className="text-white text-xs leading-4 px-2 py-0.5 bg-secondaryBlack font-GoogleSansRegular rounded-full"
+                                                    className="text-white text-xs leading-tight px-2 py-0.5 bg-secondaryBlack font-GoogleSansRegular rounded-full"
                                                 >
                                                     39min
                                                 </Text>
 
                                                 <View className="flex gap-1 flex-row items-center ml-2">
                                                     <Ionicons name="person" size={12} color="gray" />
-                                                    <Text className="font-GoogleSansRegular text-sm leading-4 text-secondaryGray dark:text-tertiaryWhite">
+                                                    <Text className="font-GoogleSansRegular text-sm leading-tight text-secondaryGray ">
                                                         6
                                                     </Text>
                                                 </View>
@@ -164,9 +163,9 @@ const Index = () => {
 
 
                                     <View
-                                        className="rounded-full h-9 w-24 bg-primary dark:bg-secondaryBlack flex justify-center items-center"
+                                        className="rounded-full h-9 w-24 bg-primary flex justify-center items-center"
                                     >
-                                        <Text numberOfLines={1} className="font-GoogleSansBold text-sm leading-4 dark:text-primary text-secondaryBlack">
+                                        <Text numberOfLines={1} className="font-GoogleSansBold text-sm leading-tight text-secondaryBlack">
                                             GHC100
                                         </Text>
 

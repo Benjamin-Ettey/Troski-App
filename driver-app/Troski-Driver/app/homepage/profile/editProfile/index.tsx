@@ -1,4 +1,4 @@
-import {View, Text, TouchableOpacity, TextInput, Keyboard, Image, Alert} from 'react-native'
+import {View, Text, TouchableOpacity, TextInput, Keyboard, Image, Alert, ActivityIndicator} from 'react-native'
 import React, {useMemo, useRef, useState} from 'react'
 import {Ionicons} from "@expo/vector-icons";
 import {useAppStore} from "@/utils/store";
@@ -40,7 +40,9 @@ const Index = () => {
 
     }
 
-    const [fullName, setFullName] = useState("")
+    const [fullName, setFullName] = useState("");
+    const [loading, setLoading] = useState(false);
+
 
 
     const handleFullName = (text: string)=>{
@@ -122,22 +124,32 @@ const Index = () => {
     };
 
     const handleImagePicker = async () => {
+        try {
+            setLoading(true);
 
-        const permission = await ImagePicker.requestMediaLibraryPermissionsAsync()
-        if (!permission.granted){
-            alert("Permission to access gallery is required!")
-            return
-        }
+            const permission =
+                await ImagePicker.requestMediaLibraryPermissionsAsync();
 
-        const result = await ImagePicker.launchImageLibraryAsync({
-            mediaTypes: ["images"],
-            quality: 1,
-            allowsEditing: true,
-        });
-        if (!result.canceled){
-            setDriverImage(result.assets[0].uri)
+            if (!permission.granted) {
+                alert("Permission to access gallery is required!");
+                return;
+            }
+
+            const result = await ImagePicker.launchImageLibraryAsync({
+                mediaTypes: ["images"],
+                quality: 1,
+                allowsEditing: true,
+            });
+
+            if (!result.canceled) {
+                setDriverImage(result.assets[0].uri);
+            }
+        } catch (error) {
+            console.log(error);
+        } finally {
+            setLoading(false);
         }
-    }
+    };
 
 
 
@@ -164,6 +176,7 @@ const Index = () => {
                                 <View
                                     className="flex h-52 w-52 bg-primary/20 p-3 justify-center items-center rounded-full border-2 border-primary"
                                 >
+
                                     <Ionicons name="person" color="#ffcc00" size={100} />
                                 </View>
                             )}
@@ -176,64 +189,77 @@ const Index = () => {
                         <View
                             style={{ backgroundColor: "#ffffff"}}
                             className="w-full rounded-full ">
-                            <NavBar onPress={handleImagePicker} name="camera-outline" textcolor="#007BFF" color="#007BFF" title="Change profile photo" goforwardcolor="#ffffff"/>
+                            {loading?
+                                <TouchableOpacity
+                                    onPress={handleImagePicker}
+                                    className="flex flex-row h-14 px-4 justify-between items-center">
+                                    <View className="flex flex-row justify-center items-center gap-4">
+                                        <Ionicons name="camera-outline" size={18} color="#007BFF"/>
+                                        <Text style={{color: "#007BFF"}} className="text-base leading-tight font-GoogleSansMedium text-secondaryBlack dark:text-general">Change profile photo</Text>
+                                    </View>
+
+                                    <ActivityIndicator size="small" color="#007BFF"/>
+                                </TouchableOpacity>
+                                :
+                                <NavBar onPress={handleImagePicker} name="camera-outline" textcolor="#007BFF" color="#007BFF" title="Change profile photo" goforwardcolor="#ffffff"/>
+                            }
                         </View>
                     </View>
 
                  <View className="w-full mb-6 px-5">
                     <Text
-                        className="font-GoogleSansRegular text-base pl-4 leading-5 mb-1 text-secondaryBlack ">Full Name</Text>
+                        className="font-GoogleSansRegular text-base pl-4 leading-tight mb-1 text-secondaryBlack ">Full Name</Text>
                     <View
                         style={{backgroundColor: "#ffffff"}}
                         className="flex justify-center items-center h-14 rounded-full px-5">
                         <TouchableOpacity
                             onPress={()=>openSheet("name")}
                             className="w-full flex-1 flex flex-row justify-between items-center">
-                            <Text className="font-GoogleSansMedium text-base leading-5 text-secondaryGray  ">{driverfullname}</Text>
+                            <Text className="font-GoogleSansMedium text-base leading-tight text-secondaryGray  ">{driverfullname}</Text>
                             <Ionicons name="create-outline" size={18} color="gray"/>
                         </TouchableOpacity>
                  </View>
                 <Text
-                    className="text-xs leading-4 pl-4 mt-2 font-GoogleSansRegular text-secondaryGray  "
+                    className="text-xs leading-tight pl-4 mt-2 font-GoogleSansRegular text-secondaryGray  "
                 >Change the full name linked to your account.</Text>
             </View>
 
 
         <View className="w-full mb-6 px-5">
             <Text
-                className="font-GoogleSansRegular text-base pl-4 leading-5 mb-1 text-secondaryBlack ">Email</Text>
+                className="font-GoogleSansRegular text-base pl-4 leading-tight mb-1 text-secondaryBlack ">Email</Text>
             <View
                 style={{backgroundColor: "#ffffff"}}
                 className="flex justify-center items-center h-14 rounded-full px-5">
                 <TouchableOpacity
                     onPress={()=> openSheet("email")}
                     className="w-full flex-1 flex flex-row justify-between items-center">
-                    <Text className="font-GoogleSansMedium text-base leading-5 text-secondaryGray ">{driveremail}</Text>
+                    <Text className="font-GoogleSansMedium text-base leading-tight text-secondaryGray ">{driveremail}</Text>
                     <Ionicons name="create-outline" size={18} color="gray"/>
                 </TouchableOpacity>
             </View>
             <Text
-                className="text-xs leading-4 pl-4 mt-2 font-GoogleSansRegular text-secondaryGray  ">Edit the email address associated with your account.
+                className="text-xs leading-tight pl-4 mt-2 font-GoogleSansRegular text-secondaryGray  ">Edit the email address associated with your account.
             </Text>
         </View>
 
 
         <View className="w-full mb-6 px-5">
             <Text
-                className="font-GoogleSansRegular text-base pl-4 leading-5 mb-1 text-secondaryBlack ">Phone Number</Text>
+                className="font-GoogleSansRegular text-base pl-4 leading-tight mb-1 text-secondaryBlack ">Phone Number</Text>
             <View
                 style={{backgroundColor: "#ffffff"}}
                 className="flex justify-center items-center h-14 rounded-full px-5">
                 <TouchableOpacity
                     onPress={()=> router.push("/homepage/profile/editProfile/changePhoneNumber")}
                     className="w-full flex-1 flex flex-row justify-between items-center">
-                    <Text className="font-GoogleSansMedium text-base leading-5 text-secondaryGray ">{drivernumber}</Text>
+                    <Text className="font-GoogleSansMedium text-base leading-tight text-secondaryGray ">{drivernumber}</Text>
                     <Ionicons name="chevron-forward" size={18} color="gray"/>
                 </TouchableOpacity>
             </View>
 
             <Text
-                className="text-xs leading-4 pl-4 mt-2 font-GoogleSansRegular text-secondaryGray">Update the phone number linked to your account.</Text>
+                className="text-xs leading-tight pl-4 mt-2 font-GoogleSansRegular text-secondaryGray">Update the phone number linked to your account.</Text>
         </View>
     </>
 
@@ -261,7 +287,7 @@ const Index = () => {
                     {editType === "name" && (
                         <View className="w-full flex-1 flex items-center">
                             <View className="w-full py-2">
-                                <Text className="text-xl leading-6 font-GoogleSansMedium tracking-tight text-secondaryBlack ">Change full name</Text>
+                                <Text className="text-xl leading-tight font-GoogleSansMedium tracking-tight text-secondaryBlack ">Change full name</Text>
                             </View>
 
                             <TextInput
@@ -279,7 +305,7 @@ const Index = () => {
                             />
 
                             <View className="mb-8 w-full items-start">
-                                <Text className="text-sm leading-4 font-GoogleSansRegular text-secondaryBlack ">Your full name should be at least 3 characters.</Text>
+                                <Text className="text-sm leading-tight font-GoogleSansRegular text-secondaryBlack ">Your full name should be at least 3 characters.</Text>
 
                             </View>
 
@@ -291,7 +317,7 @@ const Index = () => {
                     {editType === "email" && (
                         <>
                         <View className="w-full py-2">
-                            <Text className="text-xl leading-5 font-GoogleSansMedium tracking-tight text-secondaryBlack ">What&apos;s your email?</Text>
+                            <Text className="text-xl leading-tight font-GoogleSansMedium tracking-tight text-secondaryBlack ">Change email</Text>
                         </View>
 
                         <TextInput
@@ -310,11 +336,11 @@ const Index = () => {
                 <View className="mb-6 w-full items-start">
 
                     {error ? (
-                            <Text className="text-red-500 text-sm leading-4 mt-1 font-GoogleSansMedium">
+                            <Text className="text-red-500 text-sm leading-tight mt-1 font-GoogleSansMedium">
                                 {error}
                             </Text>
                         ) :
-                        <Text className="text-sm leading-4 font-GoogleSansRegular text-secondaryBlack ">You&apos;ll need to verify this email later.</Text>
+                        <Text className="text-sm leading-tight font-GoogleSansRegular text-secondaryBlack ">You&apos;ll need to verify this email later.</Text>
                     }
                 </View>
 

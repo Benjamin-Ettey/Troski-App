@@ -4,9 +4,7 @@ import {KeyboardAwareScrollView, KeyboardToolbar} from "react-native-keyboard-co
 import {StatusBar} from "expo-status-bar";
 import {router} from "expo-router";
 import PrimaryButton from "@/components/PrimaryButton";
-import {useAppStore} from "@/utils/store";
 import DisabledPrimaryButton from "@/components/DisabledPrimaryButton";
-import {useColorScheme} from "nativewind";
 
 const Withdraw = () => {
 
@@ -15,7 +13,6 @@ const Withdraw = () => {
     const [error, setError] = useState('');
     const isDisabled = value.length !== 10 || amount.length === 0;
     const [processing, setProcessing] = useState(false);
-    const { colorScheme } = useColorScheme();
 
 
 
@@ -57,7 +54,7 @@ const Withdraw = () => {
     };
 
     return (
-        <View style={{backgroundColor: colorScheme === "dark"? "#000000" : "#F5F7FA"}} className="flex-1 ">
+        <View style={{backgroundColor: "#F5F7FA"}} className="flex-1 ">
             <KeyboardAwareScrollView
                 keyboardShouldPersistTaps="handled"
                 className="flex-1">
@@ -65,7 +62,7 @@ const Withdraw = () => {
 
                 <View className="w-full flex-1 flex items-center px-6">
                     <View className="w-full py-2">
-                        <Text className="text-xl leading-6 tracking-tight font-GoogleSansMedium dark:text-general">Enter account number?</Text>
+                        <Text className="text-xl leading-tight tracking-tight font-GoogleSansMedium ">Enter account number?</Text>
                     </View>
 
                     <TextInput
@@ -75,24 +72,25 @@ const Withdraw = () => {
                         autoCorrect={false}
                         autoCapitalize="none"
                         keyboardType="phone-pad"
+                        placeholderTextColor="#a9a9a9"
                         autoFocus={true}
                         style={{paddingLeft: 16 }}
-                        className=" dark:bg-secondaryBlack mb-1 font-medium dark:text-general text-secondaryGray w-full h-14 border border-tertiaryGray  rounded-xl focus:border dark:focus:border-tertiaryGray focus:border-green-600/40"
+                        className=" mb-1 font-medium  text-secondaryGray w-full h-14 border border-tertiaryGray  rounded-xl focus:border  focus:border-green-600/40"
                     />
 
                     {error ? (
                         <View className="mb-6 w-full items-start">
-                            <Text className="text-sm leading-4 font-GoogleSansMedium text-red-600">
+                            <Text className="text-sm leading-tight font-GoogleSansMedium text-red-600">
                                 {error}
                             </Text>
                         </View>
                     ) : <View className="mb-6 w-full items-start">
-                        <Text className="text-sm leading-4 font-GoogleSansRegular dark:text-tertiaryGray">This is the number you would like to withdraw your money into.</Text>
+                        <Text className="text-sm leading-tight font-GoogleSansRegular">This is the number you would like to withdraw your money into.</Text>
                     </View>
                     }
 
                     <View className="w-full py-2">
-                        <Text className="text-xl leading-6 tracking-tight font-GoogleSansMedium dark:text-general">Amount to be withdrawn?</Text>
+                        <Text className="text-xl leading-tight tracking-tight font-GoogleSansMedium ">Amount to be withdrawn?</Text>
                     </View>
 
                     <TextInput
@@ -103,8 +101,9 @@ const Withdraw = () => {
                         autoCorrect={false}
                         autoCapitalize="none"
                         keyboardType="phone-pad"
+                        placeholderTextColor="#a9a9a9"
                         style={{paddingLeft: 16}}
-                        className=" dark:bg-secondaryBlack mb-8 font-medium dark:text-general text-secondaryGray w-full h-14 border border-tertiaryGray  rounded-xl focus:border dark:focus:border-tertiaryGray focus:border-green-600/40"
+                        className="mb-8 font-medium  text-secondaryGray w-full h-14 border border-tertiaryGray  rounded-xl focus:border  focus:border-green-600/40"
                     />
 
                     {isDisabled?
@@ -126,7 +125,7 @@ const Withdraw = () => {
                     <ActivityIndicator size="large" color="white" />
 
                     <Text
-                        className="font-GoogleSansMedium mt-4 text-general text-base leading-5"
+                        className="font-GoogleSansMedium mt-4 text-general text-base leading-tight"
                     >
                         Processing...
                     </Text>

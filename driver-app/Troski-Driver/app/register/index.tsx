@@ -55,6 +55,7 @@ const Index = () => {
         !termsCheckbox;
 
     const handleCreateAccount = () =>{
+        console.log("I am the create account button")
         router.push("/register/identityVerification")
     };
 
@@ -77,8 +78,8 @@ const Index = () => {
                 <View className="w-full flex-1 flex items-center px-6">
 
                     <View className="w-full py-6 flex-col gap-2">
-                        <Text className="text-3xl leading-none tracking-tighter text-secondaryBlack  font-GoogleSansMedium">Become a Troski Driver</Text>
-                        <Text className="text-base leading-none tracking-tight text-secondaryBlack  font-GoogleSansRegular">Let&apos;s get you started.</Text>
+                        <Text className="text-3xl leading-tight tracking-tighter text-secondaryBlack  font-GoogleSansMedium">Become a Troski Driver</Text>
+                        <Text className="text-base leading-tight tracking-tight text-secondaryBlack  font-GoogleSansRegular">Let&apos;s get you started.</Text>
                     </View>
 
                     <View className="w-full flex flex-col justify-center items-start gap-6 pt-8">
@@ -86,7 +87,7 @@ const Index = () => {
                             <View className="w-full flex flex-row  items-center gap-2">
                                 <Text
                                     style={{paddingLeft: 8, }}
-                                    className="text-base leading-none tracking-tight  text-secondaryBlack  font-GoogleSansMedium">Full Name
+                                    className="text-base leading-tight tracking-tight  text-secondaryBlack  font-GoogleSansMedium">Full Name
                                 </Text>
                                 <Ionicons name="star" size={6} color="red"/>
                             </View>
@@ -103,7 +104,7 @@ const Index = () => {
                             <View className="w-full flex flex-row  items-center gap-2">
                                 <Text
                                     style={{paddingLeft: 8, }}
-                                    className="text-base leading-none tracking-tight  text-secondaryBlack  font-GoogleSansMedium">Email
+                                    className="text-base leading-tight tracking-tight  text-secondaryBlack  font-GoogleSansMedium">Email
                                 </Text>
                                 <Ionicons name="star" size={6} color="red"/>
                             </View>
@@ -119,7 +120,7 @@ const Index = () => {
                             <View className="w-full flex flex-row  items-center gap-2">
                                 <Text
                                     style={{paddingLeft: 8, }}
-                                    className="text-base leading-none tracking-tight  text-secondaryBlack  font-GoogleSansMedium">Phone Number
+                                    className="text-base leading-tight tracking-tight  text-secondaryBlack  font-GoogleSansMedium">Phone Number
                                 </Text>
                                 <Ionicons name="star" size={6} color="red"/>
                             </View>
@@ -133,7 +134,7 @@ const Index = () => {
                             <View className="w-full flex flex-row  items-center gap-2">
                                 <Text
                                     style={{paddingLeft: 8, }}
-                                    className="text-base leading-none tracking-tight  text-secondaryBlack  font-GoogleSansMedium">City
+                                    className="text-base leading-tight tracking-tight  text-secondaryBlack  font-GoogleSansMedium">City
                                 </Text>
                                 <Ionicons name="star" size={6} color="red"/>
                             </View>
@@ -150,7 +151,7 @@ const Index = () => {
                                     <Ionicons name={termsCheckbox? "checkbox" : "square-outline"} size={16} color="black"/>
                             </TouchableOpacity>
 
-                            <Text className="text-sm leading-none text-secondaryBlack/50 text-left flex-shrink font-GoogleSansRegular">
+                            <Text className="text-sm leading-tight text-secondaryBlack/50 text-left flex-shrink font-GoogleSansRegular">
                                 By registering, you agree to our Terms of Service & Privacy Policy, comply with obligations.
                             </Text>
 
@@ -159,7 +160,7 @@ const Index = () => {
                         <View className="w-full flex flex-row gap-2 items-center">
                             <Ionicons name="notifications" size={16} color="black"/>
 
-                            <Text className="text-sm leading-none text-secondaryBlack/50 text-left flex-shrink font-GoogleSansRegular">
+                            <Text className="text-sm leading-tight text-secondaryBlack/50 text-left flex-shrink font-GoogleSansRegular">
                                 Once you become a Troski Driver, we will occasionally send you offers and promotions related to our services. You can always unsubscribe by changing your communication preferences.
                             </Text>
 

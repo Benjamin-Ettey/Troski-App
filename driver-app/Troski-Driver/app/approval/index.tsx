@@ -4,6 +4,7 @@ import {Ionicons} from "@expo/vector-icons";
 import {useRouter} from "expo-router";
 import PrimaryButton from "@/components/PrimaryButton";
 import SecondaryButton from "@/components/SecondaryButton";
+import {StatusBar} from "expo-status-bar";
 
 const Index = () => {
     const [ showModal, setShowModal ] = useState(true);
@@ -26,6 +27,7 @@ const Index = () => {
 
     return (
         <View className="flex-1  bg-general">
+            <StatusBar style="dark"/>
 
             <Modal visible={showModal} animationType="fade">
 

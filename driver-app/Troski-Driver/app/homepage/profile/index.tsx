@@ -1,5 +1,15 @@
-import {Image, ScrollView, Switch, Text, TouchableOpacity, View} from 'react-native'
-import React from 'react'
+import {
+    ActivityIndicator,
+    Image,
+    Modal,
+    Pressable,
+    ScrollView,
+    Switch,
+    Text,
+    TouchableOpacity,
+    View
+} from 'react-native'
+import React, {useState} from 'react'
 import {StatusBar} from "expo-status-bar";
 import {Ionicons} from "@expo/vector-icons";
 import NavBar from "@/components/NavBar";
@@ -7,6 +17,11 @@ import LogoutNavBar from "@/components/LogoutNavBar";
 import {useAppStore} from "@/utils/store";
 import {useRouter} from "expo-router";
 import * as ImagePicker from 'expo-image-picker'
+import LottieView from "lottie-react-native";
+import PrimaryButton from "@/components/PrimaryButton";
+import SecondaryButton from "@/components/SecondaryButton";
+import {AnimatedView} from "react-native-reanimated/src/component/View";
+import {FadeInDown} from "react-native-reanimated";
 
 
 
@@ -18,24 +33,43 @@ const Index = () => {
     const toggleDriverOnline = useAppStore((state) => state.toggleDriverOnline);
     const isOnline = useAppStore((state)=> state.isOnline);
 
+    const [showModal, setShowModal] = useState(false);
+    const [loading, setLoading] = useState(false);
+
+
     const router = useRouter();
 
     const handleImagePicker = async () => {
+        try {
+            setLoading(true);
 
-        const permission = await ImagePicker.requestMediaLibraryPermissionsAsync()
-        if (!permission.granted){
-            alert("Permission to access gallery is required!")
-            return
-        }
+            const permission =
+                await ImagePicker.requestMediaLibraryPermissionsAsync();
 
-        const result = await ImagePicker.launchImageLibraryAsync({
-            mediaTypes: ["images"],
-            quality: 1,
-            allowsEditing: true,
-        });
-        if (!result.canceled){
-            setDriverImage(result.assets[0].uri)
+            if (!permission.granted) {
+                alert("Permission to access gallery is required!");
+                return;
+            }
+
+            const result = await ImagePicker.launchImageLibraryAsync({
+                mediaTypes: ["images"],
+                quality: 1,
+                allowsEditing: true,
+            });
+
+            if (!result.canceled) {
+                setDriverImage(result.assets[0].uri);
+            }
+        } catch (error) {
+            console.log(error);
+        } finally {
+            setLoading(false);
         }
+    };
+
+    const handleContinue = ()=>{
+        setShowModal(false);
+        router.push("/homepage/profile/updateVehicle");
     }
 
     return (
@@ -66,8 +100,8 @@ const Index = () => {
 
 
                         <View className="w-full justify-start flex flex-col">
-                            <Text className="font-GoogleSansMedium text-base leading-5 text-secondaryBlack dark:text-general">{driverfullname}</Text>
-                            <Text className="text-sm leading-4 font-GoogleSansRegular text-secondaryBlack dark:text-tertiaryWhite">{driveremail}</Text>
+                            <Text className="font-GoogleSansMedium text-base leading-tight text-secondaryBlack ">{driverfullname}</Text>
+                            <Text className="text-sm leading-tight font-GoogleSansRegular text-secondaryBlack ">{driveremail}</Text>
                         </View>
                     </View>
 
@@ -85,20 +119,27 @@ const Index = () => {
 
                                 <View className="flex flex-col gap-2 flex-1">
 
-                                    <Text className="text-base leading-none flex-shrink text-secondaryGray font-GoogleSansMedium">
-                                        Please upload a profile photo
+                                    <Text className="text-base leading-tight flex-shrink text-secondaryGray font-GoogleSansMedium">
+                                        Please upload a Profile Photo
                                     </Text>
 
-                                    <Text className="text-sm leading-none flex-shrink text-secondaryGray font-GoogleSansRegular">
+                                    <Text className="text-sm leading-tight flex-shrink text-secondaryGray font-GoogleSansRegular">
                                         Passengers are more likely to trust and choose drivers whose identity can be clearly verified through a profile picture.
                                     </Text>
                                 </View>
                             </View>
 
 
-                            <TouchableOpacity onPress={handleImagePicker} style={{backgroundColor: "#22C55E"}} className="px-4 py-2 rounded-full justify-center items-center">
-                                <Text style={{color: "#BBF7D0"}} className="font-GoogleSansMedium  text-base">Upload Profile Photo</Text>
-                            </TouchableOpacity>
+                            {loading?
+                                <TouchableOpacity style={{backgroundColor: "#22C55E"}} className="px-4 py-2 rounded-full justify-center items-center">
+                                    <ActivityIndicator size="small" color="#ffffff"/>
+                                </TouchableOpacity>
+                                :
+                                <TouchableOpacity onPress={handleImagePicker} style={{backgroundColor: "#22C55E"}} className="px-4 py-2 rounded-full justify-center items-center">
+                                    <Text style={{color: "#BBF7D0"}} className="font-GoogleSansMedium  text-base">Upload Profile Photo</Text>
+                                </TouchableOpacity>
+                            }
+
                         </View>
                     </View>
                     : null
@@ -117,7 +158,7 @@ const Index = () => {
                             <View className="flex-row items-center gap-4">
                                 <Ionicons name="power" size={18} color="black" />
                                 <Text className="text-base font-GoogleSansMedium">
-                                    Go online
+                                    Go Online
                                 </Text>
                             </View>
 
@@ -137,15 +178,15 @@ const Index = () => {
                     <View
                         style={{backgroundColor: "#ffffff"}}
                         className="w-full rounded-full">
-                        <NavBar onPress={()=> router.push("/homepage/profile/editProfile")} name="person" textcolor="#444444" color="#444444" goforwardcolor="gray" title="Edit profile"/>
+                        <NavBar onPress={()=> router.push("/homepage/profile/editProfile")} name="person" textcolor="#444444" color="#444444" goforwardcolor="gray" title="Edit Profile"/>
                     </View>
 
                     <View
                         style={{backgroundColor: "#ffffff"}}
                         className="w-full rounded-3xl">
-                        <NavBar onPress={()=>router.push("/homepage/profile/rideHistory")} name="bus" title="Ride history" textcolor="#444444" color="#444444" goforwardcolor="gray"/>
+                        <NavBar onPress={()=>router.push("/homepage/profile/rideHistory")} name="bus" title="Ride History" textcolor="#444444" color="#444444" goforwardcolor="gray"/>
                         <View style={{width: "100%", height: 1, backgroundColor: "#e4e4e477"}} />
-                        <NavBar onPress={()=>router.push("/homepage/profile/myWallet")} name="wallet" title="My wallet" textcolor="#444444" color="#444444" goforwardcolor="gray"/>
+                        <NavBar onPress={()=>router.push("/homepage/profile/myWallet")} name="wallet" title="My Wallet" textcolor="#444444" color="#444444" goforwardcolor="gray"/>
 
                     </View>
 
@@ -161,7 +202,7 @@ const Index = () => {
                     <View
                         style={{backgroundColor: "#ffffff"}}
                         className="w-full rounded-full">
-                        <NavBar onPress={()=>router.push("/homepage/profile/recentEmails")} name="mail-unread" textcolor="#444444" color="#444444" title="Recent emails" goforwardcolor="gray"/>
+                        <NavBar onPress={()=>router.push("/homepage/profile/recentEmails")} name="mail-unread" textcolor="#444444" color="#444444" title="Recent Emails" goforwardcolor="gray"/>
                     </View>
 
                     <View className="w-full  justify-center items-center ">
@@ -172,18 +213,18 @@ const Index = () => {
 
                                 <View className="flex flex-col gap-2 flex-1">
 
-                                    <Text style={{}} className="text-base leading-none text-yellow-100 flex-shrink font-GoogleSansMedium">
+                                    <Text style={{}} className="text-base leading-tight text-yellow-100 flex-shrink font-GoogleSansMedium">
                                         Register a New Vehicle
                                     </Text>
 
-                                    <Text className="text-sm leading-none flex-shrink text-tertiaryWhite font-GoogleSansRegular">
+                                    <Text className="text-sm leading-tight flex-shrink text-tertiaryWhite font-GoogleSansRegular">
                                         If you&apos;ve recently changed vehicles, submit your new vehicle information for verification. Once approved, you&apos;ll be able to use it for trips.
                                     </Text>
                                 </View>
                             </View>
 
 
-                            <TouchableOpacity onPress={()=>router.push("/")} className="px-4 py-2 bg-general rounded-full justify-center items-center">
+                            <TouchableOpacity onPress={()=>setShowModal(true)} className="px-4 py-2 bg-general rounded-full justify-center items-center">
                                 <Text className="font-GoogleSansMedium text-secondaryBlack  text-base">Register New Vehicle</Text>
                             </TouchableOpacity>
                         </View>
@@ -202,6 +243,70 @@ const Index = () => {
 
 
             </ScrollView>
+
+            <Modal
+                transparent
+                visible={showModal}
+                animationType="fade"
+                onRequestClose={()=>setShowModal(false)}
+            >
+                <Pressable
+                    onPress={()=>setShowModal(false)}
+                    style={{
+                        flex: 1,
+                        backgroundColor: "rgba(0,0,0,0.5)",
+                        justifyContent: "center",
+                        alignItems: "center",
+                    }}
+                >
+
+                    <AnimatedView
+                        entering={FadeInDown.duration(300)}
+                        className="w-full h-[480px] rounded-t-3xl bg-general items-center flex flex-col absolute bottom-0 px-4">
+
+                        <View className="w-full top-4 items-end absolute">
+                            <TouchableOpacity
+                                onPress={()=>setShowModal(false)}
+                                className="p-0.5 rounded-full bg-tertiaryGray/50">
+                                <Ionicons name="close" size={24} color="black"/>
+                            </TouchableOpacity>
+                        </View>
+
+                        <LottieView
+                            source={require("../../../assets/video/newvehicle.json")}
+                            autoPlay
+                            loop
+                            style={{width: 200, height: 200}}
+                        />
+
+                        <Text className="mb-5 font-GoogleSansRegular text-sm leading-tight text-secondaryBlack text-center flex-shrink">
+                            Bought a <Text className="font-GoogleSansMedium">new vehicle</Text> or <Text className="font-GoogleSansMedium">updated</Text> your vehicle details?
+                            Submit a vehicle update request. You&apos;ll be temporarily logged out while we verify the changes and can log back in once your vehicle is approved.
+                        </Text>
+
+                        <Text className="mb-5 font-GoogleSansRegular text-sm leading-tight text-secondaryBlack text-center flex-shrink">
+                            Tap <Text className="font-GoogleSansMedium">Continue</Text> to proceed or <Text className="font-GoogleSansMedium">Contact support</Text> for assistance.
+                        </Text>
+
+                        <View className="w-full flex flex-col gap-3 justify-center bottom-10 absolute items-center">
+                            <PrimaryButton
+                                name="Continue"
+                                onPress={handleContinue}
+                                isDisabled={false}
+                            />
+                            <SecondaryButton
+                                title="Call customer care"
+                                onPress={()=>router.push("/")}
+
+                            />
+                        </View>
+
+
+                    </AnimatedView>
+
+                </Pressable>
+
+            </Modal>
         </View>
     )
 }

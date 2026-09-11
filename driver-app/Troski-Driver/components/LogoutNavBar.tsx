@@ -38,7 +38,7 @@ const LogoutNavBar = ({name, title} : any) => {
             <View className="flex flex-row justify-center items-center gap-4">
                 <Ionicons name={name} size={18} color="#dc2626"/>
                 <Text
-                    className="font-GoogleSansMedium text-red-600 text-base leading-5">{title}</Text>
+                    className="font-GoogleSansMedium text-red-600 text-base leading-tight">{title}</Text>
             </View>
 
             <Ionicons name="chevron-forward" size={18} color="#dc2626"/>

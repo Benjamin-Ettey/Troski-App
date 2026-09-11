@@ -20,9 +20,11 @@ const VerificationChecklist = () => {
 
     return (
 
-        <SafeAreaView className="flex-1 bg-general ">
-            <StatusBar style="light"/>
-            <Modal visible={showChecklist} animationType="fade">
+
+        <View className="flex-1 bg-general ">
+            <Modal statusBarTranslucent visible={showChecklist} animationType="fade">
+                <StatusBar style="light"/>
+
                 <View style={{flex: 1}}>
 
 
@@ -53,9 +55,9 @@ const VerificationChecklist = () => {
                 />
 
 
-                <View className="absolute top-2 left-2 px-6">
+                <View className="absolute bottom-12 top-2 left-2 px-6">
 
-                    <View className="mt-12">
+                    <View className=" pl-2 absolute mt-12">
                         <TouchableOpacity onPress={handleShowChecklist} style={{width: 42, height: 42}} className=" p-2 justify-center items-center bg-tertiaryWhite rounded-full" >
                             <Ionicons name="close" size={24} color="black"/>
                         </TouchableOpacity>
@@ -65,8 +67,8 @@ const VerificationChecklist = () => {
                     <AnimatedView
                         entering={FadeInUp.delay(200).duration(700)}
                         className="mt-96 gap-2">
-                        <Text className="text-3xl leading-none tracking-tighter text-general  font-GoogleSansMedium">Complete your registration to start driving</Text>
-                        <Text className="text-base leading-none tracking-tight text-general  font-GoogleSansRegular">You are almost ready to start driving.</Text>
+                        <Text className="text-3xl leading-tight tracking-tighter text-general  font-GoogleSansMedium">Complete your registration to start driving</Text>
+                        <Text className="text-base leading-tight tracking-tight text-general  font-GoogleSansRegular">You are almost ready to start driving.</Text>
 
                     </AnimatedView>
 
@@ -77,7 +79,7 @@ const VerificationChecklist = () => {
                             entering={FadeInUp.delay(200).duration(700)}
                             className="w-full flex flex-row justify-start items-end gap-2">
                             <Ionicons name="checkbox" size={16} color="#ffcc00"/>
-                            <Text className="text-base leading-none tracking-tight text-general  font-GoogleSansRegular">
+                            <Text className="text-base leading-tight tracking-tight text-general  font-GoogleSansRegular">
                                 Phone number verified
                             </Text>
 
@@ -87,7 +89,7 @@ const VerificationChecklist = () => {
                             entering={FadeInUp.delay(300).duration(700)}
                             className="w-full flex flex-row justify-start items-end gap-2">
                             <Ionicons name="checkbox" size={16} color="#ffcc00"/>
-                            <Text className="text-base leading-none tracking-tight text-general  font-GoogleSansRegular">
+                            <Text className="text-base leading-tight tracking-tight text-general  font-GoogleSansRegular">
                                 Email added
                             </Text>
 
@@ -97,7 +99,7 @@ const VerificationChecklist = () => {
                             entering={FadeInUp.delay(400).duration(700)}
                             className="w-full flex flex-row justify-start items-end gap-2">
                             <Ionicons name="checkbox" size={16} color="#ffcc00"/>
-                            <Text className="text-base leading-none tracking-tight text-general  font-GoogleSansRegular">
+                            <Text className="text-base leading-tight tracking-tight text-general  font-GoogleSansRegular">
                                 Identity verification
                             </Text>
 
@@ -107,7 +109,7 @@ const VerificationChecklist = () => {
                             entering={FadeInUp.delay(500).duration(700)}
                             className="w-full flex flex-row justify-start items-end gap-2">
                             <Ionicons name="close-circle" size={16} color="#ffffff"/>
-                            <Text className="text-base leading-none tracking-tight text-general  font-GoogleSansRegular">
+                            <Text className="text-base leading-tight tracking-tight text-general  font-GoogleSansRegular">
                                 Vehicle details
                             </Text>
 
@@ -117,7 +119,7 @@ const VerificationChecklist = () => {
                             entering={FadeInUp.delay(600).duration(700)}
                             className="w-full flex flex-row justify-start items-end gap-2">
                             <Ionicons name="close-circle" size={16} color="#ffffff"/>
-                            <Text className="text-base leading-none tracking-tight text-general  font-GoogleSansRegular">
+                            <Text className="text-base leading-tight tracking-tight text-general  font-GoogleSansRegular">
                                 Vehicle documents
                             </Text>
 
@@ -127,7 +129,7 @@ const VerificationChecklist = () => {
                             entering={FadeInUp.delay(700).duration(700)}
                             className="w-full flex flex-row justify-start items-end gap-2">
                             <Ionicons name="close-circle" size={16} color="#ffffff"/>
-                            <Text className="text-base leading-none tracking-tight text-general  font-GoogleSansRegular">
+                            <Text className="text-base leading-tight tracking-tight text-general  font-GoogleSansRegular">
                                 Route preference
                             </Text>
 
@@ -137,7 +139,7 @@ const VerificationChecklist = () => {
                             entering={FadeInUp.delay(800).duration(700)}
                             className="w-full flex flex-row justify-start items-end gap-2">
                             <Ionicons name="close-circle" size={16} color="#ffffff"/>
-                            <Text className="text-base leading-none tracking-tight text-general  font-GoogleSansRegular">
+                            <Text className="text-base leading-tight tracking-tight text-general  font-GoogleSansRegular">
                                 Setup payment
                             </Text>
 
@@ -159,7 +161,7 @@ const VerificationChecklist = () => {
 
                 </View>
             </Modal>
-        </SafeAreaView>
+        </View>
 
 
     )

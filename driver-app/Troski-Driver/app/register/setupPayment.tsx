@@ -52,12 +52,12 @@ const SetupPayment = () => {
                 <View className="w-full flex-1 flex items-center px-6">
 
                     {/* HEADER */}
-                    <View className="w-full py-6 flex-col gap-2">
-                        <Text className="text-3xl leading-none tracking-tighter text-secondaryBlack font-GoogleSansMedium">
+                    <View className="w-full py-4 flex-col gap-2">
+                        <Text className="text-3xl leading-tight tracking-tighter text-secondaryBlack font-GoogleSansMedium">
                             Setup payment
                         </Text>
 
-                        <Text className="text-sm leading-none text-secondaryGray font-GoogleSansRegular">
+                        <Text className="text-sm leading-tight text-secondaryGray font-GoogleSansRegular">
                             Add your payment details to receive earnings from rides.
                         </Text>
                     </View>
@@ -69,7 +69,7 @@ const SetupPayment = () => {
                         <View className="w-full gap-2">
 
                             <View className="w-full flex flex-row items-center gap-2">
-                                <Text className="text-base leading-none tracking-tight text-secondaryBlack font-GoogleSansMedium">
+                                <Text className="text-base leading-tight tracking-tight text-secondaryBlack font-GoogleSansMedium">
                                     Mobile money number
                                 </Text>
                                 <Ionicons name="star" size={6} color="red" />
@@ -80,6 +80,7 @@ const SetupPayment = () => {
                                 onChangeText={setMobileMoneyNumber}
                                 placeholder="Enter mobile money number"
                                 keyboardType="number-pad"
+                                autoFocus
                             />
 
                         </View>
@@ -88,10 +89,10 @@ const SetupPayment = () => {
                         <View className="w-full gap-2">
 
                             <View className="w-full flex flex-row items-center gap-2">
-                                <Text className="text-base leading-none tracking-tight text-secondaryBlack font-GoogleSansMedium">
+                                <Text className="text-base leading-tight tracking-tight text-secondaryBlack font-GoogleSansMedium">
                                     Bank account number
                                 </Text>
-                                <Text className="text-xs text-secondaryGray font-GoogleSansRegular">
+                                <Text className="text-xs leading-tight text-secondaryGray font-GoogleSansRegular">
                                     (Optional)
                                 </Text>
                             </View>
@@ -109,10 +110,10 @@ const SetupPayment = () => {
                         <View className="w-full gap-2">
 
                             <View className="w-full flex flex-row items-center gap-2">
-                                <Text className="text-base leading-none tracking-tight text-secondaryBlack font-GoogleSansMedium">
+                                <Text className="text-base leading-tight tracking-tight text-secondaryBlack font-GoogleSansMedium">
                                     Account name
                                 </Text>
-                                <Text className="text-xs text-secondaryGray font-GoogleSansRegular">
+                                <Text className="text-xs leading-tight text-secondaryGray font-GoogleSansRegular">
                                     (Optional)
                                 </Text>
                             </View>
@@ -130,11 +131,11 @@ const SetupPayment = () => {
 
                             {isDisabled ?
                                 <DisabledPrimaryButton
-                                    name="Continue"
+                                    name="Complete Registration"
                                 />
                                 :
                                 <PrimaryButton
-                                    name="Continue"
+                                    name="Complete Registration"
                                     onPress={handleSetupPayment}
                                     disabled={isDisabled}
                                 />
@@ -146,7 +147,8 @@ const SetupPayment = () => {
 
                 </View>
 
-                <Modal visible={showLoading} animationType="fade">
+                <Modal statusBarTranslucent visible={showLoading} animationType="fade">
+                    <StatusBar style="dark"/>
                     <View className="flex-1 flex-col w-full justify-center items-center bg-general">
                         <LottieView
                             source={require("../../assets/video/loading.json")}

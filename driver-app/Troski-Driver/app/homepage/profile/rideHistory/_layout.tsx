@@ -26,7 +26,7 @@ const RideHistoryRoute = () => {
                                     headerTintColor: "#000000",
                                     headerTitleAlign: "center",
 
-                                    headerTitle: 'Ride history',
+                                    headerTitle: 'Ride History',
                                     headerLeft: ()=>(
                                         <TouchableOpacity onPress={()=>router.back()} style={{display: "flex", justifyContent: "center", alignItems: "center"}}>
                                             <Ionicons name="chevron-back" size={30} color="black"/>

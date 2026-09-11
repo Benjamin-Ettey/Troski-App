@@ -22,26 +22,26 @@ const EmailInput = ({value, onChangeText}: Props) => {
 
         <View className="flex-col">
 
-            <View className={`w-full h-14 bg-tertiaryGray/10 flex-row items-center rounded-2xl px-4 ${
+            <View className={`w-full h-14 bg-tertiaryGray/10 flex-row items-center rounded-2xl  ${
                 error ? "border border-red-600" : "focus:border focus:border-green-600"
             }`}>
             <TextInput
                 value={value}
                 onChangeText={onChangeText}
-                style={{paddingLeft: 4, textAlign: "left", fontSize: 16}}
+                style={{paddingLeft: 14, textAlign: "left", fontSize: 16}}
                 keyboardType="email-address"
-                autoComplete="email"
                 autoCapitalize="none"
                 autoFocus={false}
                 placeholder="Enter your email address"
-                className="text-secondaryBlack w-full "
+                placeholderTextColor="#9CA3AF"
+                className="text-secondaryBlack flex-1 p-3 "
             />
             </View>
 
             { error?
                 <Text
                     style={{paddingLeft: 8}}
-                    className="text-xs leading-none text-red-600 mt-2">{error}
+                    className="text-xs leading-tight text-red-600 mt-2">{error}
                 </Text>
                 : null
             }

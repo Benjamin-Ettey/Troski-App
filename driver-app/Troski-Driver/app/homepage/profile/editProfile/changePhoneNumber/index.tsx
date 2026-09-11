@@ -17,8 +17,8 @@ const Index = () => {
             </View>
 
             <View className="w-full px-7 flex-1 flex flex-col ">
-                <Text className="mb-5 font-GoogleSansRegular text-secondaryBlack text-center flex-shrink">Use Change Phone number to migrate your account info and settings from your current phone number to a new phone number. You can&apos;t undo this change.</Text>
-                <Text className="font-GoogleSansRegular text-secondaryBlack text-center flex-shrink">To proceed, confirm that your new phone number can receive SMS or calls and tap Next to verify that number.</Text>
+                <Text className="mb-5 font-GoogleSansRegular text-base leading-tight text-secondaryBlack text-center flex-shrink">Use Change Phone number to migrate your account info and settings from your current phone number to a new phone number. You can&apos;t undo this change.</Text>
+                <Text className="font-GoogleSansRegular text-base leading-tight text-secondaryBlack text-center flex-shrink">To proceed, confirm that your new phone number can receive SMS or calls and tap Next to verify that number.</Text>
 
             </View>
 

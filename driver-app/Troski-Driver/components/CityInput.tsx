@@ -45,19 +45,19 @@ const CityInput = ({ value, onChangeText }: Props) => {
         <View className="flex-col relative">
             {/* Input */}
             <View
-                className={`h-14 w-full bg-tertiaryGray/10 flex-row items-center rounded-2xl px-4 ${
+                className={`h-14 w-full bg-tertiaryGray/10 flex-row items-center rounded-2xl  ${
                     error ? "border border-red-600" : ""
                 }`}
             >
                 <TextInput
                     value={value}
                     onChangeText={onChangeText}
-                    style={{paddingLeft: 4, textAlign: "left", fontSize: 16}}
+                    style={{paddingLeft: 14, textAlign: "left", fontSize: 16}}
                     placeholder="Enter your city"
                     placeholderTextColor="#9CA3AF"
                     autoCapitalize="words"
                     textAlignVertical="center"
-                    className="w-full text-secondaryBlack"
+                    className="flex-1 p-3 text-secondaryBlack"
                     onFocus={() => setFocused(true)}
                 />
             </View>
@@ -76,7 +76,7 @@ const CityInput = ({ value, onChangeText }: Props) => {
                                     setFocused(false);
                                 }}
                             >
-                                <Text className="text-base text-secondaryBlack">
+                                <Text className="text-base leading-tight text-secondaryBlack">
                                     {item}
                                 </Text>
                             </TouchableOpacity>
@@ -89,7 +89,7 @@ const CityInput = ({ value, onChangeText }: Props) => {
             {error ? (
                 <Text
                     style={{ paddingLeft: 8 }}
-                    className="text-xs leading-none text-red-600 mt-2"
+                    className="text-xs leading-tight text-red-600 mt-2"
                 >
                     {error}
                 </Text>

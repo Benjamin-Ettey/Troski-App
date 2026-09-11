@@ -78,12 +78,12 @@ const OTPChangePhoneNumber = () => {
 
                         <View className="w-full flex-1 flex items-center px-6">
                             <View className="w-full mb-4">
-                                <Text className="text-2xl leading-7 font-GoogleSansMedium tracking-tight ">Enter OTP</Text>
+                                <Text className="text-2xl leading-tight font-GoogleSansMedium tracking-tight ">Enter OTP</Text>
                                 {via?
-                                    <Text className="text-sm leading-5 font-GoogleSansRegular ">Type in the 6-digit verification sent to <Text className="font-GoogleSansBold">{drivernumber}</Text> in the
+                                    <Text className="text-sm leading-tight font-GoogleSansRegular ">Type in the 6-digit verification sent to <Text className="font-GoogleSansBold">{drivernumber}</Text> in the
                                         field provided.</Text>
                                     :
-                                    <Text className="text-sm leading-5 font-GoogleSansRegular ">Type in the 6-digit verification sent to <Text className="font-GoogleSansMedium">{driveremail}</Text> in the
+                                    <Text className="text-sm leading-tight font-GoogleSansRegular ">Type in the 6-digit verification sent to <Text className="font-GoogleSansMedium">{driveremail}</Text> in the
                                         field provided.</Text>
                                 }
 
@@ -108,7 +108,7 @@ const OTPChangePhoneNumber = () => {
                                     <Ionicons name="lock-closed" size={10} color="gray" style={{marginRight: "2%"}}
                                               className=""/>
                                     <Text
-                                        className="text-sm leading-5 flex-shrink  font-GoogleSansRegular ">Do not share this PIN code
+                                        className="text-sm leading-tight flex-shrink  font-GoogleSansRegular ">Do not share this PIN code
                                         with anyone. </Text>
                                 </View>
 
@@ -119,20 +119,20 @@ const OTPChangePhoneNumber = () => {
                             <View className="flex flex-col gap-2 justify-center items-center w-full mt-4">
                                 {seconds > 0 ?
                                     <View className="flex flex-row justify-center items-center">
-                                        <Text className="font-GoogleSansMedium text-base leading-5 ">Send another code: {seconds}</Text>
+                                        <Text className="font-GoogleSansMedium text-base leading-tight ">Send another code: {seconds}</Text>
                                     </View>
                                     :
                                     <>
                                         <TouchableOpacity
                                             onPress={resendCode}
                                             className="flex flex-row mb-3 justify-center items-center">
-                                            <Text className="font-GoogleSansBold text-base leading-5 text-yellow-500">Resend code</Text>
+                                            <Text className="font-GoogleSansBold text-base leading-tight text-yellow-500">Resend code</Text>
                                         </TouchableOpacity>
 
                                         <TouchableOpacity
                                             onPress={handleEmailCode}
                                             className="flex flex-row justify-center px-2 py-1 items-center  rounded-full border border-black">
-                                            <Text className="font-GoogleSansBold  text-base leading-5 text-secondaryBlack ">Send code via email</Text>
+                                            <Text className="font-GoogleSansBold  text-base leading-tight text-secondaryBlack ">Send code via email</Text>
                                         </TouchableOpacity>
 
                                     </>

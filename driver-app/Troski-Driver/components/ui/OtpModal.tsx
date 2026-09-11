@@ -11,7 +11,7 @@ const OtpModal = () => {
     useEffect(() => {
         const timer = setTimeout(()=>{
 
-            router.replace("/")
+            router.replace("/homepage")
         }, 3000)
 
         return () => clearTimeout(timer);
@@ -23,7 +23,7 @@ const OtpModal = () => {
             animationType="fade"
             className="relative flex-1 w-full bg-general"
         >
-            <StatusBar style="dark" />
+            <StatusBar style="dark"/>
             <View
                 style={{height: "100%", bottom: 0, borderTopRightRadius: 32, borderTopLeftRadius: 32}}
                 className="bg-general  w-full absolute ">
@@ -42,9 +42,9 @@ const OtpModal = () => {
                         <View
                             style={{marginTop: "50%"}}
                             className="w-full flex justify-center items-center absolute">
-                            <Text className="text-xl leading-none font-GoogleSansMedium mb-2 ">Verification Successful!</Text>
-                            <Text className="text-sm leading-none font-GoogleSansRegular ">Please be patient...</Text>
-                            <Text className="text-sm leading-none font-GoogleSansRegular ">You will be redirected to the homepage.</Text>
+                            <Text className="text-xl leading-tight font-GoogleSansMedium mb-2 ">Verification Successful!</Text>
+                            <Text className="text-sm leading-tight font-GoogleSansRegular ">Please be patient...</Text>
+                            <Text className="text-sm leading-tight font-GoogleSansRegular ">You will be redirected to the homepage.</Text>
                         </View>
 
 

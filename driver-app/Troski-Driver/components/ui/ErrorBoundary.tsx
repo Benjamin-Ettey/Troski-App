@@ -68,12 +68,12 @@ export class ErrorBoundary extends React.Component<Props, State> {
                 <View
                     className="flex-1 justify-center items-center px-6 bg-general"
                 >
-                    <Text className="text-secondaryBlack font-GoogleSansBold text-lg leading-none">
+                    <Text className="text-secondaryBlack font-GoogleSansBold text-lg leading-tight">
                         Something went wrong
                     </Text>
 
                     <Text
-                        className="text-center text-base leading-none mt-2 font-GoogleSansRegular text-tertiaryGray"
+                        className="text-center text-base leading-tight mt-2 font-GoogleSansRegular text-tertiaryGray"
                     >
                         An unexpected error occurred. Check your internet connection and try again.
                     </Text>
@@ -84,7 +84,7 @@ export class ErrorBoundary extends React.Component<Props, State> {
                             onPress={this.handleRetry}
                             className="w-[80%] bg-primary flex justify-center rounded-full items-center"
                         >
-                            <Text className="text-secondaryBlack font-GoogleSansBold text-base leading-none">
+                            <Text className="text-secondaryBlack font-GoogleSansBold text-base leading-tight">
                                 Retry
                             </Text>
                         </TouchableOpacity>
