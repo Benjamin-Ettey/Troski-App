@@ -15,13 +15,13 @@ const PhoneNumberInput = ({ value, onChangeText }: Props) => {
     return (
         <View className="flex-col">
             <View
-                className={`w-full h-14 bg-tertiaryGray/10 flex-row items-center rounded-2xl px-4 ${
+                className={`w-full h-14 bg-tertiaryGray/10 flex-row items-center rounded-2xl ${
                     error ? "border border-red-600" : "focus:border focus:border-green-600"
                 }`}
             >
                 {/* Ghana Code */}
                 <View className="flex-row items-center pr-3 mr-3 border-r border-gray-300">
-                    <Text className="text-lg font-GoogleSansRegular text-black">
+                    <Text style={{paddingLeft: 12}} className="text-lg leading-tight font-GoogleSansRegular text-black">
                         🇬🇭 +233
                     </Text>
                 </View>
@@ -30,11 +30,11 @@ const PhoneNumberInput = ({ value, onChangeText }: Props) => {
                 <TextInput
                     value={value}
                     onChangeText={onChangeText}
-                    style={{paddingLeft: 4, textAlign: "left", fontSize: 16}}
+                    style={{paddingLeft: 14, textAlign: "left", fontSize: 16}}
                     keyboardType="phone-pad"
                     autoFocus={false}
                     placeholder="50 352 4779"
-                    className="  text-secondaryBlack w-full"
+                    className="  text-secondaryBlack flex-1 p-3 "
                     placeholderTextColor="#9CA3AF"
                     textAlignVertical="center"
                     maxLength={9}
@@ -44,7 +44,7 @@ const PhoneNumberInput = ({ value, onChangeText }: Props) => {
             {error ? (
                 <Text
                     style={{ paddingLeft: 8 }}
-                    className="text-xs leading-none text-red-600 mt-2"
+                    className="text-xs leading-tight text-red-600 mt-2"
                 >
                     {error}
                 </Text>

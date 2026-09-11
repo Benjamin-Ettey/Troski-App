@@ -6,12 +6,12 @@ const NotFound = () => {
     const router = useRouter();
 
     return (
-        <View className="flex-1 justify-center items-center px-6 bg-general gap-2 dark:bg-secondaryBlack">
-            <Text className="text-2xl font-GoogleSansBold text-secondaryBlack dark:text-general">
+        <View className="flex-1 justify-center items-center px-6 bg-general gap-2 ">
+            <Text className="text-2xl leading-tight font-GoogleSansBold text-secondaryBlack">
                 Page not found
             </Text>
 
-            <Text className="text-center text-sm font-GoogleSansRegular text-secondaryGray dark:text-tertiaryGray">
+            <Text className="text-center text-sm leading-tight font-GoogleSansRegular text-secondaryGray">
                 The screen you’re looking for doesn’t exist.
             </Text>
 
@@ -26,7 +26,7 @@ const NotFound = () => {
                 style={{ paddingHorizontal: 16, paddingVertical: 12 }}
                 className="mt-3 bg-primary rounded-full"
             >
-                <Text className="text-secondaryBlack text-base leading-none font-GoogleSansBold">
+                <Text className="text-secondaryBlack text-base leading-tight font-GoogleSansBold">
                     Go back
                 </Text>
             </TouchableOpacity>

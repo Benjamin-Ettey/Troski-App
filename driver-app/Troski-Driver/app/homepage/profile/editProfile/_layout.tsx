@@ -25,7 +25,7 @@ const EditProfileRoute = () => {
                                     },
                                     headerTintColor: "#000000",
                                     headerTitleAlign: "center",
-                                    headerTitle: 'Edit profile',
+                                    headerTitle: 'Edit Profile',
                                     headerLeft: ()=>(
                                         <TouchableOpacity onPress={()=>router.back()} style={{display: "flex", justifyContent: "center", alignItems: "center"}}>
                                             <Ionicons name="chevron-back" size={30} color="black"/>

@@ -19,7 +19,7 @@ const RecentEmailRoute = () => {
                        },
                        headerTintColor: "#000000",
                        headerTitleAlign: "center",
-                       headerTitle: 'Recent emails',
+                       headerTitle: 'Recent Emails',
                        headerLeft: ()=>(
                            <TouchableOpacity onPress={()=>router.back()} style={{display: "flex", justifyContent: "center", alignItems: "center"}}>
                                <Ionicons name="chevron-back" size={30} color="black"/>

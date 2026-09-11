@@ -40,6 +40,12 @@ export default function RoutePreferences() {
 
                 <View className="w-full flex-1 flex items-center px-6 mt-4">
 
+                    <View className="w-full mb-10 flex-col gap-2">
+                        <Text className="text-3xl leading-tight tracking-tighter text-secondaryBlack  font-GoogleSansMedium">Set your route preferences</Text>
+                        <Text className="text-sm leading-tight  text-secondaryGray  font-GoogleSansRegular">
+                            Add the routes you regularly operate or prefer to drive. You can add multiple routes to help us match you with suitable trips.                        </Text>
+                    </View>
+
                     {routes.map((route: any, index: number) => (
                         <View
                             key={index}
@@ -48,7 +54,7 @@ export default function RoutePreferences() {
                             <View className="flex-1 mr-2">
                                 <Text
                                     style={{ marginLeft: 12 }}
-                                    className="text-base font-GoogleSansMedium mb-1"
+                                    className="text-base leading-tight font-GoogleSansMedium mb-1"
                                 >
                                     From
                                 </Text>
@@ -81,7 +87,7 @@ export default function RoutePreferences() {
                             <View className="flex-1">
                                 <Text
                                     style={{ marginLeft: 12 }}
-                                    className="text-base font-GoogleSansMedium mb-1"
+                                    className="text-base leading-tight font-GoogleSansMedium mb-1"
                                 >
                                     To
                                 </Text>

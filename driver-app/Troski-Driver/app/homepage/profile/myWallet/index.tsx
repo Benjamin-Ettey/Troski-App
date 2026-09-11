@@ -70,7 +70,7 @@ const Index = () => {
                       className="rounded-full mb-3 px-3 py-2 bg-secondaryBlack flex flex-row justify-center items-center">
                     <Ionicons className="mr-2" name="wallet-outline" size={16} color="white"/>
                     <Text
-                        className="text-base leading-5 font-GoogleSansMedium  text-general text-center flex-shrink ">Total Balance</Text>
+                        className="text-base leading-tight font-GoogleSansMedium  text-general text-center flex-shrink ">Total Balance</Text>
                 </View>
 
                 <Text
@@ -85,7 +85,7 @@ const Index = () => {
                             >
                             <Ionicons name="add-circle-outline" size={32}/>
                         </TouchableOpacity>
-                        <Text className="font-GoogleSansMedium text-base leading-5 text-center flex-shrink text-secondaryBlack">Deposit</Text>
+                        <Text className="font-GoogleSansMedium text-base leading-tight text-center flex-shrink text-secondaryBlack">Deposit</Text>
                     </View>
                     <View>
                         <TouchableOpacity
@@ -94,7 +94,7 @@ const Index = () => {
                             >
                             <Ionicons name="cash-outline" size={32}/>
                         </TouchableOpacity>
-                        <Text className="font-GoogleSansMedium text-base leading-5 text-center flex-shrink text-secondaryBlack">Withdraw</Text>
+                        <Text className="font-GoogleSansMedium text-base leading-tight text-center flex-shrink text-secondaryBlack">Withdraw</Text>
 
                     </View>
                 </View>
@@ -102,7 +102,7 @@ const Index = () => {
 
 
             <View style={{paddingLeft: 20}} className="w-full flex flex-row justify-between  items-center">
-                <Text className="font-GoogleSansMedium text-lg leading-5 text-secondaryBlack">Transaction History</Text>
+                <Text className="font-GoogleSansMedium text-lg leading-tight text-secondaryBlack">Transaction History</Text>
                 <View style={{height: 1, width: "50%"}} className="bg-tertiaryGray "/>
             </View>
 
@@ -110,8 +110,8 @@ const Index = () => {
                 {showRideHistory?
                     <View className="w-full flex flex-1 justify-center items-center">
                         <Ionicons className="mb-3" name="list-outline" size={100} color="gray"/>
-                        <Text className="font-GoogleSansMedium text-xl leading-6 tracking-tighter text-secondaryBlack">No Transaction History</Text>
-                        <Text style={{marginBottom: 16}} className="font-GoogleSansRegular text-sm leading-4 text-center flex-shrink text-secondaryBlack">Your transaction history will appear here.</Text>
+                        <Text className="font-GoogleSansMedium text-xl leading-tight tracking-tighter text-secondaryBlack">No Transaction History</Text>
+                        <Text style={{marginBottom: 16}} className="font-GoogleSansRegular text-sm leading-tight text-center flex-shrink text-secondaryBlack">Your transaction history will appear here.</Text>
 
 
                     </View>
@@ -126,7 +126,7 @@ const Index = () => {
                                 renderSectionHeader={({section})=>{
                                     return(
                                         <View >
-                                            <Text className="font-GoogleSansMedium mt-8 text-xl leading-6 text-secondaryBlack">{section.date}</Text>
+                                            <Text className="font-GoogleSansMedium mt-8 text-xl leading-tight text-secondaryBlack">{section.date}</Text>
                                         </View>
                                     )
                                 }}
@@ -146,20 +146,20 @@ const Index = () => {
                                                 <View
                                                     className="flex gap-1 w-48 flex-col justify-center items-center ">
                                                     <View className="flex w-full flex-row justify-start items-center gap-2">
-                                                        <Text numberOfLines={1} className="text-xl max-w-24 leading-5 font-GoogleSansRegular text-secondaryBlack">
+                                                        <Text numberOfLines={1} className="text-xl max-w-24 leading-tight font-GoogleSansRegular text-secondaryBlack">
                                                             {item.from}
                                                         </Text>
 
                                                         <Ionicons name="arrow-forward" size={12} color= "black"/>
 
-                                                        <Text numberOfLines={1} className="text-xl max-w-24 leading-5 font-GoogleSansRegular text-secondaryBlack">
+                                                        <Text numberOfLines={1} className="text-xl max-w-24 leading-tight font-GoogleSansRegular text-secondaryBlack">
                                                             {item.to}
                                                         </Text>
                                                     </View>
 
                                                     <View className="flex w-full flex-row gap-2 justify-start items-center ">
                                                         <Text
-                                                            className=" text-secondaryBlack text-sm leading-4 font-GoogleSansRegular rounded-full">{item.date}</Text>
+                                                            className=" text-secondaryBlack text-sm leading-tight font-GoogleSansRegular rounded-full">{item.date}</Text>
 
 
                                                     </View>
@@ -167,7 +167,7 @@ const Index = () => {
 
                                                 <View
                                                     className="rounded-full px-3 h-9 bg-primary flex justify-center items-center">
-                                                    <Text numberOfLines={1} className="font-GoogleSansBold text-sm text-secondaryBlack">{item.price}</Text>
+                                                    <Text numberOfLines={1} className="font-GoogleSansBold text-sm leading-tight text-secondaryBlack">{item.price}</Text>
                                                 </View>
 
                                             </View>
@@ -186,7 +186,7 @@ const Index = () => {
                             <TouchableOpacity onPress={handleClearRideHistory}
                                 style={{ backgroundColor: "#ff0000"}}
                                 className=" rounded-full flex h-12 px-4 justify-center items-center">
-                                <Text className="font-GoogleSansMedium text-base leading-5 text-general">Clear Ride History</Text>
+                                <Text className="font-GoogleSansMedium text-base leading-tight text-general">Clear Ride History</Text>
                             </TouchableOpacity>
                         </View>
 

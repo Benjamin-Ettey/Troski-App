@@ -1,12 +1,11 @@
 import {View, Text, TextInput, ActivityIndicator, Modal} from 'react-native'
-import React, {useEffect, useState} from 'react'
+import React, {useState} from 'react'
 import {KeyboardAwareScrollView, KeyboardToolbar} from "react-native-keyboard-controller";
 import {StatusBar} from "expo-status-bar";
 import {router} from "expo-router";
 import PrimaryButton from "@/components/PrimaryButton";
 import {useAppStore} from "@/utils/store";
 import DisabledPrimaryButton from "@/components/DisabledPrimaryButton";
-import {useColorScheme} from "nativewind";
 
 const Deposit = () => {
 
@@ -15,7 +14,6 @@ const Deposit = () => {
     const [error, setError] = useState('');
     const isDisabled = value.length !== 10 || amount.length === 0;
     const [processing, setProcessing] = useState(false);
-    const { colorScheme } = useColorScheme();
 
 
     const number = useAppStore((state)=> state.number);
@@ -61,7 +59,7 @@ const Deposit = () => {
     };
 
     return (
-        <View style={{backgroundColor: colorScheme === "dark"? "#000000" : "#F5F7FA"}} className="flex-1 ">
+        <View style={{backgroundColor: "#F5F7FA"}} className="flex-1 ">
             <KeyboardAwareScrollView
                 keyboardShouldPersistTaps="handled"
                 className="flex-1">
@@ -69,7 +67,7 @@ const Deposit = () => {
 
                 <View className="w-full flex-1 flex items-center px-6">
                     <View className="w-full py-2">
-                        <Text className="text-xl leading-6 tracking-tight font-GoogleSansMedium dark:text-general">Enter phone number?</Text>
+                        <Text className="text-xl leading-tight tracking-tight font-GoogleSansMedium ">Enter phone number?</Text>
                     </View>
 
                     <TextInput
@@ -78,25 +76,26 @@ const Deposit = () => {
                         onChangeText={validate}
                         autoCorrect={false}
                         autoCapitalize="none"
+                        placeholderTextColor="#a9a9a9"
                         keyboardType="phone-pad"
                         autoFocus={true}
                         style={{paddingLeft: 16}}
-                        className=" dark:bg-secondaryBlack mb-1 font-medium dark:text-general text-secondaryGray w-full h-14 border border-tertiaryGray  rounded-xl focus:border dark:focus:border-tertiaryGray focus:border-green-600/40"
+                        className="mb-1 font-medium text-secondaryGray w-full h-14 border border-tertiaryGray  rounded-xl focus:border focus:border-green-600/40"
                     />
 
                     {error ? (
                         <View className="mb-6 w-full items-start">
-                            <Text className="text-sm leading-4 font-GoogleSansMedium text-red-600">
+                            <Text className="text-sm leading-tight font-GoogleSansMedium text-red-600">
                                 {error}
                             </Text>
                         </View>
                     ) : <View className="mb-6 w-full items-start">
-                        <Text className="text-sm leading-4 font-GoogleSansRegular dark:text-tertiaryGray">This is the number you provided when you created your account.</Text>
+                        <Text className="text-sm leading-tight font-GoogleSansRegular ">This is the number you provided when you created your account.</Text>
                     </View>
                     }
 
                     <View className="w-full py-2">
-                        <Text className="text-xl leading-6 tracking-tight font-GoogleSansMedium dark:text-general">Amount to be deposited?</Text>
+                        <Text className="text-xl leading-tight tracking-tight font-GoogleSansMedium ">Amount to be deposited?</Text>
                     </View>
 
                     <TextInput
@@ -108,7 +107,8 @@ const Deposit = () => {
                         autoCapitalize="none"
                         keyboardType="phone-pad"
                         style={{paddingLeft: 16,}}
-                        className="dark:bg-secondaryBlack mb-8 font-medium dark:text-general text-secondaryGray w-full h-14 border border-tertiaryGray  rounded-xl focus:border dark:focus:border-tertiaryGray focus:border-green-600/40"
+                        placeholderTextColor="#a9a9a9"
+                        className="mb-8 font-medium dark:text-general text-secondaryGray w-full h-14 border border-tertiaryGray  rounded-xl focus:border focus:border-green-600/40"
                     />
 
                     {isDisabled?
@@ -133,7 +133,7 @@ const Deposit = () => {
 
                     <Text
                         style={{ marginTop: 12 }}
-                        className="font-GoogleSansMedium text-general"
+                        className="font-GoogleSansMedium leading-tight text-base text-general"
                     >
                         Processing...
                     </Text>

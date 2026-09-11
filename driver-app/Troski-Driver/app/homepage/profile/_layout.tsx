@@ -68,6 +68,13 @@ const ProfileLayout = () => {
                 }}
             />
 
+            <Stack.Screen
+                name="updateVehicle"
+                options={{
+                    headerShown: false
+                }}
+            />
+
 
         </Stack>
     )

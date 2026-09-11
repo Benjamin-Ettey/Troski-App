@@ -22,7 +22,7 @@ const Index = () => {
             />
 
             <View
-                className="absolute bottom-0 rounded-t-3xl w-full h-96 dark:bg-secondaryBlack bg-general pt-8 pb-14"
+                className="absolute bottom-0 rounded-t-3xl w-full h-96 bg-general pt-8 pb-14"
             >
                 <View className="flex-1 justify-between items-center">
 
@@ -40,7 +40,7 @@ const Index = () => {
                             numberOfLines={2}
                             adjustsFontSizeToFit
                             minimumFontScale={0.7}
-                            className="text-secondaryBlack dark:text-general text-3xl leading-none font-GoogleSansMedium text-center tracking-tight"
+                            className="text-secondaryBlack text-3xl leading-tight font-GoogleSansMedium text-center tracking-tight"
                         >
                             Troski Driver
                         </Text>
@@ -49,7 +49,7 @@ const Index = () => {
                             numberOfLines={1}
                             adjustsFontSizeToFit
                             minimumFontScale={0.7}
-                            className="text-secondaryBlack dark:text-general text-base leading-none font-GoogleSansRegular text-center "
+                            className="text-secondaryBlack text-base leading-tight font-GoogleSansRegular text-center "
                         >
                             Drive smarter, earn more.
                         </Text>

@@ -1,5 +1,5 @@
-import {View, Text, TouchableOpacity, Image} from 'react-native'
-import React from 'react'
+import {View, Text, TouchableOpacity, Image, ActivityIndicator} from 'react-native'
+import React, {useState} from 'react'
 import {KeyboardAwareScrollView} from "react-native-keyboard-controller";
 import {StatusBar} from "expo-status-bar";
 import {Ionicons} from "@expo/vector-icons";
@@ -27,23 +27,36 @@ const VehicleDetails = () => {
     const setVehicleCapacity = useAppStore((state) => state.setVehicleCapacity);
     const setVehiclePhoto = useAppStore((state) => state.setVehiclePhoto);
 
+    const [uploadingVehicle, setUploadingVehicle] = useState(false);
+
     const handleVehiclePhoto = async () => {
+        try {
+            setUploadingVehicle(true);
 
-        const permission = await ImagePicker.requestMediaLibraryPermissionsAsync()
-        if (!permission.granted){
-            alert("Permission to access gallery is required!")
-            return
-        }
+            const permission =
+                await ImagePicker.requestMediaLibraryPermissionsAsync();
 
-        const result = await ImagePicker.launchImageLibraryAsync({
-            mediaTypes: ["images"],
-            quality: 1,
-            allowsEditing: true,
-        });
-        if (!result.canceled){
-            setVehiclePhoto(result.assets[0].uri)
+            if (!permission.granted) {
+                alert("Permission to access gallery is required!");
+                return;
+            }
+
+            const result = await ImagePicker.launchImageLibraryAsync({
+                mediaTypes: ["images"],
+                quality: 1,
+                allowsEditing: true,
+            });
+
+            if (!result.canceled) {
+                setVehiclePhoto(result.assets[0].uri);
+            }
+        } catch (error) {
+            console.log(error);
+        } finally {
+            setUploadingVehicle(false);
         }
     };
+
 
     const isDisabled =
         !vehicletype ||
@@ -76,8 +89,8 @@ const VehicleDetails = () => {
                 <View className="w-full flex-1 flex items-center px-6">
 
                     <View className="w-full py-6 flex-col gap-2">
-                        <Text className="text-3xl leading-none tracking-tighter text-secondaryBlack  font-GoogleSansMedium">Fill in your vehicle details</Text>
-                        <Text className="text-sm leading-none  text-secondaryGray  font-GoogleSansRegular">
+                        <Text className="text-3xl leading-tight tracking-tighter text-secondaryBlack  font-GoogleSansMedium">Fill in your vehicle details</Text>
+                        <Text className="text-sm leading-tight  text-secondaryGray  font-GoogleSansRegular">
                             We need a few details about your vehicle to verify it and get you ready to drive.
                         </Text>
                     </View>
@@ -89,7 +102,7 @@ const VehicleDetails = () => {
                             <View className="w-full flex flex-row  items-center gap-2">
                                 <Text
                                     style={{paddingLeft: 8, }}
-                                    className="text-base leading-none tracking-tight  text-secondaryBlack  font-GoogleSansMedium">Vehicle type
+                                    className="text-base leading-tight tracking-tight  text-secondaryBlack  font-GoogleSansMedium">Vehicle type
                                 </Text>
                                 <Ionicons name="star" size={6} color="red"/>
                             </View>
@@ -110,7 +123,7 @@ const VehicleDetails = () => {
                             <View className="w-full flex flex-row  items-center gap-2">
                                 <Text
                                     style={{paddingLeft: 8, }}
-                                    className="text-base leading-none tracking-tight  text-secondaryBlack  font-GoogleSansMedium">Vehicle number plate
+                                    className="text-base leading-tight tracking-tight  text-secondaryBlack  font-GoogleSansMedium">Vehicle number plate
                                 </Text>
                                 <Ionicons name="star" size={6} color="red"/>
                             </View>
@@ -136,7 +149,7 @@ const VehicleDetails = () => {
                             <View className="w-full flex flex-row  items-center gap-2">
                                 <Text
                                     style={{paddingLeft: 8, }}
-                                    className="text-base leading-none tracking-tight  text-secondaryBlack  font-GoogleSansMedium">Vehicle color
+                                    className="text-base leading-tight tracking-tight  text-secondaryBlack  font-GoogleSansMedium">Vehicle color
                                 </Text>
                                 <Ionicons name="star" size={6} color="red"/>
                             </View>
@@ -154,7 +167,7 @@ const VehicleDetails = () => {
                             <View className="w-full flex flex-row  items-center gap-2">
                                 <Text
                                     style={{paddingLeft: 8, }}
-                                    className="text-base leading-none tracking-tight  text-secondaryBlack  font-GoogleSansMedium">Vehicle capacity
+                                    className="text-base leading-tight tracking-tight  text-secondaryBlack  font-GoogleSansMedium">Vehicle capacity
                                 </Text>
                                 <Ionicons name="star" size={6} color="red"/>
                             </View>
@@ -174,7 +187,7 @@ const VehicleDetails = () => {
                             <View className="w-full flex flex-row  items-center gap-2">
                                 <Text
                                     style={{paddingLeft: 8, }}
-                                    className="text-base leading-none tracking-tight  text-secondaryBlack  font-GoogleSansMedium">Vehicle photo
+                                    className="text-base leading-tight tracking-tight  text-secondaryBlack  font-GoogleSansMedium">Vehicle photo
                                 </Text>
                                 <Ionicons name="star" size={6} color="red"/>
                             </View>
@@ -182,10 +195,10 @@ const VehicleDetails = () => {
 
                             {vehiclephoto ? (
                                 <View className="border-2 border-dashed border-secondaryBlack w-28 h-28 justify-center items-center p-2 rounded-2xl">
-
                                     <TouchableOpacity
                                         className="w-24 h-24 rounded-2xl bg-tertiaryWhite"
                                         onPress={handleVehiclePhoto}
+                                        disabled={uploadingVehicle}
                                     >
                                         <Image
                                             source={{ uri: vehiclephoto }}
@@ -193,8 +206,12 @@ const VehicleDetails = () => {
                                             resizeMode="cover"
                                         />
 
-                                        <View className="absolute bottom-1 right-1 ">
-                                            <Ionicons name="create" size={24} color="black" />
+                                        <View className="absolute bottom-1 right-1">
+                                            {uploadingVehicle ? (
+                                                <ActivityIndicator size="small" color="#000" />
+                                            ) : (
+                                                <Ionicons name="create" size={24} color="black" />
+                                            )}
                                         </View>
                                     </TouchableOpacity>
                                 </View>
@@ -203,11 +220,15 @@ const VehicleDetails = () => {
                                     <TouchableOpacity
                                         className="w-24 h-24 rounded-2xl bg-tertiaryWhite items-center justify-center"
                                         onPress={handleVehiclePhoto}
+                                        disabled={uploadingVehicle}
                                     >
-                                        <Ionicons name="add-circle" size={32} color="#ffcc00" />
+                                        {uploadingVehicle ? (
+                                            <ActivityIndicator size="small" color="#ffcc00" />
+                                        ) : (
+                                            <Ionicons name="add-circle" size={32} color="#ffcc00" />
+                                        )}
                                     </TouchableOpacity>
                                 </View>
-
                             )}
 
 
@@ -218,11 +239,11 @@ const VehicleDetails = () => {
 
                             {isDisabled?
                                 <DisabledPrimaryButton
-                                    name="Confirm vehicle details"
+                                    name="Continue"
                                 />
                                 :
                                 <PrimaryButton
-                                    name="Confirm vehicle details"
+                                    name="Continue"
                                     onPress={handleConfirmVehicleDetails}
                                     disabled={isDisabled}
                                 />

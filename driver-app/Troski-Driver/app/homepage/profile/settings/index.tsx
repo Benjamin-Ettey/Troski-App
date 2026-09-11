@@ -42,7 +42,7 @@ const Index = () => {
             <ScrollView className="py-2">
                 <View className="w-full mb-6 px-5">
                     <Text
-                        className="font-GoogleSansRegular text-base pl-4 leading-5 mb-1 text-secondaryBlack ">Manage Notifications</Text>
+                        className="font-GoogleSansRegular text-base pl-4 leading-tight mb-1 text-secondaryBlack ">Manage Notifications</Text>
                     <View
                         style={{backgroundColor: "#ffffff"}}
                         className="flex justify-center items-center h-14 rounded-full px-5">
@@ -50,30 +50,30 @@ const Index = () => {
                             onPress={()=>router.push("/homepage/profile/settings/notifications")}
                             className="w-full flex-1 flex flex-row justify-between items-center">
                             <Text
-                                className="font-GoogleSansMedium text-base leading-5 text-secondaryGray  ">Notifications</Text>
+                                className="font-GoogleSansMedium text-base leading-tight text-secondaryGray  ">Notifications</Text>
                             <Ionicons name="chevron-forward" size={18} color="gray"/>
                         </TouchableOpacity>
                     </View>
                     <Text
-                        className="text-xs leading-4 pl-4 mt-2 font-GoogleSansRegular text-secondaryGray  "
+                        className="text-xs leading-tight pl-4 mt-2 font-GoogleSansRegular text-secondaryGray  "
                     >Receive transaction alerts and important account updates.</Text>
                 </View>
 
 
                 <View className="w-full mb-6 px-5">
                     <Text
-                        className="font-GoogleSansRegular text-base pl-4 leading-5 mb-1 text-secondaryBlack ">PIN Management</Text>
+                        className="font-GoogleSansRegular text-base pl-4 leading-tight mb-1 text-secondaryBlack ">PIN Management</Text>
                     <View
                         style={{backgroundColor: "#ffffff"}}
                         className="flex justify-center items-center h-14 rounded-full px-5">
                         <TouchableOpacity style={{ flex:1}} onPress={()=> router.push("/homepage/profile/settings/changePinCode")}
                                           className="w-full flex flex-row justify-between items-center">
-                            <Text className="font-GoogleSansMedium text-base leading-5 text-secondaryGray">Change Pin Code</Text>
+                            <Text className="font-GoogleSansMedium text-base leading-tight text-secondaryGray">Change Pin Code</Text>
                             <Ionicons name="chevron-forward" size={18} color="gray"/>
                         </TouchableOpacity>
                     </View>
                     <Text
-                        className="text-xs leading-4 pl-4 mt-2 font-GoogleSansRegular text-secondaryGray  "
+                        className="text-xs leading-tight pl-4 mt-2 font-GoogleSansRegular text-secondaryGray  "
                     >Manage your PIN to secure access to your account and transactions.
                     </Text>
                 </View>
@@ -82,21 +82,21 @@ const Index = () => {
 
                 <View className="w-full mb-6 px-5">
                     <Text
-                        className="font-GoogleSansRegular text-base pl-4 leading-5 mb-1 text-secondaryBlack ">Delete Account</Text>
+                        className="font-GoogleSansRegular text-base pl-4 leading-tight mb-1 text-secondaryBlack ">Delete Account</Text>
                     <View
                         style={{backgroundColor: "#EF4444"}}
                         className="flex justify-center items-center h-14 rounded-full px-5">
                         <TouchableOpacity
                                           onPress={handleDeleteAccount}
                                           className="w-full flex-1 flex flex-row justify-between items-center">
-                            <Text className="font-GoogleSansMedium text-base leading-5 text-general ">Delete Account</Text>
+                            <Text className="font-GoogleSansMedium text-base leading-tight text-general ">Delete Account</Text>
                             <Ionicons  name="trash-bin-outline" size={18} color="white"/>
                         </TouchableOpacity>
                     </View>
 
                     <Text
                         style={{color: "#ef4444"}}
-                        className="text-xs leading-4 pl-4 mt-2 font-GoogleSansRegular text-secondaryGray  "
+                        className="text-xs leading-tight pl-4 mt-2 font-GoogleSansRegular text-secondaryGray  "
                     >Permanently delete your account and all associated data.</Text>
                 </View>
             </ScrollView>

@@ -14,7 +14,7 @@ export default function SuspenseFallback() {
                 }}
             />
 
-            <Text className="mt-4 text-secondaryBlack text-sm leading-none font-GoogleSansRegular flex-shrink">
+            <Text className="mt-4 text-secondaryBlack text-sm leading-tight font-GoogleSansRegular flex-shrink">
                 Hang tight — we’re preparing your ride...
             </Text>
         </View>

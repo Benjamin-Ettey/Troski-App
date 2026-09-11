@@ -25,7 +25,7 @@ const ChangePinRoute = () => {
                                     },
                                     headerTintColor: "#000000",
                                     headerTitleAlign: "center",
-                                    headerTitle: 'Change pin code',
+                                    headerTitle: 'Change Pin Code',
                                     headerLeft: ()=>(
                                         <TouchableOpacity onPress={()=>router.back()} style={{display: "flex", justifyContent: "center", alignItems: "center"}}>
                                             <Ionicons name="chevron-back" size={30} color="black"/>
@@ -43,7 +43,7 @@ const ChangePinRoute = () => {
                                     },
                                     headerTintColor: "#000000",
                                     headerTitleAlign: "center",
-                                    headerTitle: 'Change pin code',
+                                    headerTitle: 'Change Pin Code',
                                     headerLeft: ()=>(
                                         <TouchableOpacity onPress={()=>router.back()} style={{display: "flex", justifyContent: "center", alignItems: "center"}}>
                                             <Ionicons name="chevron-back" size={30} color="black"/>
@@ -62,7 +62,7 @@ const ChangePinRoute = () => {
                                     },
                                     headerTintColor: "#000000",
                                     headerTitleAlign: "center",
-                                    headerTitle: 'Confirm new pin',
+                                    headerTitle: 'Confirm New Pin',
                                     headerLeft: ()=>(
                                         <TouchableOpacity onPress={()=>router.back()} style={{display: "flex", justifyContent: "center", alignItems: "center"}}>
                                             <Ionicons name="chevron-back" size={30} color="black"/>

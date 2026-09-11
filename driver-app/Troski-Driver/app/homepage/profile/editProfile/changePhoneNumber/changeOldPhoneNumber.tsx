@@ -117,7 +117,7 @@ const ChangeOldPhoneNumber = () => {
                             </Text>
                         </View>
                     ) : <View className="mb-6 w-full items-start">
-                        <Text className="text-sm leading-5 font-GoogleSansRegular ">This is the number that is currently logged in.</Text>
+                        <Text className="text-sm leading-tight font-GoogleSansRegular ">This is the number that is currently logged in.</Text>
                     </View>}
 
 
@@ -140,14 +140,14 @@ const ChangeOldPhoneNumber = () => {
 
                     {newError ? (
                         <View className="mb-6 w-full items-start">
-                            <Text className="text-sm leading-5 font-GoogleSansMedium text-red-600">
+                            <Text className="text-sm leading-tight font-GoogleSansMedium text-red-600">
                                 {newError}
                             </Text>
                         </View>
                     ) :
                         <View className="mb-6 w-full flex flex-row  items-center">
                             <Ionicons style={{paddingRight: 5 }} name="checkmark-circle-sharp" size={16} color="green"/>
-                            <Text className="text-sm leading-5 font-GoogleSansRegula flex-shrink">To proceed, confirm that your new phone number can receive SMS or calls.</Text>
+                            <Text className="text-sm leading-tight font-GoogleSansRegula flex-shrink">To proceed, confirm that your new phone number can receive SMS or calls.</Text>
                     </View>}
 
 

@@ -85,11 +85,11 @@ const PinScreen = () => {
 
 
                     <View className="w-full mb-5">
-                        <Text className="text-2xl leading-7  text-black font-GoogleSansMedium tracking-tight">
+                        <Text className="text-2xl leading-tight  text-black font-GoogleSansMedium tracking-tight">
                             Enter 6 digit pin
                         </Text>
 
-                        <Text className="text-sm leading-4 mt-1 text-secondaryGray font-GoogleSansRegular">
+                        <Text className="text-sm leading-tight mt-1 text-secondaryGray font-GoogleSansRegular">
                             Type in your 6 digit code you used during account creation.
                         </Text>
                     </View>
@@ -115,7 +115,7 @@ const PinScreen = () => {
                                     }
                                     `}
                                 >
-                                    <Text className="text-2xl text-black font-GoogleSansMedium">
+                                    <Text className="text-2xl leading-tight text-black font-GoogleSansMedium">
                                         {filled ? "*" : ""}
                                     </Text>
                                 </View>
@@ -134,7 +134,7 @@ const PinScreen = () => {
 
                             <Text
                                 style={{ flexShrink: 1 }}
-                                className="text-sm pl-2 leading-4 text-gray-500 font-GoogleSansRegular"
+                                className="text-sm pl-2 leading-tight text-gray-500 font-GoogleSansRegular"
                             >
                                 Do not share this PIN code with anyone.
                             </Text>
@@ -146,7 +146,7 @@ const PinScreen = () => {
                         <View className="w-full gap-2 mb-3 flex flex-row justify-start items-center">
                             <Ionicons name="alert" size={12} color="red"/>
 
-                            <Text className="text-red-500 text-sm font-GoogleSansRegular ">
+                            <Text className="text-red-500 text-sm leading-tight font-GoogleSansRegular ">
                                 {error}
                             </Text>
                         </View>
@@ -191,7 +191,7 @@ const PinScreen = () => {
                                                     color="#000000"
                                                 />
                                             ) : (
-                                                <Text className="text-3xl text-black font-GoogleSansMedium">
+                                                <Text className="text-3xl leading-tight text-black font-GoogleSansMedium">
                                                     {item}
                                                 </Text>
                                             )}
@@ -209,7 +209,7 @@ const PinScreen = () => {
                                 onPress={() => router.replace("/login/forgotPin")}
                                 className="mb-2 border border-secondaryBlack  px-2 py-1 rounded-full"
                             >
-                                <Text className="text-secondaryBlack text-sm font-GoogleSansMedium">
+                                <Text className="text-secondaryBlack text-sm leading-tight font-GoogleSansMedium">
                                     Forgot PIN?
                                 </Text>
                             </TouchableOpacity>

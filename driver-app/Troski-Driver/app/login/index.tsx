@@ -39,7 +39,7 @@ const Index = () => {
             return;
         }
 
-        router.push("/");
+        router.push("/login/pinScreen");
     };
 
 
@@ -50,14 +50,14 @@ const Index = () => {
             <KeyboardAwareScrollView
                 keyboardShouldPersistTaps="handled"
                 className="flex-1">
-                <StatusBar style="auto"/>
+                <StatusBar style="dark"/>
 
 
 
 
                 <View className="w-full flex-1 flex items-center px-6">
                     <View className="w-full py-2">
-                        <Text className="text-xl leading-6 tracking-tight text-secondaryBlack  font-GoogleSansMedium">Enter phone number?</Text>
+                        <Text className="text-xl leading-tight tracking-tight text-secondaryBlack  font-GoogleSansMedium">Enter phone number?</Text>
                     </View>
 
                     <TextInput
@@ -76,12 +76,12 @@ const Index = () => {
 
                     {error ? (
                         <View className="mb-6 w-full items-start">
-                            <Text className="text-sm leading-none font-GoogleSansMedium text-red-600">
+                            <Text className="text-sm leading-tight font-GoogleSansMedium text-red-600">
                                 {error}
                             </Text>
                         </View>
                     ) : <View className="mb-6 w-full items-start">
-                        <Text className="text-sm leading-none text-secondaryBlack font-GoogleSansRegular">This is the number you provided when you created your account.</Text>
+                        <Text className="text-sm leading-tight text-secondaryBlack font-GoogleSansRegular">This is the number you provided when you created your account.</Text>
                     </View>}
 
                     {isDisabled?

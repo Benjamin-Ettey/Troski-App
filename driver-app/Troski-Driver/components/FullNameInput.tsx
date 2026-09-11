@@ -20,20 +20,20 @@ const FullNameInput = ({value, onChangeText}: Props) => {
 
         <View className="flex-col">
 
-            <View className={`w-full h-14 bg-tertiaryGray/10 flex-row items-center rounded-2xl px-4 ${
+            <View className={`w-full h-14 bg-tertiaryGray/10 flex-row items-center rounded-2xl  ${
                 error ? "border border-red-600" : "focus:border focus:border-green-600"
             }`}>
 
             <TextInput
                 value={value}
                 onChangeText={onChangeText}
-                style={{paddingLeft: 4, textAlign: "left", fontSize: 16}}
+                style={{paddingLeft: 14, textAlign: "left", fontSize: 16}}
                 keyboardType="default"
                 hitSlop={64}
-                autoComplete="name"
                 autoFocus={true}
                 placeholder="Enter your full name"
-                className="w-full text-secondaryBlack "
+                placeholderTextColor="#9CA3AF"
+                className="flex-1 p-3 text-secondaryBlack "
             />
             </View>
 
@@ -41,7 +41,7 @@ const FullNameInput = ({value, onChangeText}: Props) => {
             { error?
                 <Text
                     style={{paddingLeft: 8}}
-                    className="text-xs leading-none text-red-600 mt-2">{error}
+                    className="text-xs leading-tight text-red-600 mt-2">{error}
                 </Text>
                 : null
             }

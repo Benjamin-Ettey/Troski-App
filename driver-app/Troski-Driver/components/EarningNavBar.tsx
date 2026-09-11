@@ -17,14 +17,14 @@ const EarningNavBar = () => {
                         style={{width: 64, height: 64}}
                     />
                     <View className="flex flex-col ">
-                        <Text numberOfLines={1} className="text-xl leading-6 tracking-tight text-secondaryBlack  font-GoogleSansMedium">Today&apos;s earning</Text>
+                        <Text numberOfLines={1} className="text-xl leading-tight tracking-tight text-secondaryBlack  font-GoogleSansMedium">Today&apos;s earning</Text>
                         <Text numberOfLines={1} className="text-xs leading-tight text-secondaryBlack font-GoogleSansRegular">Recent earnings as of today</Text>
 
                     </View>
                 </View>
 
                 <View className="flex-1 h-8 items-end">
-                    <Text className="text-base leading-tight tracking-tight text-secondaryBlack  font-GoogleSansMedium">GH₵2000</Text>
+                    <Text className="text-base leading-tight tracking-tight text-secondaryBlack font-GoogleSansMedium">GH₵2000</Text>
                 </View>
 
 
