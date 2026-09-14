@@ -1,7 +1,35 @@
+import { Link } from "react-router-dom";
+
 const Footer = () => {
   return (
-    <footer className="px-6 py-8 text-sm text-center">
-      <p>&copy; {new Date().getFullYear()} Troski. All rights reserved.</p>
+    <footer className="w-full border-t border-gray-200 mt-12">
+      <div className="w-[90%] md:w-[70%] mx-auto py-10 flex flex-col md:flex-row justify-between gap-8">
+        <div className="flex flex-col gap-2">
+          <span className="font-bold text-lg">Troski</span>
+          <p className="text-gray-600 text-sm max-w-xs">
+            Modernizing tro-tro transport in Ghana through digital booking,
+            payments, and trip verification.
+          </p>
+        </div>
+
+        <div className="flex flex-col gap-2 text-sm">
+          <span className="font-semibold mb-1">Company</span>
+          <Link to="/about" className="text-gray-600">About</Link>
+          <Link to="/how-it-works" className="text-gray-600">How It Works</Link>
+          <Link to="/services" className="text-gray-600">Services</Link>
+        </div>
+
+        <div className="flex flex-col gap-2 text-sm">
+          <span className="font-semibold mb-1">Support</span>
+          <Link to="/faqs" className="text-gray-600">FAQs</Link>
+          <Link to="/contact" className="text-gray-600">Contact</Link>
+          <Link to="/terms" className="text-gray-600">Terms & Privacy</Link>
+        </div>
+      </div>
+
+      <div className="w-full text-center text-xs text-gray-400 pb-6">
+        &copy; {new Date().getFullYear()} Troski. All rights reserved.
+      </div>
     </footer>
   );
 };
