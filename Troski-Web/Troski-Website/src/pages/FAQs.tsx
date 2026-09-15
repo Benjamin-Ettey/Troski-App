@@ -1,4 +1,5 @@
 import { useState } from "react";
+import useSEO from "../hooks/useSEO";
 
 const faqs = [
   {
@@ -29,13 +30,21 @@ const faqs = [
 ];
 
 const FAQs = () => {
+  useSEO({
+    title: "FAQs | Troski",
+    description:
+      "Answers to frequently asked questions about Troski.",
+  });
+
   const [openIndex, setOpenIndex] = useState<number | null>(null);
 
   return (
-    <div className="flex flex-col gap-12 pb-24">
-      <section className="max-w-3xl mx-auto px-8 pt-12 text-center flex flex-col gap-4 items-center">
-        <h1 className="text-5xl font-bold">Frequently Asked Questions</h1>
-        <p className="text-lg text-gray-600">
+    <div className="flex flex-col gap-10 md:gap-12 pb-24">
+      <section className="max-w-3xl mx-auto px-6 md:px-8 pt-12 text-center flex flex-col gap-4 items-center">
+        <h1 className="text-4xl md:text-5xl font-bold">
+          Frequently Asked Questions
+        </h1>
+        <p className="text-base md:text-lg text-gray-600">
           Answers to the questions we get asked most.
         </p>
       </section>
@@ -47,14 +56,20 @@ const FAQs = () => {
             return (
               <div key={faq.question} className="py-4">
                 <button
-                  className="w-full flex justify-between items-center text-left cursor-pointer"
+                  className="w-full flex justify-between items-center text-left cursor-pointer gap-4"
                   onClick={() => setOpenIndex(isOpen ? null : index)}
                 >
-                  <span className="text-lg font-medium">{faq.question}</span>
-                  <span className="text-2xl">{isOpen ? "−" : "+"}</span>
+                  <span className="text-base md:text-lg font-medium">
+                    {faq.question}
+                  </span>
+                  <span className="text-xl md:text-2xl shrink-0">
+                    {isOpen ? "−" : "+"}
+                  </span>
                 </button>
                 {isOpen && (
-                  <p className="mt-2 text-gray-600 max-w-2xl">{faq.answer}</p>
+                  <p className="mt-2 text-sm md:text-base text-gray-600 max-w-2xl">
+                    {faq.answer}
+                  </p>
                 )}
               </div>
             );

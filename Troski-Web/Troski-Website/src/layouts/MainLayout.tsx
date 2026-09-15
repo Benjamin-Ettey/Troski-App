@@ -10,7 +10,9 @@ const MainLayout = () => {
     <div className="flex flex-col min-h-screen">
       <Navbar />
       <main className={`flex-1 ${isHome ? "" : "pt-24"}`}>
-        <Outlet />
+        <div key={pathname} className="page-transition">
+          <Outlet />
+        </div>
       </main>
       <Footer />
     </div>

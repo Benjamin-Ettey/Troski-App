@@ -10,6 +10,7 @@ const navLinks = [
   { to: "/become-a-driver", label: "Become a Driver" },
   { to: "/faqs", label: "FAQs" },
   { to: "/contact", label: "Contact" },
+  { to: "/terms", label: "Terms & Privacy" },
 ];
 
 const Navbar = () => {
@@ -21,7 +22,7 @@ const Navbar = () => {
   return (
     <section
       id="NavBar"
-      className={`fixed top-0 left-0 w-full z-50 flex justify-center ${
+      className={`fixed top-0 left-0 w-full z-50 flex justify-center transition-colors duration-300 ${
         showDark ? "bg-white shadow-sm" : ""
       }`}
     >
@@ -37,7 +38,7 @@ const Navbar = () => {
               alt="Troski Logo"
               width={96}
               height={64}
-              className={showDark ? "invert" : ""}
+              className={`transition-all duration-300 ${showDark ? "invert" : ""}`}
             />
           </Link>
 
@@ -55,12 +56,12 @@ const Navbar = () => {
               onClick={() => setMenuOpen((prev) => !prev)}
             >
               <div
-                className={`w-8 h-0.5 transition-transform ${
+                className={`w-8 h-0.5 transition-all duration-300 ${
                   showDark ? "bg-black" : "bg-white"
                 } ${menuOpen ? "rotate-45 translate-y-[3px]" : ""}`}
               />
               <div
-                className={`w-8 h-0.5 transition-transform ${
+                className={`w-8 h-0.5 transition-all duration-300 ${
                   showDark ? "bg-black" : "bg-white"
                 } ${menuOpen ? "-rotate-45 -translate-y-[3px]" : ""}`}
               />
@@ -68,15 +69,19 @@ const Navbar = () => {
           </div>
         </div>
 
-        {menuOpen && (
-          <div className="mt-6 flex flex-col gap-4 pb-4">
+        <div
+          className={`overflow-hidden transition-all duration-300 ease-in-out ${
+            menuOpen ? "max-h-96 opacity-100 mt-6" : "max-h-0 opacity-0 mt-0"
+          }`}
+        >
+          <div className="flex flex-col gap-4 pb-4">
             {navLinks.map((link) => (
               <NavLink
                 key={link.to}
                 to={link.to}
                 onClick={() => setMenuOpen(false)}
                 className={({ isActive }) =>
-                  `text-lg font-medium ${
+                  `text-lg font-medium transition-colors ${
                     isActive ? "text-[#ffcc00]" : "text-black"
                   }`
                 }
@@ -85,7 +90,7 @@ const Navbar = () => {
               </NavLink>
             ))}
           </div>
-        )}
+        </div>
       </div>
     </section>
   );

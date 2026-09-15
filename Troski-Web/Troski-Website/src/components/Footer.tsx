@@ -14,16 +14,16 @@ const Footer = () => {
 
         <div className="flex flex-col gap-2 text-sm">
           <span className="font-semibold mb-1">Company</span>
-          <Link to="/about" className="text-gray-600">About</Link>
-          <Link to="/how-it-works" className="text-gray-600">How It Works</Link>
-          <Link to="/services" className="text-gray-600">Services</Link>
+          <Link to="/about" className="text-gray-600 hover:text-black">About</Link>
+          <Link to="/how-it-works" className="text-gray-600 hover:text-black">How It Works</Link>
+          <Link to="/services" className="text-gray-600 hover:text-black">Services</Link>
         </div>
 
         <div className="flex flex-col gap-2 text-sm">
           <span className="font-semibold mb-1">Support</span>
-          <Link to="/faqs" className="text-gray-600">FAQs</Link>
-          <Link to="/contact" className="text-gray-600">Contact</Link>
-          <Link to="/terms" className="text-gray-600">Terms & Privacy</Link>
+          <Link to="/faqs" className="text-gray-600 hover:text-black">FAQs</Link>
+          <Link to="/contact" className="text-gray-600 hover:text-black">Contact</Link>
+          <Link to="/terms" className="text-gray-600 hover:text-black">Terms & Privacy</Link>
         </div>
       </div>
 

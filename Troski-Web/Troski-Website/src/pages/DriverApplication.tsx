@@ -1,4 +1,7 @@
 import { useState, type ChangeEvent, type FormEvent } from "react";
+import useSEO from "../hooks/useSEO";
+
+
 
 interface DriverApplicationForm {
   fullName: string;
@@ -17,6 +20,12 @@ const initialForm: DriverApplicationForm = {
 };
 
 const DriverApplication = () => {
+  useSEO({
+  title: "Driver Application | Troski",
+  description:
+    "Apply to become a verified Troski driver.",
+});
+
   const [form, setForm] = useState<DriverApplicationForm>(initialForm);
   const [submitted, setSubmitted] = useState(false);
 
@@ -33,9 +42,9 @@ const DriverApplication = () => {
 
   if (submitted) {
     return (
-      <div className="max-w-xl mx-auto px-8 pt-24 pb-24 text-center flex flex-col gap-4 items-center">
-        <h1 className="text-4xl font-bold">Application Received</h1>
-        <p className="text-gray-600">
+      <div className="max-w-xl mx-auto px-6 md:px-8 pt-24 pb-24 text-center flex flex-col gap-4 items-center">
+        <h1 className="text-3xl md:text-4xl font-bold">Application Received</h1>
+        <p className="text-sm md:text-base text-gray-600">
           Thanks for applying to drive with Troski. Our team will review your
           application and get back to you soon.
         </p>
@@ -44,10 +53,10 @@ const DriverApplication = () => {
   }
 
   return (
-    <div className="flex flex-col gap-12 pb-24">
-      <section className="max-w-3xl mx-auto px-8 pt-12 text-center flex flex-col gap-4 items-center">
-        <h1 className="text-5xl font-bold">Driver Application</h1>
-        <p className="text-lg text-gray-600">
+    <div className="flex flex-col gap-10 md:gap-12 pb-24">
+      <section className="max-w-3xl mx-auto px-6 md:px-8 pt-12 text-center flex flex-col gap-4 items-center">
+        <h1 className="text-4xl md:text-5xl font-bold">Driver Application</h1>
+        <p className="text-base md:text-lg text-gray-600">
           Fill in your details below to apply to become a Troski driver.
         </p>
       </section>
@@ -55,10 +64,12 @@ const DriverApplication = () => {
       <section className="w-full flex justify-center">
         <form
           onSubmit={handleSubmit}
-          className="w-[90%] md:w-[50%] flex flex-col gap-6"
+          className="w-[90%] md:w-[50%] flex flex-col gap-5 md:gap-6"
         >
           <div className="flex flex-col gap-2">
-            <label htmlFor="fullName" className="font-medium">Full Name</label>
+            <label htmlFor="fullName" className="text-sm md:text-base font-medium">
+              Full Name
+            </label>
             <input
               id="fullName"
               name="fullName"
@@ -66,12 +77,14 @@ const DriverApplication = () => {
               required
               value={form.fullName}
               onChange={handleChange}
-              className="border border-gray-300 rounded-lg px-4 py-2"
+              className="border border-gray-300 rounded-lg px-4 py-2 text-sm md:text-base"
             />
           </div>
 
           <div className="flex flex-col gap-2">
-            <label htmlFor="phone" className="font-medium">Phone Number</label>
+            <label htmlFor="phone" className="text-sm md:text-base font-medium">
+              Phone Number
+            </label>
             <input
               id="phone"
               name="phone"
@@ -79,12 +92,14 @@ const DriverApplication = () => {
               required
               value={form.phone}
               onChange={handleChange}
-              className="border border-gray-300 rounded-lg px-4 py-2"
+              className="border border-gray-300 rounded-lg px-4 py-2 text-sm md:text-base"
             />
           </div>
 
           <div className="flex flex-col gap-2">
-            <label htmlFor="email" className="font-medium">Email Address</label>
+            <label htmlFor="email" className="text-sm md:text-base font-medium">
+              Email Address
+            </label>
             <input
               id="email"
               name="email"
@@ -92,12 +107,15 @@ const DriverApplication = () => {
               required
               value={form.email}
               onChange={handleChange}
-              className="border border-gray-300 rounded-lg px-4 py-2"
+              className="border border-gray-300 rounded-lg px-4 py-2 text-sm md:text-base"
             />
           </div>
 
           <div className="flex flex-col gap-2">
-            <label htmlFor="vehicleRegistration" className="font-medium">
+            <label
+              htmlFor="vehicleRegistration"
+              className="text-sm md:text-base font-medium"
+            >
               Vehicle Registration Number
             </label>
             <input
@@ -107,12 +125,12 @@ const DriverApplication = () => {
               required
               value={form.vehicleRegistration}
               onChange={handleChange}
-              className="border border-gray-300 rounded-lg px-4 py-2"
+              className="border border-gray-300 rounded-lg px-4 py-2 text-sm md:text-base"
             />
           </div>
 
           <div className="flex flex-col gap-2">
-            <label htmlFor="licenseNumber" className="font-medium">
+            <label htmlFor="licenseNumber" className="text-sm md:text-base font-medium">
               Driver's License Number
             </label>
             <input
@@ -122,13 +140,13 @@ const DriverApplication = () => {
               required
               value={form.licenseNumber}
               onChange={handleChange}
-              className="border border-gray-300 rounded-lg px-4 py-2"
+              className="border border-gray-300 rounded-lg px-4 py-2 text-sm md:text-base"
             />
           </div>
 
           <button
             type="submit"
-            className="bg-[#ffcc00] font-medium text-base cursor-pointer px-6 py-3 rounded-full self-start"
+            className="bg-[#ffcc00] font-medium text-sm md:text-base cursor-pointer px-6 py-3 rounded-full self-start"
           >
             Submit Application
           </button>
