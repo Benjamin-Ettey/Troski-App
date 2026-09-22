@@ -2,35 +2,87 @@ import { Link } from "react-router-dom";
 
 const Footer = () => {
   return (
-    <footer className="w-full border-t border-gray-200 mt-12">
-      <div className="w-[90%] md:w-[70%] mx-auto py-10 flex flex-col md:flex-row justify-between gap-8">
-        <div className="flex flex-col gap-2">
-          <span className="font-bold text-lg">Troski</span>
-          <p className="text-gray-600 text-sm max-w-xs">
-            Modernizing tro-tro transport in Ghana through digital booking,
-            payments, and trip verification.
-          </p>
+      <footer className="relative w-full bg-black border-t border-white/10 mt-12 overflow-hidden">
+        {/* Main footer content */}
+        <div className="relative z-10 w-[90%] max-w-[1536px] mx-auto pt-14 pb-8">
+          <div className="flex flex-col  gap-12 md:flex-row md:justify-between">
+
+            {/* Brand */}
+            <div className="flex flex-col">
+              <h2 className="text-white font-bold text-5xl">
+                Troski
+              </h2>
+            </div>
+
+
+            {/* Company */}
+
+            <div className="flex flex-col gap-3 text-sm">
+            <span className="text-white font-bold mb-1">
+              Company
+            </span>
+
+              <Link
+                  to="/about"
+                  className="text-white/50 font-medium hover:text-white/90 transition-colors"
+              >
+                About
+              </Link>
+
+              <Link
+                  to="/how-it-works"
+                  className="text-white/50 font-medium hover:text-white/90 transition-colors"
+              >
+                How It Works
+              </Link>
+
+              <Link
+                  to="/services"
+                  className="text-white/50 font-medium hover:text-white/90 transition-colors"
+              >
+                Services
+              </Link>
+            </div>
+
+            {/* Support */}
+            <div className="flex flex-col gap-3 text-sm">
+            <span className="text-white font-bold mb-1">
+              Support
+            </span>
+
+              <Link
+                  to="/faqs"
+                  className="text-white/50 font-medium hover:text-white/90 transition-colors"
+              >
+                FAQs
+              </Link>
+
+              <Link
+                  to="/contact"
+                  className="text-white/50 font-medium hover:text-white/90 transition-colors"
+              >
+                Contact
+              </Link>
+
+              <Link
+                  to="/terms"
+                  className="text-white/50 font-medium hover:text-white/90 transition-colors"
+              >
+                Terms & Privacy
+              </Link>
+            </div>
+          </div>
+
+          {/* Divider */}
+          <div className="w-full border-t border-white/10 mt-14 pt-6">
+            <p className="text-center md:text-left font-medium text-xs text-white/40">
+              &copy; {new Date().getFullYear()} Troski. All rights reserved.
+            </p>
+          </div>
         </div>
 
-        <div className="flex flex-col gap-2 text-sm">
-          <span className="font-semibold mb-1">Company</span>
-          <Link to="/about" className="text-gray-600 hover:text-black">About</Link>
-          <Link to="/how-it-works" className="text-gray-600 hover:text-black">How It Works</Link>
-          <Link to="/services" className="text-gray-600 hover:text-black">Services</Link>
-        </div>
 
-        <div className="flex flex-col gap-2 text-sm">
-          <span className="font-semibold mb-1">Support</span>
-          <Link to="/faqs" className="text-gray-600 hover:text-black">FAQs</Link>
-          <Link to="/contact" className="text-gray-600 hover:text-black">Contact</Link>
-          <Link to="/terms" className="text-gray-600 hover:text-black">Terms & Privacy</Link>
-        </div>
-      </div>
-
-      <div className="w-full text-center text-xs text-gray-400 pb-6">
-        &copy; {new Date().getFullYear()} Troski. All rights reserved.
-      </div>
-    </footer>
+      </footer>
   );
 };
 

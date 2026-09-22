@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Link, NavLink, useLocation } from "react-router-dom";
+import { Menu, X } from "lucide-react";
 import logo from "../assets/logo.svg";
 
 const navLinks = [
@@ -15,84 +16,115 @@ const navLinks = [
 
 const Navbar = () => {
   const { pathname } = useLocation();
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+
   const isHome = pathname === "/";
-  const [menuOpen, setMenuOpen] = useState(false);
-  const showDark = !isHome || menuOpen;
+
+  // Navbar becomes white when:
+  // 1. We are on any page other than Home
+  // 2. The full-screen menu is open
+  const showDark = !isHome || isMenuOpen;
+
+  const closeMenu = () => {
+    setIsMenuOpen(false);
+  };
 
   return (
-    <section
-      id="NavBar"
-      className={`fixed top-0 left-0 w-full z-50 flex justify-center transition-colors duration-300 ${
-        showDark ? "bg-white shadow-sm" : ""
-      }`}
-    >
-      <div className="w-[95%] md:w-[70%] mt-4 md:mt-8 mb-4 md:mb-8 flex flex-col">
-        <div className="flex flex-row items-center justify-between">
-          <Link
-            to="/"
-            className="w-24 h-10 flex items-center justify-center"
-            onClick={() => setMenuOpen(false)}
-          >
-            <img
-              src={logo}
-              alt="Troski Logo"
-              width={96}
-              height={64}
-              className={`transition-all duration-300 ${showDark ? "invert" : ""}`}
-            />
-          </Link>
+      <>
+        {/* Navbar */}
+        <nav
+            className={`fixed top-0 left-0 z-50 w-full px-6 py-5 transition-colors duration-300 ${
+                showDark ? "bg-white" : "bg-transparent"
+            }`}
+        >
+          <div className="mx-auto flex w-full max-w-[1536px] items-center justify-between md:px-10 lg:px-36">
 
-          <div className="w-64 h-10 flex flex-row md:justify-between justify-end items-center gap-2">
+            {/* Logo */}
             <Link
-              to="/become-a-driver"
-              className="hidden md:flex hover:bg-white bg-[#ffcc00] font-medium text-base cursor-pointer justify-center items-center px-4 py-2 rounded-full"
+                to="/"
+                onClick={closeMenu}
+                className="relative z-50 shrink-0"
             >
-              Become a driver
+              <img
+                  src={logo}
+                  alt="Troski Logo"
+                  width={96}
+                  height={64}
+                  className={`transition-all duration-300 ${
+                      showDark ? "invert" : ""
+                  }`}
+              />
             </Link>
 
-            <button
-              className="flex flex-col gap-2"
-              aria-label={menuOpen ? "Close menu" : "Open menu"}
-              onClick={() => setMenuOpen((prev) => !prev)}
-            >
-              <div
-                className={`w-8 h-0.5 transition-all duration-300 ${
-                  showDark ? "bg-black" : "bg-white"
-                } ${menuOpen ? "rotate-45 translate-y-[3px]" : ""}`}
-              />
-              <div
-                className={`w-8 h-0.5 transition-all duration-300 ${
-                  showDark ? "bg-black" : "bg-white"
-                } ${menuOpen ? "-rotate-45 -translate-y-[3px]" : ""}`}
-              />
-            </button>
-          </div>
-        </div>
+            {/* Right Side */}
+            <div className="flex shrink-0 items-center gap-3">
 
-        <div
-          className={`overflow-hidden transition-all duration-300 ease-in-out ${
-            menuOpen ? "max-h-96 opacity-100 mt-6" : "max-h-0 opacity-0 mt-0"
-          }`}
-        >
-          <div className="flex flex-col gap-4 pb-4">
-            {navLinks.map((link) => (
-              <NavLink
-                key={link.to}
-                to={link.to}
-                onClick={() => setMenuOpen(false)}
-                className={({ isActive }) =>
-                  `text-lg font-medium transition-colors ${
-                    isActive ? "text-[#ffcc00]" : "text-black"
-                  }`
-                }
+              {/* Become a Driver */}
+              <Link
+                  to="/become-a-driver"
+                  onClick={closeMenu}
+                  className="hidden whitespace-nowrap rounded-full bg-black px-5 py-2.5 text-sm font-medium text-white transition hover:bg-neutral-800 md:flex"
               >
-                {link.label}
-              </NavLink>
-            ))}
+                Become a Driver
+              </Link>
+
+              {/* Menu Button */}
+              <button
+                  onClick={() => setIsMenuOpen((prev) => !prev)}
+                  className={`relative z-50 flex h-10 w-10 shrink-0 cursor-pointer items-center justify-center rounded-full transition ${
+                      showDark
+                          ? "bg-black text-white hover:bg-neutral-800"
+                          : "bg-white text-black hover:bg-neutral-200"
+                  }`}
+                  aria-label={
+                    isMenuOpen ? "Close menu" : "Open menu"
+                  }
+                  aria-expanded={isMenuOpen}
+              >
+                {isMenuOpen ? (
+                    <X size={22} strokeWidth={2} />
+                ) : (
+                    <Menu size={22} strokeWidth={2} />
+                )}
+              </button>
+            </div>
+          </div>
+        </nav>
+
+        {/* Full Screen Menu */}
+        <div
+            className={`fixed inset-0 z-40 bg-white transition-all duration-500 ${
+                isMenuOpen
+                    ? "visible opacity-100"
+                    : "invisible opacity-0"
+            }`}
+        >
+          <div className="flex h-full w-full flex-col overflow-y-auto px-6 pb-10 pt-32 md:px-10 lg:px-36">
+
+            {/* Menu Links */}
+            <div className="flex flex-col gap-5 md:gap-6">
+
+              {navLinks.map((link) => (
+                  <NavLink
+                      key={link.to}
+                      to={link.to}
+                      onClick={closeMenu}
+                      className={({ isActive }) =>
+                          `font-InterTight text-5xl font-bold tracking-tight transition md:text-7xl ${
+                              isActive
+                                  ? "text-[#ffcc00]"
+                                  : "text-black hover:opacity-50"
+                          }`
+                      }
+                  >
+                    {link.label}
+                  </NavLink>
+              ))}
+
+            </div>
           </div>
         </div>
-      </div>
-    </section>
+      </>
   );
 };
 

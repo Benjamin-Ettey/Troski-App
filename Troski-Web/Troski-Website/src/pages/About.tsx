@@ -1,4 +1,4 @@
-import aerial from "../assets/aerialviewimage.png";
+import aerial from "../assets/aerialview.png";
 import useSEO from "../hooks/useSEO";
 
 const About = () => {
