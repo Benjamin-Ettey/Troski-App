@@ -52,6 +52,17 @@ const DriverProfileSchema = new mongoose.Schema(
       type: String,
     },
 
+    // Mobile Money provider for payouts (MTN / Vodafone-Telecel / AirtelTigo).
+    momoProvider: {
+      type: String,
+      enum: ["MTN", "VOD", "ATL"],
+    },
+
+    // Cached Paystack transfer recipient code, created lazily on first payout.
+    transferRecipientCode: {
+      type: String,
+    },
+
     rejectionReason: {
       type: String,
     },
@@ -59,6 +70,10 @@ const DriverProfileSchema = new mongoose.Schema(
     isOnline: {
       type: Boolean,
       default: false,
+    },
+
+    lastSeenAt: {
+      type: Date,
     },
   },
   { timestamps: true },

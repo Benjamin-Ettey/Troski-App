@@ -10,6 +10,7 @@ const TokenSchema = new mongoose.Schema(
     refreshToken: {
       type: String,
       required: true,
+      unique: true,
     },
     ip: {
       type: String,

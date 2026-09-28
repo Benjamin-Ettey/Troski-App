@@ -33,3 +33,11 @@ export const toggleOnlineStatus = async (req: Request, res: Response): Promise<v
   const result = await driverService.toggleOnlineStatusService(req.user!._id, isOnline);
   res.status(result.status).json({ message: result.message, data: result.data });
 };
+
+export const getMyStatus = async (
+  req: Request,
+  res: Response,
+): Promise<void> => {
+  const result = await driverService.getVerificationStatusService(req.user!._id);
+  res.status(result.status).json({ message: result.message, data: result.data });
+};

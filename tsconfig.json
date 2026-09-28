@@ -11,5 +11,5 @@
     "rootDir": ".",
     "outDir": "./dist"
   },
-  "include": ["src/**/*"]
+  "include": ["src/**/*", "scripts/maps-check.ts"]
 }

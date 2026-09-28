@@ -137,6 +137,41 @@ export const submitVehicleService = async (
   };
 };
 
+/**
+ * Let a driver check their own verification state: KYC/profile status, vehicle
+ * status, any rejection reasons, and whether they're cleared to go online and
+ * take rides (dispatchable = profile approved AND an approved vehicle).
+ */
+export const getVerificationStatusService = async (
+  userId: Types.ObjectId,
+): Promise<ServiceResponse> => {
+  const profile = await DriverProfile.findOne({ user: userId });
+  if (!profile) {
+    return {
+      status: StatusCodes.NOT_FOUND,
+      message: "Driver profile not found",
+    };
+  }
+
+  const vehicle = await Vehicle.findOne({ driver: profile._id });
+  const isDispatchable =
+    profile.verificationStatus === "approved" &&
+    vehicle?.vehicleStatus === "approved";
+
+  return {
+    status: StatusCodes.OK,
+    message: "Verification status retrieved",
+    data: {
+      verificationStatus: profile.verificationStatus,
+      rejectionReason: profile.rejectionReason ?? null,
+      hasVehicle: !!vehicle,
+      vehicleStatus: vehicle?.vehicleStatus ?? null,
+      vehicleRejectionReason: vehicle?.rejectionReason ?? null,
+      isDispatchable,
+    },
+  };
+};
+
 export const toggleOnlineStatusService = async (
   userId: Types.ObjectId,
   isOnline: boolean,
@@ -150,6 +185,9 @@ export const toggleOnlineStatusService = async (
   }
 
   profile.isOnline = isOnline;
+  if (isOnline) {
+    profile.lastSeenAt = new Date();
+  }
   await profile.save();
 
   return {

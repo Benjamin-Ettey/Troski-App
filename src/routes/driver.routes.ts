@@ -10,8 +10,13 @@ import {
   submitKyc,
   submitVehicle,
   toggleOnlineStatus,
+  getMyStatus,
 } from "../controllers/driver.controller";
 const router = Router();
+
+// A driver checks their own verification/approval state. Intentionally not
+// behind requireApprovedDriver — they need this most before they're approved.
+router.get("/status", getMyStatus);
 
 router.post(
   "/kyc",

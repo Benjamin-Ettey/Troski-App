@@ -34,11 +34,24 @@ const errorHandlerMiddleware = (
     customError.statusCode = StatusCodes.BAD_REQUEST;
   }
 
-  // Handle MongoDB Duplicate Key Errors (code 11000)
+  // Handle MongoDB Duplicate Key Errors (code 11000).
+  // Several unique indexes are compound (e.g. { email, role }, { phoneNumber, role }),
+  // so map the offending field(s) to a clear, user-facing message.
   if (error.code === 11000 && error.keyValue) {
-    const fields = Object.keys(error.keyValue).join(", ");
-    customError.msg = `Duplicate value entered for [${fields}] field, please choose another value`;
-    customError.statusCode = StatusCodes.BAD_REQUEST;
+    const keys = Object.keys(error.keyValue);
+    const friendlyMessages: Record<string, string> = {
+      email: "An account with this email already exists",
+      phoneNumber: "An account with this phone number already exists",
+      adminId: "This admin ID is already taken",
+      googleId: "This Google account is already linked to another user",
+      plateNumber: "A vehicle with this plate number already exists",
+    };
+
+    const matched = keys.find((key) => key in friendlyMessages);
+    customError.msg = matched
+      ? friendlyMessages[matched]
+      : `Duplicate value entered for [${keys.join(", ")}], please choose another value`;
+    customError.statusCode = StatusCodes.CONFLICT;
   }
 
   // Handle Mongoose Cast Errors (e.g., malformed MongoDB ObjectIDs)
