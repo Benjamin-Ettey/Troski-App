@@ -1,0 +1,296 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="AutoImportSettings">
+    <option name="autoReloadType" value="SELECTIVE" />
+  </component>
+  <component name="ChangeListManager">
+    <list default="true" id="564ac165-5879-4255-b187-31d269c93d35" name="Changes" comment="" />
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="CopilotPersistence">
+    <persistenceIdMap>
+      <entry key="_D:/Troski-App" value="3BfYEPzlCgrAQMq1QFh8QFa9t9f" />
+    </persistenceIdMap>
+  </component>
+  <component name="Git.Settings">
+    <option name="RECENT_BRANCH_BY_REPOSITORY">
+      <map>
+        <entry key="$PROJECT_DIR$" value="development" />
+      </map>
+    </option>
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+    <option name="ROOT_SYNC" value="DONT_SYNC" />
+  </component>
+  <component name="GitHubPullRequestSearchHistory">{
+  &quot;lastFilter&quot;: {
+    &quot;state&quot;: &quot;OPEN&quot;,
+    &quot;assignee&quot;: &quot;Benjamin-Ettey&quot;
+  }
+}</component>
+  <component name="GithubPullRequestsUISettings">{
+  &quot;selectedUrlAndAccountId&quot;: {
+    &quot;url&quot;: &quot;https://github.com/Benjamin-Ettey/Troski-App.git&quot;,
+    &quot;accountId&quot;: &quot;a3e5e998-fb54-457e-850e-c7fe5104cfce&quot;
+  }
+}</component>
+  <component name="ProblemsViewState">
+    <option name="selectedTabId" value="CurrentFile" />
+  </component>
+  <component name="ProjectColorInfo">{
+  &quot;associatedIndex&quot;: 4
+}</component>
+  <component name="ProjectId" id="3BfYEPzlCgrAQMq1QFh8QFa9t9f" />
+  <component name="ProjectViewState">
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showLibraryContents" value="true" />
+  </component>
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "ModuleVcsDetector.initialDetectionPerformed": "true",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252": "true",
+    "RunOnceActivity.git.unshallow": "true",
+    "RunOnceActivity.typescript.service.memoryLimit.init": "true",
+    "codeWithMe.voiceChat.enabledByDefault": "false",
+    "com.intellij.ml.llm.matterhorn.ej.ui.settings.DefaultModelSelectionForGA.v1": "true",
+    "git-widget-placeholder": "dev",
+    "javascript.preferred.runtime.type.id": "node",
+    "junie.onboarding.icon.badge.shown": "true",
+    "last_opened_file_path": "D:/Troski-App/Troski-Web/Troski-Website/src/assets",
+    "node.js.detected.package.eslint": "true",
+    "node.js.detected.package.tslint": "true",
+    "node.js.selected.package.eslint": "(autodetect)",
+    "node.js.selected.package.tslint": "(autodetect)",
+    "nodejs_package_manager_path": "npm",
+    "settings.editor.selected.configurable": "preferences.pluginManager",
+    "to.speed.mode.migration.done": "true",
+    "ts.external.directory.path": "D:\\Troski-App\\Frontend\\passenger-app\\Troski\\node_modules\\typescript\\lib",
+    "vue.rearranger.settings.migration": "true"
+  }
+}]]></component>
+  <component name="RecentsManager">
+    <key name="CopyFile.RECENT_KEYS">
+      <recent name="D:\Troski-App\Troski-Web\Troski-Website\src\assets" />
+      <recent name="D:\Troski-App\Troski-Web\Troski-Website\public" />
+      <recent name="D:\Troski-App\passenger-app\Troski\assets\images" />
+      <recent name="D:\Troski-App\driver-app\Troski-Driver\assets\images" />
+      <recent name="D:\Troski-App\driver-app\Troski-Driver\assets\video" />
+    </key>
+    <key name="MoveFile.RECENT_KEYS">
+      <recent name="D:\Troski-App\Troski-Web\Troski-Website\src\assets" />
+      <recent name="D:\Troski-App\Troski-Web\Troski-Website\src\assets\images" />
+      <recent name="D:\Troski-App\Troski-Web\Troski-Website\public" />
+      <recent name="D:\Troski-App\driver-app\Troski-Driver\assets\images" />
+      <recent name="D:\Troski-App\driver-app\Troski-Driver\app\landingPage" />
+    </key>
+  </component>
+  <component name="SharedIndexes">
+    <attachedChunks>
+      <set>
+        <option value="bundled-js-predefined-d6986cc7102b-31caf2ab9e3c-JavaScript-WS-261.26222.58" />
+      </set>
+    </attachedChunks>
+  </component>
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="564ac165-5879-4255-b187-31d269c93d35" name="Changes" comment="" />
+      <created>1774881481981</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1774881481981</updated>
+      <workItem from="1774881483999" duration="15614000" />
+      <workItem from="1775069451390" duration="4953000" />
+      <workItem from="1775361665035" duration="12000" />
+      <workItem from="1775361717124" duration="22000" />
+      <workItem from="1775363257947" duration="427000" />
+      <workItem from="1777059761225" duration="670000" />
+      <workItem from="1777237716289" duration="391000" />
+      <workItem from="1777238153566" duration="105000" />
+      <workItem from="1777488565692" duration="1153000" />
+      <workItem from="1777516104778" duration="1216000" />
+      <workItem from="1777613084560" duration="4903000" />
+      <workItem from="1777618209501" duration="1697000" />
+      <workItem from="1777622297602" duration="22235000" />
+      <workItem from="1777668100151" duration="3893000" />
+      <workItem from="1777672348604" duration="17837000" />
+      <workItem from="1777724914968" duration="10427000" />
+      <workItem from="1777742768863" duration="15326000" />
+      <workItem from="1777851868845" duration="671000" />
+      <workItem from="1777853140410" duration="789000" />
+      <workItem from="1777897960994" duration="17665000" />
+      <workItem from="1777924958063" duration="23572000" />
+      <workItem from="1778009497633" duration="13476000" />
+      <workItem from="1778059625505" duration="25057000" />
+      <workItem from="1778096059977" duration="7771000" />
+      <workItem from="1778106450695" duration="13072000" />
+      <workItem from="1778196303506" duration="20970000" />
+      <workItem from="1778245213943" duration="18003000" />
+      <workItem from="1778287089981" duration="2242000" />
+      <workItem from="1778327295610" duration="20462000" />
+      <workItem from="1778364683003" duration="8842000" />
+      <workItem from="1778393210551" duration="5585000" />
+      <workItem from="1778434183621" duration="16399000" />
+      <workItem from="1778497730579" duration="7001000" />
+      <workItem from="1778526227084" duration="28111000" />
+      <workItem from="1778610702691" duration="8403000" />
+      <workItem from="1778645731026" duration="29210000" />
+      <workItem from="1778715235111" duration="14450000" />
+      <workItem from="1778762762888" duration="1574000" />
+      <workItem from="1778764723171" duration="467000" />
+      <workItem from="1778765797404" duration="60451000" />
+      <workItem from="1778930262070" duration="14248000" />
+      <workItem from="1778974178269" duration="9126000" />
+      <workItem from="1779097346386" duration="15479000" />
+      <workItem from="1779114511647" duration="10618000" />
+      <workItem from="1779137639273" duration="3746000" />
+      <workItem from="1779142933612" duration="1432000" />
+      <workItem from="1779169431887" duration="12000" />
+      <workItem from="1779170902225" duration="9579000" />
+      <workItem from="1779181015743" duration="3733000" />
+      <workItem from="1779221789253" duration="1695000" />
+      <workItem from="1779271879512" duration="6529000" />
+      <workItem from="1779281851053" duration="8665000" />
+      <workItem from="1779290698725" duration="945000" />
+      <workItem from="1779304943849" duration="11394000" />
+      <workItem from="1779364491201" duration="26350000" />
+      <workItem from="1779430356654" duration="3996000" />
+      <workItem from="1779434958362" duration="790000" />
+      <workItem from="1779435790525" duration="2847000" />
+      <workItem from="1779446516533" duration="2799000" />
+      <workItem from="1779450042719" duration="2567000" />
+      <workItem from="1779453398306" duration="6075000" />
+      <workItem from="1779470853664" duration="1267000" />
+      <workItem from="1779472699720" duration="1269000" />
+      <workItem from="1779476369228" duration="380000" />
+      <workItem from="1779513879606" duration="7129000" />
+      <workItem from="1779640958530" duration="3947000" />
+      <workItem from="1779677167491" duration="1793000" />
+      <workItem from="1779702925049" duration="4975000" />
+      <workItem from="1779708170997" duration="1482000" />
+      <workItem from="1779730850605" duration="3600000" />
+      <workItem from="1779793251894" duration="2094000" />
+      <workItem from="1779801536600" duration="14123000" />
+      <workItem from="1779881479450" duration="5640000" />
+      <workItem from="1779911828956" duration="6925000" />
+      <workItem from="1779953305537" duration="12206000" />
+      <workItem from="1779989148961" duration="8986000" />
+      <workItem from="1780260228868" duration="12362000" />
+      <workItem from="1780317824695" duration="39000" />
+      <workItem from="1780318187803" duration="899000" />
+      <workItem from="1780328667912" duration="252000" />
+      <workItem from="1780394953410" duration="9155000" />
+      <workItem from="1780413470529" duration="11560000" />
+      <workItem from="1780472303418" duration="10804000" />
+      <workItem from="1780562149194" duration="5602000" />
+      <workItem from="1780583289751" duration="722000" />
+      <workItem from="1780584061121" duration="7895000" />
+      <workItem from="1780685406513" duration="14140000" />
+      <workItem from="1780717432618" duration="10834000" />
+      <workItem from="1780752015480" duration="5049000" />
+      <workItem from="1780943692126" duration="4571000" />
+      <workItem from="1781185749073" duration="253000" />
+      <workItem from="1781532857728" duration="2118000" />
+      <workItem from="1781549212649" duration="2366000" />
+      <workItem from="1781607430001" duration="363000" />
+      <workItem from="1781608569396" duration="7402000" />
+      <workItem from="1781617066346" duration="619000" />
+      <workItem from="1781617989397" duration="4833000" />
+      <workItem from="1784132022369" duration="556000" />
+      <workItem from="1788626828933" duration="316000" />
+      <workItem from="1788632516437" duration="2435000" />
+      <workItem from="1788635208830" duration="612000" />
+      <workItem from="1788635901779" duration="1394000" />
+      <workItem from="1789139061671" duration="2081000" />
+      <workItem from="1789148756449" duration="16504000" />
+      <workItem from="1789467129679" duration="1679000" />
+      <workItem from="1789639771084" duration="2826000" />
+      <workItem from="1789650466349" duration="5530000" />
+      <workItem from="1789679185800" duration="3177000" />
+      <workItem from="1789731993644" duration="5969000" />
+      <workItem from="1790104780267" duration="411000" />
+      <workItem from="1790124633634" duration="3230000" />
+      <workItem from="1790157906819" duration="4418000" />
+      <workItem from="1790758006829" duration="1705000" />
+    </task>
+    <task id="LOCAL-00001" summary="Added custom components in the components directory">
+      <option name="closed" value="true" />
+      <created>1777238010684</created>
+      <option name="number" value="00001" />
+      <option name="presentableId" value="LOCAL-00001" />
+      <option name="project" value="LOCAL" />
+      <updated>1777238010684</updated>
+    </task>
+    <task id="LOCAL-00002" summary="Condition added for load of fonts">
+      <option name="closed" value="true" />
+      <created>1777613587203</created>
+      <option name="number" value="00002" />
+      <option name="presentableId" value="LOCAL-00002" />
+      <option name="project" value="LOCAL" />
+      <updated>1777613587203</updated>
+    </task>
+    <task id="LOCAL-00003" summary="Designed and added the apps images(i.e: splash-icon, app icon and the like...) into the assets/images folder and also changed the background color for the splash screen to the primary color &quot;#ffcc00&quot; for both dark mode and light mode. This changes was made for both the driver and passenger folders">
+      <option name="closed" value="true" />
+      <created>1777619340578</created>
+      <option name="number" value="00003" />
+      <option name="presentableId" value="LOCAL-00003" />
+      <option name="project" value="LOCAL" />
+      <updated>1777619340578</updated>
+    </task>
+    <task id="LOCAL-00004" summary="Finished all sign up, login, and onboarding screens.">
+      <option name="closed" value="true" />
+      <created>1777689983472</created>
+      <option name="number" value="00004" />
+      <option name="presentableId" value="LOCAL-00004" />
+      <option name="project" value="LOCAL" />
+      <updated>1777689983472</updated>
+    </task>
+    <task id="LOCAL-00005" summary="Finished all sign up, login, and onboarding screens.">
+      <option name="closed" value="true" />
+      <created>1789149693467</created>
+      <option name="number" value="00005" />
+      <option name="presentableId" value="LOCAL-00005" />
+      <option name="project" value="LOCAL" />
+      <updated>1789149693467</updated>
+    </task>
+    <task id="LOCAL-00006" summary="Merge pull request #11 from Benjamin-Ettey/development&#10;&#10;Finished passenger app completely by adding dark modes and other erro…">
+      <option name="closed" value="true" />
+      <created>1789150777889</created>
+      <option name="number" value="00006" />
+      <option name="presentableId" value="LOCAL-00006" />
+      <option name="project" value="LOCAL" />
+      <updated>1789150777889</updated>
+    </task>
+    <task id="LOCAL-00007" summary="Merge pull request #11 from Benjamin-Ettey/development&#10;&#10;Finished passenger app completely by adding dark modes and other erro…">
+      <option name="closed" value="true" />
+      <created>1789151582667</created>
+      <option name="number" value="00007" />
+      <option name="presentableId" value="LOCAL-00007" />
+      <option name="project" value="LOCAL" />
+      <updated>1789151582667</updated>
+    </task>
+    <option name="localTasksCounter" value="8" />
+    <servers />
+  </component>
+  <component name="TypeScriptGeneratedFilesManager">
+    <option name="version" value="3" />
+  </component>
+  <component name="VcsManagerConfiguration">
+    <MESSAGE value="Added custom components in the components directory" />
+    <MESSAGE value="Condition added for load of fonts" />
+    <MESSAGE value="Designed and added the apps images(i.e: splash-icon, app icon and the like...) into the assets/images folder and also changed the background color for the splash screen to the primary color &quot;#ffcc00&quot; for both dark mode and light mode. This changes was made for both the driver and passenger folders" />
+    <MESSAGE value="Finished all sign up, login, and onboarding screens." />
+    <MESSAGE value="Merge pull request #11 from Benjamin-Ettey/development&#10;&#10;Finished passenger app completely by adding dark modes and other erro…" />
+    <option name="LAST_COMMIT_MESSAGE" value="Merge pull request #11 from Benjamin-Ettey/development&#10;&#10;Finished passenger app completely by adding dark modes and other erro…" />
+  </component>
+  <component name="github-copilot-workspace">
+    <instructionFileLocations>
+      <option value=".github/instructions" />
+    </instructionFileLocations>
+    <promptFileLocations>
+      <option value=".github/prompts" />
+    </promptFileLocations>
+  </component>
+</project>
