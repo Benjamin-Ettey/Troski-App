@@ -1,34 +1,43 @@
 import { Link } from "react-router-dom";
+import logo from "../assets/logo.svg";
+
+const linkClass =
+  "text-white/70 transition-colors duration-200 hover:text-brand";
 
 const Footer = () => {
   return (
-    <footer className="w-full border-t border-gray-200 mt-12">
-      <div className="w-[90%] md:w-[70%] mx-auto py-10 flex flex-col md:flex-row justify-between gap-8">
-        <div className="flex flex-col gap-2">
-          <span className="font-bold text-lg">Troski</span>
-          <p className="text-gray-600 text-sm max-w-xs">
+    <footer className="w-full bg-ink text-white">
+      <div className="mx-auto flex w-[90%] flex-col justify-between gap-10 py-12 md:w-[70%] md:flex-row md:py-16">
+        <div className="flex flex-col gap-4">
+          <Link to="/" className="w-24">
+            <img src={logo} alt="Troski" width={96} height={64} />
+          </Link>
+          <p className="max-w-xs text-sm text-white/60">
             Modernizing tro-tro transport in Ghana through digital booking,
             payments, and trip verification.
           </p>
         </div>
 
-        <div className="flex flex-col gap-2 text-sm">
-          <span className="font-semibold mb-1">Company</span>
-          <Link to="/about" className="text-gray-600 hover:text-black">About</Link>
-          <Link to="/how-it-works" className="text-gray-600 hover:text-black">How It Works</Link>
-          <Link to="/services" className="text-gray-600 hover:text-black">Services</Link>
+        <div className="flex flex-col gap-3 text-sm">
+          <span className="mb-1 font-semibold text-white">Company</span>
+          <Link to="/about" className={linkClass}>About</Link>
+          <Link to="/how-it-works" className={linkClass}>How It Works</Link>
+          <Link to="/services" className={linkClass}>Services</Link>
+          <Link to="/become-a-driver" className={linkClass}>Become a Driver</Link>
         </div>
 
-        <div className="flex flex-col gap-2 text-sm">
-          <span className="font-semibold mb-1">Support</span>
-          <Link to="/faqs" className="text-gray-600 hover:text-black">FAQs</Link>
-          <Link to="/contact" className="text-gray-600 hover:text-black">Contact</Link>
-          <Link to="/terms" className="text-gray-600 hover:text-black">Terms & Privacy</Link>
+        <div className="flex flex-col gap-3 text-sm">
+          <span className="mb-1 font-semibold text-white">Support</span>
+          <Link to="/faqs" className={linkClass}>FAQs</Link>
+          <Link to="/contact" className={linkClass}>Contact</Link>
+          <Link to="/terms" className={linkClass}>Terms & Privacy</Link>
         </div>
       </div>
 
-      <div className="w-full text-center text-xs text-gray-400 pb-6">
-        &copy; {new Date().getFullYear()} Troski. All rights reserved.
+      <div className="border-t border-white/10">
+        <p className="mx-auto w-[90%] py-6 text-center text-xs text-white/50 md:w-[70%] md:text-left">
+          &copy; {new Date().getFullYear()} Troski. All rights reserved.
+        </p>
       </div>
     </footer>
   );

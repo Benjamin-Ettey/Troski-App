@@ -1,9 +1,49 @@
 @import "tailwindcss";
 
-:root{
-    background-color: #fafafa;
+@theme {
+  /* Troski brand palette */
+  --color-brand: #ffcc00;
+  --color-brand-dark: #e6b800;
+  --color-ink: #2b2b2b;
+  --color-ink-hover: #404040;
 
+  /* Animations */
+  --animate-fade-up: fade-up 0.7s ease-out both;
+  --animate-hero-zoom: hero-zoom 2s ease-out both;
+
+  @keyframes fade-up {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes hero-zoom {
+    from {
+      transform: scale(1.08);
+    }
+    to {
+      transform: scale(1);
+    }
+  }
 }
+
+@layer base {
+  html {
+    /* stops the page jumping sideways when the menu locks scrolling */
+    scrollbar-gutter: stable;
+  }
+
+  body {
+    color: var(--color-ink);
+  }
+}
+
+/* Page-to-page fade */
 @keyframes fadeIn {
   from {
     opacity: 0;
@@ -17,4 +57,29 @@
 
 .page-transition {
   animation: fadeIn 300ms ease-out;
+}
+
+/* Sections fade up as they scroll into view (added by MainLayout) */
+.reveal {
+  opacity: 0;
+  transform: translateY(24px);
+  transition:
+    opacity 700ms ease-out,
+    transform 700ms ease-out;
+}
+
+.reveal-visible {
+  opacity: 1;
+  transform: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .page-transition {
+    animation: none;
+  }
+  .reveal {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
 }
