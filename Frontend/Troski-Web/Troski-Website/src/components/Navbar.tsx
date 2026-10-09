@@ -58,7 +58,7 @@ const Navbar = () => {
       {/* Navbar */}
       <nav
         className={`fixed top-0 left-0 z-50 w-full px-6 py-5 transition-all duration-300 ${
-          showDark ? "bg-white" : "bg-transparent"
+          showDark ? "bg-[#FAF9F6]" : "bg-transparent"
         } ${isScrolled && !isMenuOpen ? "shadow-sm" : ""}`}
       >
         <div className="mx-auto flex w-full max-w-[1536px] items-center justify-between md:px-10 lg:px-36">
