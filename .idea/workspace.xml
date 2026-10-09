@@ -4,7 +4,9 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="564ac165-5879-4255-b187-31d269c93d35" name="Changes" comment="" />
+    <list default="true" id="564ac165-5879-4255-b187-31d269c93d35" name="Changes" comment="">
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+    </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -56,10 +58,10 @@
     "RunOnceActivity.typescript.service.memoryLimit.init": "true",
     "codeWithMe.voiceChat.enabledByDefault": "false",
     "com.intellij.ml.llm.matterhorn.ej.ui.settings.DefaultModelSelectionForGA.v1": "true",
-    "git-widget-placeholder": "dev",
+    "git-widget-placeholder": "#23 on development",
     "javascript.preferred.runtime.type.id": "node",
     "junie.onboarding.icon.badge.shown": "true",
-    "last_opened_file_path": "D:/Troski-App/Troski-Web/Troski-Website/src/assets",
+    "last_opened_file_path": "D:/Troski-App/Frontend/Troski-Web/Troski-Website/public/fonts",
     "node.js.detected.package.eslint": "true",
     "node.js.detected.package.tslint": "true",
     "node.js.selected.package.eslint": "(autodetect)",
@@ -67,17 +69,17 @@
     "nodejs_package_manager_path": "npm",
     "settings.editor.selected.configurable": "preferences.pluginManager",
     "to.speed.mode.migration.done": "true",
-    "ts.external.directory.path": "D:\\Troski-App\\Frontend\\passenger-app\\Troski\\node_modules\\typescript\\lib",
+    "ts.external.directory.path": "D:\\Troski-App\\Frontend\\driver-app\\Troski-Driver\\node_modules\\typescript\\lib",
     "vue.rearranger.settings.migration": "true"
   }
 }]]></component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
+      <recent name="D:\Troski-App\Frontend\Troski-Web\Troski-Website\public\fonts" />
       <recent name="D:\Troski-App\Troski-Web\Troski-Website\src\assets" />
       <recent name="D:\Troski-App\Troski-Web\Troski-Website\public" />
       <recent name="D:\Troski-App\passenger-app\Troski\assets\images" />
       <recent name="D:\Troski-App\driver-app\Troski-Driver\assets\images" />
-      <recent name="D:\Troski-App\driver-app\Troski-Driver\assets\video" />
     </key>
     <key name="MoveFile.RECENT_KEYS">
       <recent name="D:\Troski-App\Troski-Web\Troski-Website\src\assets" />
