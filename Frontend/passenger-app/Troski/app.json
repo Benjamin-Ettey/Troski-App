@@ -50,7 +50,6 @@
           }
         }
       ],
-
       [
         "expo-audio",
         {
@@ -59,10 +58,10 @@
           "enableBackgroundRecording": false
         }
       ],
-
       "expo-web-browser",
       "expo-video",
-      "expo-audio"
+      "expo-audio",
+      "expo-secure-store"
     ],
     "experiments": {
       "typedRoutes": true,

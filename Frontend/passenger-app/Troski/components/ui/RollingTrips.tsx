@@ -33,76 +33,56 @@ const TripRow = ({ item, onPress }: { item: TripItem; onPress: () => void }) => 
             onPress={onPress}
             className="w-full h-20 rounded-3xl px-4 mb-4 gap-4 bg-tertiaryWhite dark:bg-secondaryGray/40 flex flex-col justify-center items-center"
         >
-            <View className="flex w-full flex-row justify-between items-center gap-4">
-
-                <View className="flex-row flex gap-4 flex-1">
-
+            <View className="flex w-full flex-row justify-between items-center gap-3">
+                <View className="flex-row flex gap-2 flex-1 min-w-0 justify-start items-center">
                     <Image
                         source={require("../../assets/images/minibus.png")}
-                        className="w-9 h-9 mx-2"
+                        className="w-24 h-16"
+                        resizeMode="cover"
                     />
 
-
-                    <View className="flex flex-col">
-
-                        <View className="flex  flex-row justify-start items-center gap-2">
+                    <View className="flex flex-col flex-1 min-w-0">
+                        <View className="flex flex-row items-center gap-1 min-w-0">
                             <Text
                                 numberOfLines={1}
                                 ellipsizeMode="tail"
-                                className="text-lg leading-5 font-GoogleSansRegular max-w-[80px] text-secondaryBlack dark:text-tertiaryGray"
-                            >
-                                {item.pickup}
-                            </Text>
-
-                            <Ionicons name="arrow-forward" size={12} color={colorScheme === "dark"? "#f0f0f0": "#444444"} />
-
-                            <Text
-                                numberOfLines={1}
-                                ellipsizeMode="tail"
-                                className="text-lg leading-5 font-GoogleSansRegular max-w-[80px] text-secondaryBlack dark:text-tertiaryGray"
+                                className="flex-1 min-w-0 text-lg leading-5 font-GoogleSansMedium text-secondaryBlack dark:text-tertiaryGray"
                             >
                                 {item.destination}
                             </Text>
+
+
                         </View>
 
-                        <View className="w-full flex flex-row items-center mt-1">
-                            <Text
-                                className="text-white text-xs leading-4 px-2 py-0.5 bg-secondaryBlack font-GoogleSansRegular rounded-full"
-                            >
+                        <View className="w-full flex flex-row justify-start items-center ">
+                            <Text className="text-secondaryGray dark:text-white text-sm font-GoogleSansRegular rounded-full">
                                 {item.minutes}
                             </Text>
 
                             <View className="flex gap-1 flex-row items-center ml-2">
-                                <Ionicons name="person" size={12} color={colorScheme === "dark"? "#f0f0f0": "gray"} />
-                                <Text className="font-GoogleSansRegular text-sm leading-4 text-secondaryGray dark:text-tertiaryWhite">
+                                <Ionicons
+                                    name="person"
+                                    size={12}
+                                    color={colorScheme === "dark" ? "#f0f0f0" : "gray"}
+                                />
+
+                                <Text className="font-GoogleSansRegular text-sm  text-secondaryGray dark:text-tertiaryWhite">
                                     {item.passengercount}
                                 </Text>
                             </View>
                         </View>
-
                     </View>
-
                 </View>
 
-
-                <View
-                    className="rounded-full h-9 w-24 bg-primary dark:bg-secondaryBlack flex justify-center items-center"
-                >
-                    <Text numberOfLines={1} className="font-GoogleSansBold text-sm leading-4 dark:text-primary text-secondaryBlack">
+                <View className="rounded-full h-9 w-24 shrink-0 bg-primary dark:bg-secondaryBlack flex justify-center items-center">
+                    <Text
+                        numberOfLines={1}
+                        className="font-GoogleSansBold text-base dark:text-primary text-secondaryBlack"
+                    >
                         {item.price}
                     </Text>
-
                 </View>
-
-
-
-
             </View>
-
-
-
-
-
         </Pressable>
     );
 };

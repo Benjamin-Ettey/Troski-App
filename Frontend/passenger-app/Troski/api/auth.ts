@@ -2,9 +2,10 @@ import { api } from "./client";
 
 export const registerPassenger = async (data: {
     email: string;
-    phone: number;
+    phoneNumber: string;
     name: string;
-    pin: number;
+    pin: string;
+    otpCode: string;
 })=> {
     const response = await api.post("/passenger/register", data);
 
@@ -13,8 +14,8 @@ export const registerPassenger = async (data: {
 
 
 export const loginPassenger = async (data: {
-    phone: number;
-    pin: number;
+    phoneNumber: string;
+    pin: string;
 })=> {
     const response = await api.post("/passenger/login", data);
 
@@ -23,7 +24,7 @@ export const loginPassenger = async (data: {
 
 
 export const requestOTP = async (data: {
-    phone: number;
+    phoneNumber: string;
     purpose: "signup"
 })=> {
     const response = await api.post("/passenger/request-otp", data);
@@ -33,10 +34,11 @@ export const requestOTP = async (data: {
 
 
 export const requestEmailOTP = async (data: {
+    name: string;
     email: string;
     purpose: "signup"
 })=> {
-    const response = await api.post("/passenger/request-otp", data);
+    const response = await api.post("/passenger/request-email-otp", data);
 
     return response.data;
 };

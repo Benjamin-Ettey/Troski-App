@@ -130,28 +130,28 @@ const SelectRideType = ({ routeCoords, duration, price }: SelectRideTypeProps) =
 
                         <View
                               className="w-full h-20 px-4 rounded-3xl bg-tertiaryWhite dark:bg-secondaryGray/20 border-2 border-secondaryGray flex flex-row justify-between items-center">
-                        <View >
+                        <View>
                             <Image
-                                className="w-9 h-9"
+                                className="w-24 h-12 "
                                 source={require("../../assets/images/minibus.png")}
+                                resizeMode="cover"
+
                             />
                         </View>
 
-                        <View
-                            className="flex flex-1 px-6 flex-col justify-center items-center "
-                        >
-                            <View className="flex flex-row justify-start items-center w-full gap-2">
-                                <Text className="text-xl font-GoogleSansMedium dark:text-general">Troski</Text>
-                            </View>
+                            <View className="flex flex-1 flex-col justify-center items-start">
+                                <View className="flex flex-row justify-start items-center w-full">
+                                    <Text className="text-xl font-GoogleSansMedium dark:text-general">
+                                        Troski
+                                    </Text>
+                                </View>
 
-                            <View className="w-full flex flex-row items-center ">
-                                <Text
-                                    className="text-white px-2 py-0.5 text-xs leading-4 bg-black font-GoogleSansRegular rounded-full"
-                                >
-                                    {item.speed}
-                                </Text>
+                                <View className="w-full flex flex-row justify-start items-center">
+                                    <Text className="text-white px-2 py-0.5 text-xs leading-4 bg-black font-GoogleSansRegular rounded-full">
+                                        {item.speed}
+                                    </Text>
+                                </View>
                             </View>
-                        </View>
 
                             <View
                                 className="rounded-full w-24 h-9 bg-secondaryBlack flex justify-center items-center"

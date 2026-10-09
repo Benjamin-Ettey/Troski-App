@@ -4,7 +4,31 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="564ac165-5879-4255-b187-31d269c93d35" name="Changes" comment="" />
+    <list default="true" id="564ac165-5879-4255-b187-31d269c93d35" name="Changes" comment="">
+      <change afterPath="$PROJECT_DIR$/Frontend/passenger-app/Troski/assets/video/splash.json" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Frontend/passenger-app/Troski/assets/video/splashdark.json" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Frontend/passenger-app/Troski/components/ui/PaginateHomepage.tsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Frontend/passenger-app/Troski/utils/authStorage.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Backend/package-lock.json" beforeDir="false" afterPath="$PROJECT_DIR$/Backend/package-lock.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Frontend/passenger-app/Troski/api/auth.ts" beforeDir="false" afterPath="$PROJECT_DIR$/Frontend/passenger-app/Troski/api/auth.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Frontend/passenger-app/Troski/api/client.ts" beforeDir="false" afterPath="$PROJECT_DIR$/Frontend/passenger-app/Troski/api/client.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Frontend/passenger-app/Troski/app.json" beforeDir="false" afterPath="$PROJECT_DIR$/Frontend/passenger-app/Troski/app.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Frontend/passenger-app/Troski/app/_layout.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/Frontend/passenger-app/Troski/app/_layout.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Frontend/passenger-app/Troski/app/homepage/bookings/selectRide.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/Frontend/passenger-app/Troski/app/homepage/bookings/selectRide.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Frontend/passenger-app/Troski/app/index.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/Frontend/passenger-app/Troski/app/index.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Frontend/passenger-app/Troski/app/landingPage/login/index.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/Frontend/passenger-app/Troski/app/landingPage/login/index.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Frontend/passenger-app/Troski/app/landingPage/login/pinScreen.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/Frontend/passenger-app/Troski/app/landingPage/login/pinScreen.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Frontend/passenger-app/Troski/app/landingPage/signup/fullNameScreen.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/Frontend/passenger-app/Troski/app/landingPage/signup/fullNameScreen.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Frontend/passenger-app/Troski/app/landingPage/signup/otpScreen.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/Frontend/passenger-app/Troski/app/landingPage/signup/otpScreen.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Frontend/passenger-app/Troski/app/landingPage/signup/pinScreen.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/Frontend/passenger-app/Troski/app/landingPage/signup/pinScreen.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Frontend/passenger-app/Troski/assets/images/minibus.png" beforeDir="false" afterPath="$PROJECT_DIR$/Frontend/passenger-app/Troski/assets/images/minibus.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Frontend/passenger-app/Troski/components/ui/RollingTrips.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/Frontend/passenger-app/Troski/components/ui/RollingTrips.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Frontend/passenger-app/Troski/components/ui/SelectRideType.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/Frontend/passenger-app/Troski/components/ui/SelectRideType.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Frontend/passenger-app/Troski/package-lock.json" beforeDir="false" afterPath="$PROJECT_DIR$/Frontend/passenger-app/Troski/package-lock.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Frontend/passenger-app/Troski/package.json" beforeDir="false" afterPath="$PROJECT_DIR$/Frontend/passenger-app/Troski/package.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Frontend/passenger-app/Troski/utils/store.js" beforeDir="false" afterPath="$PROJECT_DIR$/Frontend/passenger-app/Troski/utils/store.js" afterDir="false" />
+    </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -47,37 +71,37 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent"><![CDATA[{
-  "keyToString": {
-    "ModuleVcsDetector.initialDetectionPerformed": "true",
-    "RunOnceActivity.ShowReadmeOnStart": "true",
-    "RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252": "true",
-    "RunOnceActivity.git.unshallow": "true",
-    "RunOnceActivity.typescript.service.memoryLimit.init": "true",
-    "codeWithMe.voiceChat.enabledByDefault": "false",
-    "com.intellij.ml.llm.matterhorn.ej.ui.settings.DefaultModelSelectionForGA.v1": "true",
-    "git-widget-placeholder": "dev",
-    "javascript.preferred.runtime.type.id": "node",
-    "junie.onboarding.icon.badge.shown": "true",
-    "last_opened_file_path": "D:/Troski-App/Troski-Web/Troski-Website/src/assets",
-    "node.js.detected.package.eslint": "true",
-    "node.js.detected.package.tslint": "true",
-    "node.js.selected.package.eslint": "(autodetect)",
-    "node.js.selected.package.tslint": "(autodetect)",
-    "nodejs_package_manager_path": "npm",
-    "settings.editor.selected.configurable": "preferences.pluginManager",
-    "to.speed.mode.migration.done": "true",
-    "ts.external.directory.path": "D:\\Troski-App\\Frontend\\passenger-app\\Troski\\node_modules\\typescript\\lib",
-    "vue.rearranger.settings.migration": "true"
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;ModuleVcsDetector.initialDetectionPerformed&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.typescript.service.memoryLimit.init&quot;: &quot;true&quot;,
+    &quot;codeWithMe.voiceChat.enabledByDefault&quot;: &quot;false&quot;,
+    &quot;com.intellij.ml.llm.matterhorn.ej.ui.settings.DefaultModelSelectionForGA.v1&quot;: &quot;true&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;dev&quot;,
+    &quot;javascript.preferred.runtime.type.id&quot;: &quot;node&quot;,
+    &quot;junie.onboarding.icon.badge.shown&quot;: &quot;true&quot;,
+    &quot;last_opened_file_path&quot;: &quot;D:/Troski-App/Frontend/passenger-app/Troski/assets/video&quot;,
+    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
+    &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
+    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
+    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
+    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
+    &quot;settings.editor.selected.configurable&quot;: &quot;preferences.pluginManager&quot;,
+    &quot;to.speed.mode.migration.done&quot;: &quot;true&quot;,
+    &quot;ts.external.directory.path&quot;: &quot;D:\\Troski-App\\Frontend\\driver-app\\Troski-Driver\\node_modules\\typescript\\lib&quot;,
+    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
   }
-}]]></component>
+}</component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
+      <recent name="D:\Troski-App\Frontend\passenger-app\Troski\assets\video" />
       <recent name="D:\Troski-App\Troski-Web\Troski-Website\src\assets" />
       <recent name="D:\Troski-App\Troski-Web\Troski-Website\public" />
       <recent name="D:\Troski-App\passenger-app\Troski\assets\images" />
       <recent name="D:\Troski-App\driver-app\Troski-Driver\assets\images" />
-      <recent name="D:\Troski-App\driver-app\Troski-Driver\assets\video" />
     </key>
     <key name="MoveFile.RECENT_KEYS">
       <recent name="D:\Troski-App\Troski-Web\Troski-Website\src\assets" />
@@ -214,6 +238,12 @@
       <workItem from="1790124633634" duration="3230000" />
       <workItem from="1790157906819" duration="4418000" />
       <workItem from="1790758006829" duration="1705000" />
+      <workItem from="1791118249389" duration="8261000" />
+      <workItem from="1791137454093" duration="9099000" />
+      <workItem from="1791200780477" duration="36725000" />
+      <workItem from="1791361905556" duration="18258000" />
+      <workItem from="1791463018051" duration="15078000" />
+      <workItem from="1791543115752" duration="13513000" />
     </task>
     <task id="LOCAL-00001" summary="Added custom components in the components directory">
       <option name="closed" value="true" />
