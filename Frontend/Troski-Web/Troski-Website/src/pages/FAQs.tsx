@@ -129,7 +129,7 @@ const FAQs = () => {
                 onClick={() => handleTabChange("drivers")}
                 className={`w-full lg:w-[60%] flex items-center justify-between gap-4 px-5 py-2 rounded-xl text-left transition-all duration-200 ${
   activeTab === "drivers"
-      ? "bg-[#ffcc00] hover:bg-[#F0C000] text-black"
+      ? "bg-brand hover:bg-[#F0C000] text-black"
       : "bg-[#FAF9F6] text-gray-700 hover:bg-black/5"
 }`}
               >
@@ -215,7 +215,17 @@ const FAQs = () => {
               Contact Us <span className="ml-2">→</span>
             </a>
           </div>
+
+
+
         </section>
+
+
+      </div>
+
+      <div className="flex-1 h-[720px] rounded-3xl bg-black mt-24 flex flex-col justify-start items-center ">
+
+        <h1 className="text-white text-center md:text-6xl text-3xl max-w[80%] font-medium tracking-tight mt-24 md:max-w-[60%] items-center justify-center">Ride safe. Earn more.</h1>
       </div>
     </main>
   );
