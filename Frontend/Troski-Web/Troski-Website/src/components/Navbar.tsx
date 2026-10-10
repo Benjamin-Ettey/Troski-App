@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, NavLink, useLocation } from "react-router-dom";
+import { Menu, X } from "lucide-react";
 import logo from "../assets/logo.svg";
 
 const navLinks = [
@@ -15,84 +16,141 @@ const navLinks = [
 
 const Navbar = () => {
   const { pathname } = useLocation();
+
+  // We remember which page the menu was opened on, so it also
+  // closes by itself when the route changes (e.g. browser back button).
+  const [openedAt, setOpenedAt] = useState<string | null>(null);
+  const [isScrolled, setIsScrolled] = useState(() => window.scrollY > 40);
+
+  const isMenuOpen = openedAt === pathname;
   const isHome = pathname === "/";
-  const [menuOpen, setMenuOpen] = useState(false);
-  const showDark = !isHome || menuOpen;
+  const showDark = !isHome || isMenuOpen || isScrolled;
+
+  const closeMenu = () => setOpenedAt(null);
+  const toggleMenu = () => setOpenedAt(isMenuOpen ? null : pathname);
+
+  // Navbar turns solid once the page is scrolled
+  useEffect(() => {
+    const onScroll = () => setIsScrolled(window.scrollY > 40);
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+
+  // While the menu is open: lock page scroll and allow Escape to close
+  useEffect(() => {
+    if (!isMenuOpen) return;
+
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setOpenedAt(null);
+    };
+
+    document.body.style.overflow = "hidden";
+    window.addEventListener("keydown", onKeyDown);
+
+    return () => {
+      document.body.style.overflow = "";
+      window.removeEventListener("keydown", onKeyDown);
+    };
+  }, [isMenuOpen]);
 
   return (
-    <section
-      id="NavBar"
-      className={`fixed top-0 left-0 w-full z-50 flex justify-center transition-colors duration-300 ${
-        showDark ? "bg-white shadow-sm" : ""
-      }`}
-    >
-      <div className="w-[95%] md:w-[70%] mt-4 md:mt-8 mb-4 md:mb-8 flex flex-col">
-        <div className="flex flex-row items-center justify-between">
-          <Link
-            to="/"
-            className="w-24 h-10 flex items-center justify-center"
-            onClick={() => setMenuOpen(false)}
-          >
+    <>
+      {/* Navbar */}
+      <nav
+        className={`fixed top-0 left-0 z-50 w-full px-6 py-5 transition-all duration-300 ${
+          showDark ? "bg-[#FAF9F6]" : "bg-transparent"
+        } ${isScrolled && !isMenuOpen ? "shadow-sm" : ""}`}
+      >
+        <div className="mx-auto flex w-full max-w-[1536px] items-center justify-between md:px-10 lg:px-36">
+          <Link to="/" onClick={closeMenu} className="relative z-50 shrink-0">
             <img
               src={logo}
               alt="Troski Logo"
               width={96}
               height={64}
-              className={`transition-all duration-300 ${showDark ? "invert" : ""}`}
+              className={`transition-all duration-300 ${
+                showDark ? "invert" : ""
+              }`}
             />
           </Link>
 
-          <div className="w-64 h-10 flex flex-row md:justify-between justify-end items-center gap-2">
-            <Link
+          <div className="flex shrink-0 items-center gap-3">
+           <Link
               to="/become-a-driver"
-              className="hidden md:flex hover:bg-white bg-[#ffcc00] font-medium text-base cursor-pointer justify-center items-center px-4 py-2 rounded-full"
-            >
-              Become a driver
-            </Link>
-
+              onClick={closeMenu}
+                  className="hidden whitespace-nowrap rounded-full bg-ink px-5 py-2.5 text-sm font-semibold text-white transition duration-300 hover:-translate-y-0.5 hover:bg-ink-hover active:scale-95 md:flex"
+              >
+                Become a Driver
+           </Link>
             <button
-              className="flex flex-col gap-2"
-              aria-label={menuOpen ? "Close menu" : "Open menu"}
-              onClick={() => setMenuOpen((prev) => !prev)}
+              onClick={toggleMenu}
+              className={`relative z-50 flex h-10 w-10 shrink-0 cursor-pointer items-center justify-center rounded-full transition duration-300 active:scale-90 ${
+                showDark
+                  ? "bg-ink text-white hover:bg-ink-hover"
+                  : "bg-white text-ink hover:bg-neutral-200"
+              }`}
+              aria-label={isMenuOpen ? "Close menu" : "Open menu"}
+              aria-expanded={isMenuOpen}
             >
-              <div
-                className={`w-8 h-0.5 transition-all duration-300 ${
-                  showDark ? "bg-black" : "bg-white"
-                } ${menuOpen ? "rotate-45 translate-y-[3px]" : ""}`}
-              />
-              <div
-                className={`w-8 h-0.5 transition-all duration-300 ${
-                  showDark ? "bg-black" : "bg-white"
-                } ${menuOpen ? "-rotate-45 -translate-y-[3px]" : ""}`}
-              />
+              <span className="relative block h-[22px] w-[22px]">
+                <Menu
+                  size={22}
+                  strokeWidth={2}
+                  className={`absolute inset-0 transition-all duration-300 ${
+                    isMenuOpen ? "rotate-90 opacity-0" : "rotate-0 opacity-100"
+                  }`}
+                />
+                <X
+                  size={22}
+                  strokeWidth={2}
+                  className={`absolute inset-0 transition-all duration-300 ${
+                    isMenuOpen ? "rotate-0 opacity-100" : "-rotate-90 opacity-0"
+                  }`}
+                />
+              </span>
             </button>
           </div>
         </div>
+      </nav>
 
-        <div
-          className={`overflow-hidden transition-all duration-300 ease-in-out ${
-            menuOpen ? "max-h-96 opacity-100 mt-6" : "max-h-0 opacity-0 mt-0"
-          }`}
-        >
-          <div className="flex flex-col gap-4 pb-4">
-            {navLinks.map((link) => (
-              <NavLink
+      {/* Full-screen menu: slides down from the top, and back up when closed */}
+      <div
+        aria-hidden={!isMenuOpen}
+        className={`fixed inset-0 z-40 bg-white transition-all duration-700 ease-[cubic-bezier(0.76,0,0.24,1)] ${
+          isMenuOpen ? "visible translate-y-0" : "invisible -translate-y-full"
+        }`}
+      >
+        <div className="flex h-full w-full flex-col overflow-y-auto px-6 pb-10 pt-28 md:px-10 lg:px-36">
+          <div className="flex flex-col gap-1 md:gap-2">
+            {navLinks.map((link, index) => (
+              <div
                 key={link.to}
-                to={link.to}
-                onClick={() => setMenuOpen(false)}
-                className={({ isActive }) =>
-                  `text-lg font-medium transition-colors ${
-                    isActive ? "text-[#ffcc00]" : "text-black"
-                  }`
-                }
+                className={`transition-all duration-500 ease-out ${
+                  isMenuOpen
+                    ? "translate-y-0 opacity-100"
+                    : "translate-y-6 opacity-0"
+                }`}
+                style={{
+                  transitionDelay: isMenuOpen ? `${250 + index * 60}ms` : "0ms",
+                }}
               >
-                {link.label}
-              </NavLink>
+                <NavLink
+                  to={link.to}
+                  onClick={closeMenu}
+                  className={({ isActive }) =>
+                    `inline-block py-2 text-2xl font-semibold tracking-tight transition-opacity md:text-3xl ${
+                      isActive ? "text-brand" : "text-ink hover:opacity-50"
+                    }`
+                  }
+                >
+                  {link.label}
+                </NavLink>
+              </div>
             ))}
           </div>
         </div>
       </div>
-    </section>
+    </>
   );
 };
 
