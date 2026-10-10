@@ -1,19 +1,25 @@
+// @ts-ignore
 
 import {
     View,
     Text,
     TextInput,
     Pressable,
-    TouchableOpacity,
     Animated,
 } from "react-native";
-import React, { useEffect, useRef, useState } from "react";
+import React, {
+    useCallback,
+    useEffect,
+    useRef,
+    useState,
+} from "react";
 import { Ionicons } from "@expo/vector-icons";
-import * as Location from "expo-location";
 import { useAppStore } from "@/utils/store";
-import { useRouter } from "expo-router";
+import { useFocusEffect, useRouter } from "expo-router";
 import { FlashList } from "@shopify/flash-list";
 import { useColorScheme } from "nativewind";
+import PaginateSuggestedDestination from "@/components/ui/PaginateSuggestedDestination";
+import { KeyboardToolbar } from "react-native-keyboard-controller";
 
 type GeoFeature = {
     type: "geo";
@@ -53,16 +59,18 @@ const haversineKm = (
     lon2: number
 ): string => {
     const R = 6371;
+
     const dLat = ((lat2 - lat1) * Math.PI) / 180;
     const dLon = ((lon2 - lon1) * Math.PI) / 180;
 
     const a =
         Math.sin(dLat / 2) ** 2 +
         Math.cos((lat1 * Math.PI) / 180) *
-        Math.cos((lat2 * Math.PI) / 180) *
-        Math.sin(dLon / 2) ** 2;
+            Math.cos((lat2 * Math.PI) / 180) *
+            Math.sin(dLon / 2) ** 2;
 
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    const c =
+        2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 
     return (R * c).toFixed(1);
 };
@@ -75,40 +83,81 @@ const Index = () => {
         "pickup" | "destination" | null
     >(null);
 
-    // Separate search text for each field.
     const [pickupSearch, setPickupSearch] = useState("");
-    const [destinationSearch, setDestinationSearch] = useState("");
+    const [destinationSearch, setDestinationSearch] =
+        useState("");
 
     const [results, setResults] = useState<GeoFeature[]>([]);
     const [isProcessing, setIsProcessing] = useState(false);
+    const [isSearching, setIsSearching] = useState(false);
 
-    // Independent floating-label animations.
-    const pickupLabelAnim = useRef(new Animated.Value(0)).current;
-    const destinationLabelAnim = useRef(new Animated.Value(0)).current;
+    // Floating-label animations
+    const pickupLabelAnim = useRef(
+        new Animated.Value(0)
+    ).current;
 
+    const destinationLabelAnim = useRef(
+        new Animated.Value(0)
+    ).current;
+
+    // Input references
+    const pickupInputRef = useRef<TextInput>(null);
+    const destinationInputRef = useRef<TextInput>(null);
+
+    // Prevent older search requests from replacing newer results
+    const searchRequestId = useRef(0);
+
+    // Store values
     const pickupPoint = useAppStore((s) => s.pickupPoint);
-    const destinationPoint = useAppStore((s) => s.destinationPoint);
+    const destinationPoint = useAppStore(
+        (s) => s.destinationPoint
+    );
 
     const pickupCoords = useAppStore((s) => s.pickupCoords);
-    const destinationCoords = useAppStore((s) => s.destinationCoords);
+    const destinationCoords = useAppStore(
+        (s) => s.destinationCoords
+    );
 
-    const setPickupPoint = useAppStore((s) => s.setPickupPoint);
+    const setPickupPoint = useAppStore(
+        (s) => s.setPickupPoint
+    );
+
     const setDestinationPoint = useAppStore(
         (s) => s.setDestinationPoint
     );
-    const setPickupCoords = useAppStore((s) => s.setPickupCoords);
+
+    const setPickupCoords = useAppStore(
+        (s) => s.setPickupCoords
+    );
+
     const setDestinationCoords = useAppStore(
         (s) => s.setDestinationCoords
     );
 
     const isDark = colorScheme === "dark";
 
+    // Activate pickup when the screen gains focus.
+    useFocusEffect(
+        useCallback(() => {
+            setActiveField("pickup");
+
+            const timer = setTimeout(() => {
+                pickupInputRef.current?.focus();
+            }, 300);
+
+            return () => {
+                clearTimeout(timer);
+            };
+        }, [])
+    );
+
+    // The text belonging to the currently active field.
     const search =
         activeField === "pickup"
             ? pickupSearch
             : activeField === "destination"
-                ? destinationSearch
-                : "";
+              ? destinationSearch
+              : "";
 
     const setActiveSearch = (text: string) => {
         if (activeField === "pickup") {
@@ -118,18 +167,12 @@ const Index = () => {
         }
     };
 
-    const resetTrip = () => {
-        setPickupPoint("");
-        setDestinationPoint("");
-        setPickupCoords(null);
-        setDestinationCoords(null);
-    };
-
     const goNextIfReady = (
         nextPickup?: string,
         nextDestination?: string
     ) => {
         const finalPickup = nextPickup ?? pickupPoint;
+
         const finalDestination =
             nextDestination ?? destinationPoint;
 
@@ -138,7 +181,7 @@ const Index = () => {
         }
     };
 
-    // Animate the floating label when a field becomes active.
+    // Animate the floating labels.
     useEffect(() => {
         Animated.timing(pickupLabelAnim, {
             toValue: activeField === "pickup" ? 1 : 0,
@@ -147,7 +190,8 @@ const Index = () => {
         }).start();
 
         Animated.timing(destinationLabelAnim, {
-            toValue: activeField === "destination" ? 1 : 0,
+            toValue:
+                activeField === "destination" ? 1 : 0,
             duration: 200,
             useNativeDriver: false,
         }).start();
@@ -157,100 +201,65 @@ const Index = () => {
         destinationLabelAnim,
     ]);
 
-    // Get the passenger's current location.
-    useEffect(() => {
-        resetTrip();
-
-        let cancelled = false;
-
-        const getCurrentLocation = async () => {
-            try {
-                const { status } =
-                    await Location.requestForegroundPermissionsAsync();
-
-                if (status !== "granted" || cancelled) return;
-
-                const location =
-                    await Location.getCurrentPositionAsync({});
-
-                if (cancelled) return;
-
-                const latitude = location.coords.latitude;
-                const longitude = location.coords.longitude;
-
-                const reverseGeocode =
-                    await Location.reverseGeocodeAsync({
-                        latitude,
-                        longitude,
-                    });
-
-                if (cancelled) return;
-
-                const place = reverseGeocode[0];
-
-                const nearestJunction =
-                    place?.street ||
-                    place?.district ||
-                    place?.subregion ||
-                    place?.city ||
-                    "Current Location";
-
-                const area = [
-                    place?.city,
-                    place?.region,
-                ]
-                    .filter(Boolean)
-                    .join(", ");
-
-                const fullLocation = area
-                    ? `${nearestJunction}, ${area}`
-                    : nearestJunction;
-
-                setPickupPoint(fullLocation);
-                setPickupCoords({
-                    latitude,
-                    longitude,
-                });
-            } catch (error) {
-                console.log(error);
-            }
-        };
-
-        getCurrentLocation();
-
-        return () => {
-            cancelled = true;
-            resetTrip();
-        };
-    }, []);
-
+    // Photon search URL restricted to Ghana.
     const photonUrlForQuery = (text: string) => {
-        const bbox = `${GHANA_BBOX.minLon},${GHANA_BBOX.minLat},${GHANA_BBOX.maxLon},${GHANA_BBOX.maxLat}`;
+        const bbox =
+            `${GHANA_BBOX.minLon},${GHANA_BBOX.minLat},` +
+            `${GHANA_BBOX.maxLon},${GHANA_BBOX.maxLat}`;
 
-        return `https://photon.komoot.io/api/?q=${encodeURIComponent(
-            text
-        )}&limit=10&countrycode=gh&bbox=${encodeURIComponent(bbox)}`;
+        return (
+            `https://photon.komoot.io/api/?q=${encodeURIComponent(
+    text
+)}&limit=10&countrycode=gh&bbox=${encodeURIComponent(
+    bbox
+)}`
+        );
     };
 
+    // Search locations without allowing stale requests
+    // to overwrite the most recent search.
     const searchPlaces = async (text: string) => {
-        try {
-            const res = await fetch(photonUrlForQuery(text));
-            const data = await res.json();
+        const query = text.trim();
+        const requestId = ++searchRequestId.current;
 
-            const features = (data.features ?? []) as GeoFeature[];
+        if (query.length <= 1) {
+            setResults([]);
+            setIsSearching(false);
+            return;
+        }
+
+        setIsSearching(true);
+
+        try {
+            const response = await fetch(
+                photonUrlForQuery(query)
+            );
+
+            if (!response.ok) {
+                throw new Error(
+                    `Location search failed: ${response.status}`
+                );
+            }
+
+            const data = await response.json();
+
+            // Ignore responses from older queries.
+            if (requestId !== searchRequestId.current) {
+                return;
+            }
+
+            const features = (
+                data.features ?? []
+            ) as GeoFeature[];
 
             const ghanaOnly = features.filter((feature) => {
                 const country = feature.properties?.country;
 
-                if (!country) return false;
-
                 return (
+                    !!country &&
                     String(country)
                         .toLowerCase()
-                        .includes("ghana") ||
-                    String(country)
-                        .toLowerCase()
-                        .includes("gh")
+                        .includes("ghana")
                 );
             });
 
@@ -263,8 +272,14 @@ const Index = () => {
 
             setResults(formattedResults);
         } catch (error) {
-            console.log(error);
-            setResults([]);
+            if (requestId === searchRequestId.current) {
+                console.log("Location search error:", error);
+                setResults([]);
+            }
+        } finally {
+            if (requestId === searchRequestId.current) {
+                setIsSearching(false);
+            }
         }
     };
 
@@ -274,18 +289,25 @@ const Index = () => {
         if (text.trim().length > 1) {
             searchPlaces(text);
         } else {
+            // Invalidate any request for the previous query.
+            searchRequestId.current += 1;
             setResults([]);
+            setIsSearching(false);
         }
     };
 
+    // Switch between pickup and destination fields.
     const openField = (
         field: "pickup" | "destination"
     ) => {
-        if (activeField === field) return;
+        if (activeField === field) {
+            // The active input already owns the keyboard.
+            return;
+        }
 
+        searchRequestId.current += 1;
         setResults([]);
-
-        // Restore the text previously entered in this field.
+        setIsSearching(false);
         setActiveField(field);
 
         const fieldSearch =
@@ -296,8 +318,18 @@ const Index = () => {
         if (fieldSearch.trim().length > 1) {
             searchPlaces(fieldSearch);
         }
+
+        // Focus only the requested field.
+        requestAnimationFrame(() => {
+            if (field === "pickup") {
+                pickupInputRef.current?.focus();
+            } else {
+                destinationInputRef.current?.focus();
+            }
+        });
     };
 
+    // Select a location and move from pickup to destination.
     const handleSelectGeo = (item: GeoFeature) => {
         if (isProcessing) return;
 
@@ -310,57 +342,63 @@ const Index = () => {
             item.properties?.city ||
             "Unknown location";
 
+        const coordinates = {
+            latitude: lat,
+            longitude: lng,
+        };
+
+        searchRequestId.current += 1;
+        setResults([]);
+        setIsSearching(false);
+
         if (activeField === "pickup") {
             setPickupPoint(name);
-            setPickupCoords({
-                latitude: lat,
-                longitude: lng,
-            });
+            setPickupCoords(coordinates);
             setPickupSearch("");
-        } else if (activeField === "destination") {
-            setDestinationPoint(name);
-            setDestinationCoords({
-                latitude: lat,
-                longitude: lng,
-            });
+
             setDestinationSearch("");
-        } else {
-            setPickupPoint(name);
-            setPickupCoords({
-                latitude: lat,
-                longitude: lng,
+            setActiveField("destination");
+
+            requestAnimationFrame(() => {
+                destinationInputRef.current?.focus();
+                setIsProcessing(false);
             });
-            setPickupSearch("");
+
+            return;
         }
 
-        setResults([]);
-        setActiveField(null);
+        if (activeField === "destination") {
+            setDestinationPoint(name);
+            setDestinationCoords(coordinates);
+            setDestinationSearch("");
+            setActiveField(null);
 
-        setTimeout(() => {
-            if (activeField === "pickup") {
-                goNextIfReady(name, undefined);
-            } else if (activeField === "destination") {
+            // Dismiss the keyboard after selecting a destination.
+            pickupInputRef.current?.blur();
+            destinationInputRef.current?.blur();
+
+            setTimeout(() => {
                 goNextIfReady(undefined, name);
-            } else {
-                goNextIfReady(name, undefined);
-            }
-
-            setIsProcessing(false);
-        }, 100);
+                setIsProcessing(false);
+            }, 100);
+        }
     };
 
+    // Geocode suggested ride destinations.
     const geocodePlaceName = async (name: string) => {
         try {
-            const res = await fetch(
-                photonUrlForQuery(name) + "&limit=1"
+            const response = await fetch(
+                photonUrlForQuery(name)
             );
 
-            const data = await res.json();
+            if (!response.ok) {
+                return null;
+            }
+
+            const data = await response.json();
             const feature = data.features?.[0];
 
-            if (
-                feature?.geometry?.coordinates
-            ) {
+            if (feature?.geometry?.coordinates) {
                 const [lng, lat] =
                     feature.geometry.coordinates;
 
@@ -370,10 +408,7 @@ const Index = () => {
                 if (
                     String(country)
                         .toLowerCase()
-                        .includes("ghana") ||
-                    String(country)
-                        .toLowerCase()
-                        .includes("gh")
+                        .includes("ghana")
                 ) {
                     return {
                         latitude: lat,
@@ -382,12 +417,13 @@ const Index = () => {
                 }
             }
         } catch (error) {
-            console.log("geocode error", error);
+            console.log("Geocode error:", error);
         }
 
         return null;
     };
 
+    // Suggested destinations.
     const rides: RideItem[] = [
         {
             type: "ride",
@@ -419,18 +455,21 @@ const Index = () => {
         },
     ];
 
-    const listData: ListItem[] =
-        search.trim().length > 1 ? results : rides;
+    const isQueryActive = search.trim().length > 1;
 
-    // Field appearance.
+    const listData: ListItem[] = isQueryActive
+        ? results
+        : rides;
+
+    // Field styling.
     const fieldBackground = (isActive: boolean) =>
         isActive
             ? isDark
                 ? "#111111"
                 : "#FFFFFF"
             : isDark
-                ? "#202020"
-                : "#E9EAED";
+              ? "#202020"
+              : "#a9a9a933";
 
     const fieldBorder = (isActive: boolean) =>
         isActive
@@ -445,13 +484,13 @@ const Index = () => {
 
     const mutedColor = isDark
         ? "#A3A3A3"
-        : "#737373";
+        : "#000000";
 
+    // Render one location field.
     const renderLocationField = (
         field: "pickup" | "destination",
         label: "From" | "To",
         selectedValue: string,
-        inactiveIcon: "hand-left" | "location-outline",
         animation: Animated.Value,
         fieldSearch: string
     ) => {
@@ -468,106 +507,131 @@ const Index = () => {
         });
 
         return (
-            <View
-                key={field}
-                className="mb-3"
-                style={{
-                    backgroundColor: fieldBackground(isActive),
-                    borderColor: fieldBorder(isActive),
-                    borderWidth: isActive ? 1.5 : 1,
-                    borderRadius: 9,
-                    minHeight: 54,
-                    justifyContent: "center",
-                }}
-            >
-                {isActive ? (
-                    <View className="flex-row items-center px-4">
-                        <Ionicons
-                            name="search-outline"
-                            size={21}
-                            color={mutedColor}
-                        />
-
-                        <View
-                            className="flex-1 ml-3"
-                            style={{
-                                minHeight: 54,
-                                justifyContent: "center",
-                            }}
-                        >
-                            <Animated.Text
-                                pointerEvents="none"
-                                style={{
-                                    position: "absolute",
-                                    top: labelTop,
-                                    fontSize: labelSize,
-                                    color: mutedColor,
-                                    fontFamily: "GoogleSansRegular",
-                                }}
-                            >
-                                {label}
-                            </Animated.Text>
-
-                            <TextInput
-                                value={fieldSearch}
-                                onChangeText={onChangeSearch}
-                                autoFocus={true}
-                                placeholder=""
-                                selectionColor={fieldTextColor}
-                                autoCapitalize="words"
-                                returnKeyType="search"
-                                style={{
-                                    color: fieldTextColor,
-                                    fontFamily: "GoogleSansRegular",
-                                    fontSize: 16,
-                                    paddingTop: 20,
-                                    paddingBottom: 5,
-                                    paddingHorizontal: 0,
-                                }}
+            <View className="mb-3">
+                <View
+                    style={{
+                        backgroundColor:
+                            fieldBackground(isActive),
+                        borderColor: fieldBorder(isActive),
+                        borderWidth: isActive ? 1.5 : 1,
+                        borderRadius: 9,
+                        minHeight: 54,
+                        justifyContent: "center",
+                    }}
+                >
+                    {isActive ? (
+                        <View className="flex-row items-center px-4">
+                            <Ionicons
+                                name="search-outline"
+                                size={21}
+                                color={mutedColor}
                             />
-                        </View>
 
-                        {fieldSearch.length > 0 && (
-                            <Pressable
-                                onPress={() => {
-                                    setActiveSearch("");
-                                    setResults([]);
+                            <View
+                                className="flex-1 ml-3"
+                                style={{
+                                    minHeight: 54,
+                                    justifyContent: "center",
                                 }}
-                                hitSlop={10}
                             >
-                                <Ionicons
-                                    name="close-circle"
-                                    size={20}
-                                    color={mutedColor}
-                                />
-                            </Pressable>
-                        )}
-                    </View>
-                ) : (
-                    <Pressable
-                        onPress={() => openField(field)}
-                        className="flex-row items-center px-4"
-                        style={{ minHeight: 54 }}
-                    >
-                        <Ionicons
-                            name={label==="From"? "hand-left": "flag"}
-                            size={22}
-                            color={mutedColor}
-                        />
+                                <Animated.Text
+                                    pointerEvents="none"
+                                    style={{
+                                        position: "absolute",
+                                        top: labelTop,
+                                        fontSize: labelSize,
+                                        color: mutedColor,
+                                        fontFamily:
+                                            "GoogleSansRegular",
+                                    }}
+                                >
+                                    {label}
+                                </Animated.Text>
 
-                        <Text
-                            numberOfLines={1}
-                            className="flex-1 ml-3 font-GoogleSansRegular text-base"
-                            style={{
-                                color: selectedValue
-                                    ? fieldTextColor
-                                    : mutedColor,
-                            }}
+                                <TextInput
+                                    ref={
+                                        field === "pickup"
+                                            ? pickupInputRef
+                                            : destinationInputRef
+                                    }
+                                    value={fieldSearch}
+                                    onChangeText={onChangeSearch}
+                                    autoCorrect={false}
+                                    spellCheck={false}
+                                    placeholder=""
+                                    selectionColor={fieldTextColor}
+                                    autoCapitalize="words"
+                                    returnKeyType="search"
+                                    style={{
+                                        color: fieldTextColor,
+                                        fontFamily:
+                                            "GoogleSansRegular",
+                                        fontSize: 16,
+                                        paddingTop: 20,
+                                        paddingBottom: 5,
+                                        paddingHorizontal: 0,
+                                    }}
+                                />
+                            </View>
+
+                            {fieldSearch.length > 0 && (
+                                <Pressable
+                                    onPress={() => {
+                                        setActiveSearch("");
+                                        searchRequestId.current += 1;
+                                        setResults([]);
+                                        setIsSearching(false);
+
+                                        // Keep the current field active
+                                        // and leave the keyboard open.
+                                        requestAnimationFrame(() => {
+                                            if (field === "pickup") {
+                                                pickupInputRef.current?.focus();
+                                            } else {
+                                                destinationInputRef.current?.focus();
+                                            }
+                                        });
+                                    }}
+                                    hitSlop={10}
+                                >
+                                    <Ionicons
+                                        name="close-circle"
+                                        size={20}
+                                        color={mutedColor}
+                                    />
+                                </Pressable>
+                            )}
+                        </View>
+                    ) : (
+                        <Pressable
+                            onPress={() => openField(field)}
+                            className="flex-row items-center px-4"
+                            style={{ minHeight: 54 }}
                         >
-                            {selectedValue || label}
-                        </Text>
-                    </Pressable>
-                )}
+                            <Ionicons
+                                name={
+                                    label === "From"
+                                        ? "hand-left"
+                                        : "flag"
+                                }
+                                size={22}
+                                color={mutedColor}
+                            />
+
+                            <Text
+                                numberOfLines={1}
+                                className="flex-1 ml-3 font-GoogleSansRegular text-base"
+                                style={{
+                                    color: selectedValue
+                                        ? fieldTextColor
+                                        : mutedColor,
+                                }}
+                            >
+                                {selectedValue || label}
+                            </Text>
+                        </Pressable>
+                    )}
+                </View>
             </View>
         );
     };
@@ -575,16 +639,19 @@ const Index = () => {
     return (
         <View
             style={{
-                backgroundColor: isDark ? "#000000" : "#F5F7FA",
+                backgroundColor: isDark
+                    ? "#000000"
+                    : "#F5F7FA",
             }}
             className="flex-1"
         >
-            <View className="p-5">
+            {/* Fixed location fields.
+                They remain mounted while the keyboard is open. */}
+            <View className="px-5 pt-5">
                 {renderLocationField(
                     "pickup",
                     "From",
                     pickupPoint,
-                    "hand-left",
                     pickupLabelAnim,
                     pickupSearch
                 )}
@@ -593,163 +660,183 @@ const Index = () => {
                     "destination",
                     "To",
                     destinationPoint,
-                    "location-outline",
                     destinationLabelAnim,
                     destinationSearch
                 )}
             </View>
 
-            <FlashList
-                data={listData}
-                keyboardShouldPersistTaps="handled"
-                getItemType={(item) => item.type}
-                keyExtractor={(item, index) =>
-                    item.type === "geo"
-                        ? `geo-${item.geometry.coordinates[0]}-${item.geometry.coordinates[1]}-${index}`
-                        : `ride-${item.id}`
-                }
-                ListHeaderComponent={
-                <View className="px-6 pb-4">
-                    <Text className="self-start text-general dark:text-secondaryBlack dark:bg-tertiaryWhite bg-secondaryBlack px-3 py-1.5 rounded-full font-GoogleSansMedium text-base">Suggested Destinations</Text>
-                </View>
-                }
+            {/* Keep the virtualized list separate from the fields. */}
+            <View className="flex-1">
+                <FlashList
+                    style={{ flex: 1 }}
+                    data={listData}
+                    contentContainerStyle={{
+                        paddingBottom: 120,
+                    }}
+                    keyboardShouldPersistTaps="always"
+                    keyboardDismissMode="none"
+                    getItemType={(item) => item.type}
+                    keyExtractor={(item, index) =>
+                        item.type === "geo"
+                            ? `geo-${item.geometry.coordinates[0]}-${item.geometry.coordinates[1]}-${index}`
+                            : `ride-${item.id}`
+                    }
+                    ListHeaderComponent={
+                        <View className="px-6 pb-4 mt-4">
+                            <Text className="self-start text-secondaryBlack dark:text-general bg-secondaryBlack/10 dark:bg-tertiaryWhite/20 px-3 py-1.5 rounded-full font-GoogleSansMedium text-base">
+                                {isQueryActive
+                                    ? "Search Results"
+                                    : "Suggested Destinations"}
+                            </Text>
+                        </View>
+                    }
+                    ListEmptyComponent={
+                            <PaginateSuggestedDestination />
+                    }
+                    renderItem={({ item }) => {
+                        // Photon search result
+                        if (item.type === "geo") {
+                            const geo = item;
 
-                ListEmptyComponent={
-                    <View className="flex-1 justify-center items-center py-20">
-                        <Ionicons
-                            name="document-text-outline"
-                            size={48}
-                            color="gray"
-                        />
+                            const name =
+                                geo.properties?.name ||
+                                geo.properties?.city ||
+                                "Place";
 
-                        <Text className="mt-4 text-base font-GoogleSansMedium text-secondaryGray dark:text-tertiaryGray">
-                            No items found
-                        </Text>
+                            const subtitle = [
+                                geo.properties?.city,
+                                geo.properties?.state,
+                                geo.properties?.country,
+                            ]
+                                .filter(Boolean)
+                                .join(", ");
 
-                        <Text className="mt-1 text-sm text-center px-10 font-GoogleSansRegular text-tertiaryGray">
-                            There’s nothing to display right now.
-                        </Text>
-                    </View>
-                }
-                renderItem={({ item }) => {
-                    if (item.type === "geo") {
-                        const geo = item;
+                            return (
+                                <Pressable
+                                    onPress={() =>
+                                        handleSelectGeo(geo)
+                                    }
+                                    className="py-4 px-6 flex-row items-center"
+                                >
+                                    <Ionicons
+                                        name="location"
+                                        size={24}
+                                        color={
+                                            isDark
+                                                ? "#FFFFFF"
+                                                : "#000000"
+                                        }
+                                    />
 
-                        const name =
-                            geo.properties?.name ||
-                            geo.properties?.city ||
-                            "Place";
+                                    <View className="ml-3 flex-1">
+                                        <Text className="font-GoogleSansMedium text-lg leading-5 text-secondaryBlack dark:text-general">
+                                            {name}
+                                        </Text>
 
-                        const subtitle = [
-                            geo.properties?.city,
-                            geo.properties?.state,
-                            geo.properties?.country,
-                        ]
-                            .filter(Boolean)
-                            .join(", ");
+                                        {subtitle ? (
+                                            <Text className="text-secondaryGray dark:text-tertiaryGray leading-4 text-sm">
+                                                {subtitle}
+                                            </Text>
+                                        ) : null}
+
+                                        <View className="w-[90%] bg-tertiaryGray/30 h-[0.8px] mt-2" />
+                                    </View>
+                                </Pressable>
+                            );
+                        }
+
+                        // Suggested ride destination
+                        const ride = item;
+
+                        let km = "0";
+
+                        if (pickupCoords && destinationCoords) {
+                            km = haversineKm(
+                                pickupCoords.latitude,
+                                pickupCoords.longitude,
+                                destinationCoords.latitude,
+                                destinationCoords.longitude
+                            );
+                        }
 
                         return (
                             <Pressable
-                                onPress={() =>
-                                    handleSelectGeo(geo)
-                                }
-                                className="py-5 px-6 flex-row items-center"
+                                onPress={async () => {
+                                    if (isProcessing) return;
+
+                                    if (!pickupPoint) {
+                                        openField("pickup");
+                                        return;
+                                    }
+
+                                    setIsProcessing(true);
+
+                                    try {
+                                        setDestinationPoint(
+                                            ride.destination
+                                        );
+
+                                        setDestinationSearch("");
+                                        setResults([]);
+                                        setActiveField(null);
+
+                                        pickupInputRef.current?.blur();
+                                        destinationInputRef.current?.blur();
+
+                                        const coords =
+                                            await geocodePlaceName(
+                                                ride.destination
+                                            );
+
+                                        if (coords) {
+                                            setDestinationCoords(coords);
+                                        } else {
+                                            setDestinationCoords(null);
+                                        }
+
+                                        goNextIfReady(
+                                            undefined,
+                                            ride.destination
+                                        );
+                                    } finally {
+                                        setIsProcessing(false);
+                                    }
+                                }}
+                                className="px-7 py-5 flex-row justify-between items-center"
                             >
                                 <Ionicons
-                                    name="location-outline"
-                                    size={24}
-                                    color={isDark ? "#FFFFFF" : "#000000"}
+                                    name="flag"
+                                    size={20}
+                                    color={
+                                        isDark
+                                            ? "#E9EAED"
+                                            : "#20202088"
+                                    }
                                 />
 
-                                <View className="ml-3 flex-1">
-                                    <Text className="font-GoogleSansMedium text-base leading-5 text-secondaryBlack dark:text-general">
-                                        {name}
+                                <View className="flex-1 pl-4">
+                                    <Text className="text-lg leading-5 font-GoogleSansRegular text-secondaryBlack dark:text-general">
+                                        {ride.destination}
                                     </Text>
 
-                                    {subtitle ? (
-                                        <Text className="text-secondaryGray dark:text-tertiaryGray leading-4 text-sm">
-                                            {subtitle}
-                                        </Text>
-                                    ) : null}
+                                    <Text className="text-sm leading-4 text-secondaryGray font-GoogleSansRegular dark:text-tertiaryGray">
+                                        {ride.area}
+                                    </Text>
                                 </View>
+
+                                <Text className="text-lg leading-none font-GoogleSansRegular dark:text-tertiaryGray">
+                                    {km} km
+                                </Text>
                             </Pressable>
                         );
-                    }
+                    }}
+                />
+            </View>
 
-                    const ride = item;
-
-                    let km = "0";
-
-                    if (pickupCoords && destinationCoords) {
-                        km = haversineKm(
-                            pickupCoords.latitude,
-                            pickupCoords.longitude,
-                            destinationCoords.latitude,
-                            destinationCoords.longitude
-                        );
-                    }
-
-                    return (
-                        <Pressable
-                            onPress={async () => {
-                                if (isProcessing) return;
-
-                                setIsProcessing(true);
-
-                                setDestinationPoint(
-                                    ride.destination
-                                );
-
-                                setDestinationSearch("");
-                                setResults([]);
-                                setActiveField(null);
-
-                                const coords =
-                                    await geocodePlaceName(
-                                        ride.destination
-                                    );
-
-                                if (coords) {
-                                    setDestinationCoords(coords);
-                                } else {
-                                    setDestinationCoords(null);
-                                }
-
-                                setTimeout(() => {
-                                    goNextIfReady(
-                                        undefined,
-                                        ride.destination
-                                    );
-                                    setIsProcessing(false);
-                                }, 100);
-                            }}
-                            className="px-7 py-5 flex-row justify-between items-center"
-                        >
-                            <Ionicons
-                                name="flag"
-                                size={20}
-                                color={isDark ? "#E9EAED": "#20202088"}
-                            />
-
-                            <View className="flex-1 pl-4">
-                                <Text className="text-lg leading-5 font-GoogleSansRegular text-secondaryBlack dark:text-general">
-                                    {ride.destination}
-                                </Text>
-
-                                <Text className="text-sm leading-4 text-secondaryGray font-GoogleSansRegular dark:text-tertiaryGray">
-                                    {ride.area}
-                                </Text>
-                            </View>
-
-                            <Text className="text-lg leading-none font-GoogleSansRegular dark:text-tertiaryGray">
-                                {km} km
-                            </Text>
-                        </Pressable>
-                    );
-                }}
-            />
+            <KeyboardToolbar />
         </View>
     );
 };
 
 export default Index;
+

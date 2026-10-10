@@ -1,36 +1,34 @@
+
 import {
     View,
     Text,
-    ActivityIndicator,
     Modal,
     TouchableOpacity,
     TextInput,
     FlatList,
     KeyboardAvoidingView,
     Platform,
-    StyleSheet, Image, Alert,
+    StyleSheet,
+    Image,
+    Alert,
 } from "react-native";
+
 import React, { useEffect, useMemo, useRef, useState } from "react";
-
 import BottomSheet, { BottomSheetView } from "@gorhom/bottom-sheet";
-
 import { Ionicons } from "@expo/vector-icons";
-
 import PrimaryButton from "@/components/PrimaryButton";
-
+import SearchingDriver from "@/components/ui/SearchingDriver";
 import { router } from "expo-router";
-
 import MapView, { Marker, Polyline } from "react-native-maps";
-
 import { useAppStore } from "@/utils/store";
+
 // @ts-ignore
-import call from 'react-native-phone-call'
+import call from "react-native-phone-call";
 
-
-import {KeyboardAwareScrollView} from "react-native-keyboard-controller";
-import {useAudioPlayer} from "expo-audio";
-import {useColorScheme} from "nativewind";
-import LottieView from "lottie-react-native";
+import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
+import { useAudioPlayer } from "expo-audio";
+import { useColorScheme } from "nativewind";
+import CancelRideButton from "@/components/CancelRideButton";
 
 type Message = {
     id: string;
@@ -39,62 +37,61 @@ type Message = {
     time: number;
 };
 
-const audioSource = require("../../../assets/audio/driverarrived.mp3")
-
+const audioSource = require("../../../assets/audio/driverarrived.mp3");
 
 const SearchDriver = () => {
-    const snapPoints = useMemo(() => ["50%"], []);
+    const snapPoints = useMemo(() => ["55%"], []);
     const chatSnapPoints = useMemo(() => ["85%"], []);
+
     const bottomSheetRef = useRef<BottomSheet>(null);
     const chatBottomRef = useRef<BottomSheet>(null);
     const mapRef = useRef<MapView>(null);
     const flatListRef = useRef<FlatList<Message>>(null);
-    const arrivalTimeoutRef = useRef<number | null>(null);
+    const arrivalTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
     const [driverFound, setDriverFound] = useState(false);
     const [driverArrived, setDriverArrived] = useState(false);
     const [showModal, setShowModal] = useState(true);
 
-
     const [chatOpen, setChatOpen] = useState(false);
     const [messages, setMessages] = useState<Message[]>([]);
     const [inputText, setInputText] = useState("");
 
-
-
     const [routeCoordsLocal, setRouteCoordsLocal] = useState<
         { latitude: number; longitude: number }[]
     >([]);
-
-
 
     const pickupCoords = useAppStore((s) => s.pickupCoords);
     const destinationCoords = useAppStore((s) => s.destinationCoords);
     const pickupPoint = useAppStore((s) => s.pickupPoint);
     const destinationPoint = useAppStore((s) => s.destinationPoint);
     const routeCoordsFromStore = useAppStore((s) => s.routeCoords);
+
     const driverCoords = useAppStore((s) => s.driverCoords);
     const setDriverCoords = useAppStore((s) => s.setDriverCoords);
     const driverEta = useAppStore((s) => s.driverEta);
     const setDriverEta = useAppStore((s) => s.setDriverEta);
+
     const [showArrivedMessage, setShowArrivedMessage] = useState(false);
+
     const player = useAudioPlayer(audioSource);
     const { colorScheme } = useColorScheme();
+
     const [bookingCode] = useState(
         () => Math.floor(100000 + Math.random() * 900000)
     );
 
-    const handleDriverCall= ()=>{
+    const handleDriverCall = () => {
         const args = {
-            number: '0503524779',
+            number: "0503524779",
             prompt: false,
-            skipCanOpen: true
-        }
+            skipCanOpen: true,
+        };
 
-        call(args).catch(console.error)
-    }
+        call(args).catch(console.error);
+    };
 
-
+    // Simulate finding a driver.
     useEffect(() => {
         const timer = setTimeout(() => {
             setDriverFound(true);
@@ -108,16 +105,13 @@ const SearchDriver = () => {
         }, 3000);
 
         return () => clearTimeout(timer);
-
     }, []);
 
-
-
+    // Simulate the driver moving toward the pickup point.
     useEffect(() => {
-        if (!driverFound) return;
-        if (!driverCoords || !pickupCoords) return;
-        if (driverArrived) return;
-
+        if (!driverFound || !driverCoords || !pickupCoords || driverArrived) {
+            return;
+        }
 
         const interval = setInterval(() => {
             setDriverCoords((prev: any) => {
@@ -129,27 +123,24 @@ const SearchDriver = () => {
                 const nextLat = prev.latitude + latDiff * 0.12;
                 const nextLng = prev.longitude + lngDiff * 0.12;
 
-
-
                 const arrived =
-                    Math.abs(latDiff) < 0.0005 && Math.abs(lngDiff) < 0.0005;
+                    Math.abs(latDiff) < 0.0005 &&
+                    Math.abs(lngDiff) < 0.0005;
 
                 if (arrived) {
                     setDriverArrived(true);
                     setDriverEta(null);
                     setShowArrivedMessage(true);
-                    
-                    const timer = setTimeout(()=>{
-                        player.play();
-                        return()=>clearTimeout(timer);
-                    }, 2000)
 
+                    const soundTimer = setTimeout(() => {
+                        player.play();
+                    }, 2000);
 
                     if (arrivalTimeoutRef.current) {
                         clearTimeout(arrivalTimeoutRef.current);
                     }
-                    arrivalTimeoutRef.current = setTimeout(() => {
 
+                    arrivalTimeoutRef.current = setTimeout(() => {
                         setShowArrivedMessage(false);
                     }, 5000);
 
@@ -164,20 +155,35 @@ const SearchDriver = () => {
         }, 2000);
 
         return () => clearInterval(interval);
-    }, [driverFound, pickupCoords, setDriverCoords, setDriverEta, driverArrived]);
+    }, [
+        driverFound,
+        pickupCoords,
+        setDriverCoords,
+        setDriverEta,
+        driverArrived,
+    ]);
 
-
-
-
+    // Calculate the driver's estimated arrival time.
     useEffect(() => {
-        if (!driverCoords || !pickupCoords || driverArrived || showArrivedMessage) return;
+        if (
+            !driverCoords ||
+            !pickupCoords ||
+            driverArrived ||
+            showArrivedMessage
+        ) {
+            return;
+        }
 
         let mounted = true;
 
         const calculateEta = async () => {
             if (!mounted) return;
+
             try {
-                const url = `https://router.project-osrm.org/route/v1/driving/${driverCoords.longitude},${driverCoords.latitude};${pickupCoords.longitude},${pickupCoords.latitude}?overview=false`;
+                const url =
+                    `https://router.project-osrm.org/route/v1/driving/` +
+                    `${driverCoords.longitude},${driverCoords.latitude};` +
+                    `${pickupCoords.longitude},${pickupCoords.latitude}?overview=false`;
 
                 const res = await fetch(url);
                 const data = await res.json();
@@ -193,31 +199,42 @@ const SearchDriver = () => {
         };
 
         calculateEta();
+
         const etaInterval = setInterval(calculateEta, 10000);
 
         return () => {
             mounted = false;
             clearInterval(etaInterval);
         };
-    }, [driverCoords, driverArrived, pickupCoords, setDriverEta, showArrivedMessage]);
+    }, [
+        driverCoords,
+        driverArrived,
+        pickupCoords,
+        setDriverEta,
+        showArrivedMessage,
+    ]);
 
-
-
-
+    // Fetch the route from pickup to destination after the driver arrives.
     useEffect(() => {
-        if (!driverArrived) return;
-        if (!pickupCoords || !destinationCoords) return;
+        if (!driverArrived || !pickupCoords || !destinationCoords) {
+            return;
+        }
 
         let mounted = true;
 
         const fetchRoute = async () => {
             try {
-                const url = `https://router.project-osrm.org/route/v1/driving/${pickupCoords.longitude},${pickupCoords.latitude};${destinationCoords.longitude},${destinationCoords.latitude}?overview=full&geometries=geojson&steps=false`;
+                const url =
+                    `https://router.project-osrm.org/route/v1/driving/` +
+                    `${pickupCoords.longitude},${pickupCoords.latitude};` +
+                    `${destinationCoords.longitude},${destinationCoords.latitude}` +
+                    `?overview=full&geometries=geojson&steps=false`;
 
                 const res = await fetch(url);
                 const data = await res.json();
 
-                const coords: any[] = data?.routes?.[0]?.geometry?.coordinates;
+                const coords: any[] =
+                    data?.routes?.[0]?.geometry?.coordinates;
 
                 if (coords && Array.isArray(coords) && mounted) {
                     const mapped = coords.map((c: number[]) => ({
@@ -239,68 +256,83 @@ const SearchDriver = () => {
         };
     }, [driverArrived, pickupCoords, destinationCoords]);
 
-
-
+    // Keep the map focused on the relevant locations.
     useEffect(() => {
         if (!mapRef.current) return;
 
-        if (routeCoordsLocal && routeCoordsLocal.length > 0) {
+        if (routeCoordsLocal.length > 0) {
             mapRef.current.fitToCoordinates(routeCoordsLocal, {
-                edgePadding: { top: 120, right: 60, bottom: 300, left: 60 },
+                edgePadding: {
+                    top: 120,
+                    right: 60,
+                    bottom: 300,
+                    left: 60,
+                },
                 animated: true,
             });
             return;
         }
 
         if (driverFound && driverCoords && pickupCoords && destinationCoords) {
-            const coords = [driverCoords, pickupCoords, destinationCoords].filter(Boolean);
-            if (coords.length > 0) {
-                mapRef.current.fitToCoordinates(coords as any, {
-                    edgePadding: { top: 150, right: 60, bottom: 350, left: 60 },
+            mapRef.current.fitToCoordinates(
+                [driverCoords, pickupCoords, destinationCoords],
+                {
+                    edgePadding: {
+                        top: 150,
+                        right: 60,
+                        bottom: 350,
+                        left: 60,
+                    },
                     animated: true,
-                });
-            }
+                }
+            );
             return;
         }
 
         if (pickupCoords) {
             mapRef.current.fitToCoordinates([pickupCoords], {
-                edgePadding: { top: 150, right: 60, bottom: 350, left: 60 },
+                edgePadding: {
+                    top: 150,
+                    right: 60,
+                    bottom: 350,
+                    left: 60,
+                },
                 animated: true,
             });
         }
-    }, [routeCoordsLocal, driverCoords, driverFound, pickupCoords, destinationCoords]);
+    }, [
+        routeCoordsLocal,
+        driverCoords,
+        driverFound,
+        pickupCoords,
+        destinationCoords,
+    ]);
 
-
-
-
+    // Confirm before cancelling the ride.
     const handleCancelRide = () => {
         Alert.alert(
-            "Cancel ride?", "Your trip request will be cancelled and the driver will be notified.",
+            "Cancel ride?",
+            "Your trip request will be cancelled and the driver will be notified.",
             [
                 {
-                    text: "Cancel",
-                    style: "cancel"
+                    text: "Keep ride",
+                    style: "cancel",
                 },
                 {
                     text: "Cancel ride",
                     style: "destructive",
-                    onPress: ()=> {
+                    onPress: () => {
                         setShowModal(false);
                         router.replace("/homepage/bookings/whyCancelRide");
-                    }
-                }
-
-
+                    },
+                },
             ]
-        )
-
-
+        );
     };
-
 
     const openChat = () => {
         setChatOpen(true);
+
         setTimeout(() => {
             chatBottomRef.current?.snapToIndex(0);
         }, 50);
@@ -308,11 +340,13 @@ const SearchDriver = () => {
 
     const closeChat = () => {
         chatBottomRef.current?.close();
+
         setTimeout(() => setChatOpen(false), 200);
     };
 
     const sendMessage = () => {
         const text = inputText.trim();
+
         if (!text) return;
 
         const newMsg: Message = {
@@ -325,7 +359,6 @@ const SearchDriver = () => {
         setMessages((prev) => [...prev, newMsg]);
         setInputText("");
 
-
         setTimeout(() => {
             const reply: Message = {
                 id: `${Date.now()}-r`,
@@ -333,17 +366,22 @@ const SearchDriver = () => {
                 from: "driver",
                 time: Date.now(),
             };
+
             setMessages((prev) => [...prev, reply]);
 
-            setTimeout(() => flatListRef.current?.scrollToEnd({ animated: true }), 50);
+            setTimeout(() => {
+                flatListRef.current?.scrollToEnd({ animated: true });
+            }, 50);
         }, 1200);
 
-
-        setTimeout(() => flatListRef.current?.scrollToEnd({ animated: true }), 50);
+        setTimeout(() => {
+            flatListRef.current?.scrollToEnd({ animated: true });
+        }, 50);
     };
 
     const renderMessage = ({ item }: { item: Message }) => {
         const isUser = item.from === "user";
+
         return (
             <View
                 style={[
@@ -351,38 +389,57 @@ const SearchDriver = () => {
                     isUser ? styles.messageRowUser : styles.messageRowDriver,
                 ]}
             >
-                <View style={[styles.bubble,
-                    isUser ?
-                    {backgroundColor: colorScheme === "dark"? "#ffcc00": "#0165FC",
-                    borderBottomRightRadius: 4} :
-                    styles.bubbleDriver]}>
-                    <Text style={isUser ?
-                        {
-                            color: colorScheme ==="dark"? "black":"white",
+                <View
+                    style={[
+                        styles.bubble,
+                        isUser
+                            ? {
+                                backgroundColor:
+                                    colorScheme === "dark"
+                                        ? "#ffcc00"
+                                        : "#0165FC",
+                                borderBottomRightRadius: 4,
+                            }
+                            : styles.bubbleDriver,
+                    ]}
+                >
+                    <Text
+                        className="font-GoogleSansRegular"
+                        style={
+                            isUser
+                                ? {
+                                    color:
+                                        colorScheme === "dark"
+                                            ? "black"
+                                            : "white",
+                                }
+                                : styles.textDriver
                         }
-
-                        : styles.textDriver} className="font-GoogleSansRegular">{item.text}</Text>
+                    >
+                        {item.text}
+                    </Text>
                 </View>
             </View>
         );
     };
 
     return (
-        <Modal visible={showModal} animationType="slide">
+        <Modal
+            visible={showModal}
+            animationType="slide"
+            onRequestClose={handleCancelRide}
+        >
             <View style={{ flex: 1 }} className="bg-general">
-
-
                 <MapView
                     ref={mapRef}
                     style={{ flex: 1 }}
                     initialRegion={{
                         latitude: pickupCoords?.latitude || 5.6037,
-                        longitude: pickupCoords?.longitude || -0.1870,
+                        longitude: pickupCoords?.longitude || -0.187,
                         latitudeDelta: 0.05,
                         longitudeDelta: 0.05,
                     }}
                 >
-
                     {driverCoords && (
                         <Marker coordinate={driverCoords}>
                             <View
@@ -392,45 +449,58 @@ const SearchDriver = () => {
                                     borderRadius: 999,
                                 }}
                             >
-
                                 <Image
                                     source={require("../../../assets/images/minibus.png")}
-                                    style={{width: 20, height: 20}}
+                                    style={{ width: 20, height: 20 }}
                                     resizeMode="contain"
                                 />
                             </View>
                         </Marker>
                     )}
 
-                    {pickupCoords && <Marker coordinate={pickupCoords} pinColor="#0165FC" />}
-
-                    {destinationCoords && (
-                        <Marker coordinate={destinationCoords} pinColor="#ffcc00" />
+                    {pickupCoords && (
+                        <Marker coordinate={pickupCoords} pinColor="#0165FC" />
                     )}
 
-
-                    {driverFound && !driverArrived && driverCoords && pickupCoords && (
-                        <Polyline
-                            coordinates={[driverCoords, pickupCoords]}
-                            strokeWidth={5}
-                            strokeColor="#0165FC"
-                            lineDashPattern={[1]}
+                    {destinationCoords && (
+                        <Marker
+                            coordinate={destinationCoords}
+                            pinColor="#ffcc00"
                         />
                     )}
 
+                    {driverFound &&
+                        !driverArrived &&
+                        driverCoords &&
+                        pickupCoords && (
+                            <Polyline
+                                coordinates={[driverCoords, pickupCoords]}
+                                strokeWidth={5}
+                                strokeColor="#0165FC"
+                                lineDashPattern={[1]}
+                            />
+                        )}
 
-                    {driverArrived && routeCoordsLocal?.length > 0 && (
-                        <Polyline coordinates={routeCoordsLocal} strokeWidth={6} strokeColor="#ffcc00" />
+                    {driverArrived && routeCoordsLocal.length > 0 && (
+                        <Polyline
+                            coordinates={routeCoordsLocal}
+                            strokeWidth={6}
+                            strokeColor="#ffcc00"
+                        />
                     )}
 
-
-                    {!driverArrived && driverFound && routeCoordsFromStore?.length > 0 && (
-                        <Polyline coordinates={routeCoordsFromStore} strokeWidth={6} strokeColor="#ffcc00" />
-                    )}
+                    {!driverArrived &&
+                        driverFound &&
+                        routeCoordsFromStore?.length > 0 && (
+                            <Polyline
+                                coordinates={routeCoordsFromStore}
+                                strokeWidth={6}
+                                strokeColor="#ffcc00"
+                            />
+                        )}
                 </MapView>
 
-
-
+                {/* Pickup and destination header */}
                 <View
                     style={{
                         position: "absolute",
@@ -450,7 +520,6 @@ const SearchDriver = () => {
                             alignItems: "center",
                             justifyContent: "center",
                             width: "100%",
-                            paddingHorizontal: 10,
                             paddingVertical: 12,
                         }}
                         className="rounded-full bg-general dark:bg-secondaryBlack"
@@ -458,10 +527,10 @@ const SearchDriver = () => {
                         <Text
                             numberOfLines={1}
                             style={{
-                                color: colorScheme === "dark"? "white":"black",
+                                color: colorScheme === "dark" ? "white" : "black",
                                 fontWeight: "600",
                                 fontSize: 14,
-                                maxWidth: "40%",
+                                maxWidth: "50%",
                                 textAlign: "right",
                             }}
                         >
@@ -471,19 +540,18 @@ const SearchDriver = () => {
                         <Ionicons
                             name="arrow-forward"
                             size={14}
-                            color= {colorScheme === "dark"? "gray":"black"}
-                            style={{
-                                marginHorizontal: 8,
-                            }}
+                            color={colorScheme === "dark" ? "gray" : "black"}
+                            style={{ marginHorizontal: 8 }}
                         />
 
                         <Text
                             numberOfLines={1}
                             style={{
-                                color: colorScheme === "dark"? "#ffcc00":"black",
+                                color:
+                                    colorScheme === "dark" ? "#ffcc00" : "black",
                                 fontWeight: "600",
                                 fontSize: 14,
-                                maxWidth: "40%",
+                                maxWidth: "50%",
                                 textAlign: "left",
                             }}
                         >
@@ -492,103 +560,160 @@ const SearchDriver = () => {
                     </View>
                 </View>
 
-
-
+                {/* Main bottom sheet */}
                 <BottomSheet
                     ref={bottomSheetRef}
-                    snapPoints={snapPoints}
                     index={0}
                     backgroundStyle={{
-                        backgroundColor: colorScheme === "dark"? "#000000" : "#ffffff",
+                        backgroundColor:
+                            colorScheme === "dark" ? "#000000" : "#ffffff",
                         borderTopLeftRadius: 24,
                         borderTopRightRadius: 24,
                     }}
                     handleIndicatorStyle={{
-                        backgroundColor: colorScheme === "dark"? "gray": "gray",
+                        backgroundColor: "gray",
                     }}
                     onChange={(index) => {
-                        if (index < 1) {
-                            bottomSheetRef.current?.snapToIndex(1);
+                        if (index < 0) {
+                            bottomSheetRef.current?.snapToIndex(0);
                         }
                     }}
                 >
                     <BottomSheetView style={{ flex: 1 }}>
-                        <View style={{ marginTop: "5%" }} className="w-full flex justify-center items-center">
+                        <View
+                            style={{
+                                flex: 1,
+                                width: "100%",
+                            }}
+                        >
                             {driverFound ? (
-                                <View className="w-full flex items-center" style={{ paddingHorizontal: 4 }}>
-
+                                <View
+                                    className="w-full items-center"
+                                    style={{ paddingHorizontal: 4 }}
+                                >
+                                    {/* Driver information */}
                                     <View
-                                        style={{
-                                            paddingHorizontal: 16,
-                                        }}
+                                        style={{ paddingHorizontal: 16 }}
                                         className="rounded-3xl gap-4 flex flex-row justify-center items-center w-full"
                                     >
-
                                         <View
-                                            style={{width: 50, height: 50, padding: 10, backgroundColor: "#ffcc0033" }}
+                                            style={{
+                                                width: 50,
+                                                height: 50,
+                                                padding: 10,
+                                                backgroundColor: "#ffcc0033",
+                                            }}
                                             className="flex justify-center items-center rounded-full border-2 border-primary"
                                         >
-                                            <Ionicons name="person" color="#ffcc00" size={24} />
+                                            <Ionicons
+                                                name="person"
+                                                color="#ffcc00"
+                                                size={24}
+                                            />
                                         </View>
 
+                                        <View className="flex-1 flex flex-col justify-start">
+                                            <Text
+                                                numberOfLines={1}
+                                                className="font-GoogleSansMedium text-lg text-secondaryBlack dark:text-general"
+                                            >
+                                                Kelvin Agyeman
+                                            </Text>
 
-
-                                        <View  className="flex-1 flex flex-col justify-start">
-                                            <Text numberOfLines={1} className="font-GoogleSansMedium dark:text-general">Kelvin Agyeman</Text>
-
-                                            <View style={{gap: 4}} className="flex flex-row justify-start items-center">
-                                                <>
-                                                    <Ionicons name="star" size={12} color="#ffcc00"/>
-                                                    <Text className="font-GoogleSansRegular text-xs dark:text-tertiaryGray">4.9</Text>
-                                                </>
-                                                <Text className="font-GoogleSansRegular text-xs dark:text-tertiaryGray">{'\u2022'}</Text>
-                                                <>
-                                                    <Text className="font-GoogleSansRegular text-xs dark:text-tertiaryGray">(100trips)</Text>
-                                                </>
+                                            <View
+                                                style={{ gap: 4 }}
+                                                className="flex flex-row justify-start items-center"
+                                            >
+                                                <Ionicons
+                                                    name="star"
+                                                    size={12}
+                                                    color="#ffcc00"
+                                                />
+                                                <Text className="font-GoogleSansRegular text-sm text-secondaryGray dark:text-tertiaryGray">
+                                                    4.9
+                                                </Text>
+                                                <Text className="font-GoogleSansRegular text-sm text-secondaryGray dark:text-tertiaryGray">
+                                                    {"\u2022"}
+                                                </Text>
+                                                <Text className="font-GoogleSansRegular text-xs text-secondaryGray dark:text-tertiaryGray">
+                                                    (100 trips)
+                                                </Text>
                                             </View>
-
                                         </View>
 
-                                        <View className="flex flex-row justify-center items-center" style={{gap: 10}}>
+                                        <View
+                                            className="flex flex-row justify-center items-center"
+                                            style={{ gap: 10 }}
+                                        >
                                             <TouchableOpacity
-                                                className="rounded-full bg-tertiaryWhite  dark:bg-secondaryBlack" style={{padding: 10}}
+                                                className="rounded-full bg-tertiaryWhite dark:bg-secondaryBlack"
+                                                style={{ padding: 10 }}
                                                 onPress={openChat}
                                             >
-                                                <Ionicons name="chatbubbles-outline" size={24} color={colorScheme === "dark"? "white":"black"}/>
-
+                                                <Ionicons
+                                                    name="chatbubbles-outline"
+                                                    size={24}
+                                                    color={
+                                                        colorScheme === "dark"
+                                                            ? "white"
+                                                            : "black"
+                                                    }
+                                                />
                                             </TouchableOpacity>
 
                                             <TouchableOpacity
                                                 onPress={handleDriverCall}
-                                                className="rounded-full " style={{padding: 10, backgroundColor: "#34C759"}}
+                                                className="rounded-full"
+                                                style={{
+                                                    padding: 10,
+                                                    backgroundColor: "#34C759",
+                                                }}
                                             >
-                                                <Ionicons name="call-outline" size={24} color="white"/>
-
+                                                <Ionicons
+                                                    name="call-outline"
+                                                    size={24}
+                                                    color="white"
+                                                />
                                             </TouchableOpacity>
                                         </View>
-
                                     </View>
 
-
-
-
-                                    <View style={{ paddingHorizontal: 16 }} className="w-full">
-                                        <View style={{marginBottom: 10, marginTop: 10}} className="w-full flex flex-row justify-center items-center">
+                                    <View
+                                        style={{ paddingHorizontal: 16 }}
+                                        className="w-full"
+                                    >
+                                        <View
+                                            style={{
+                                                marginBottom: 10,
+                                                marginTop: 10,
+                                            }}
+                                            className="w-full flex flex-row justify-center items-center"
+                                        >
                                             {(driverEta || showArrivedMessage) && (
                                                 <View
                                                     style={{ gap: 5 }}
                                                     className="flex flex-row justify-center items-center"
                                                 >
                                                     <Ionicons
-                                                        name={showArrivedMessage ? "checkmark-circle" : "person-outline"}
+                                                        name={
+                                                            showArrivedMessage
+                                                                ? "checkmark-circle"
+                                                                : "person-outline"
+                                                        }
                                                         size={12}
-                                                        color={showArrivedMessage ? "#22C55E" : "red"}
+                                                        color={
+                                                            showArrivedMessage
+                                                                ? "#22C55E"
+                                                                : "red"
+                                                        }
                                                     />
 
                                                     <Text
-                                                        className="font-GoogleSansMedium"
+                                                        className="font-GoogleSansMedium text-lg"
                                                         style={{
-                                                            color: showArrivedMessage ? "#22C55E" : "red",
+                                                            color: showArrivedMessage
+                                                                ? "#22C55E"
+                                                                : "red",
                                                         }}
                                                     >
                                                         {showArrivedMessage
@@ -599,95 +724,156 @@ const SearchDriver = () => {
                                             )}
                                         </View>
 
-
-                                        <View style={{marginBottom: 16}} className="w-full flex flex-row justify-between items-center">
-                                            <View style={{gap: 5}} className="flex flex-row justify-start items-center">
-                                                <Ionicons name="bus-outline" size={12} color={colorScheme === "dark"? "white" : "black"}/>
-                                                <Text numberOfLines={1} className="font-GoogleSansMedium text-sm dark:text-tertiaryGray">Sprinter Benz - White</Text>
+                                        <View
+                                            style={{ marginBottom: 16 }}
+                                            className="w-full flex flex-row justify-between items-center"
+                                        >
+                                            <View
+                                                style={{ gap: 5 }}
+                                                className="flex flex-row justify-start items-center"
+                                            >
+                                                <Ionicons
+                                                    name="bus-outline"
+                                                    size={12}
+                                                    color={
+                                                        colorScheme === "dark"
+                                                            ? "white"
+                                                            : "black"
+                                                    }
+                                                />
+                                                <Text
+                                                    numberOfLines={1}
+                                                    className="font-GoogleSansMedium text-base text-secondaryBlack dark:text-tertiaryGray"
+                                                >
+                                                    Sprinter Benz - White
+                                                </Text>
                                             </View>
 
-                                            <View style={{gap: 5}} className="flex flex-row justify-start items-center">
-                                                <Ionicons name="reader-outline" size={12} color={colorScheme === "dark"? "white" : "black"}/>
-                                                <Text numberOfLines={1} className="font-GoogleSansRegular text-sm dark:text-general">Plate:</Text>
-                                                <Text numberOfLines={1} className="font-GoogleSansMedium text-sm dark:text-tertiaryGray">XYZ 123 ZZ</Text>
+                                            <View
+                                                style={{ gap: 5 }}
+                                                className="flex flex-row justify-start items-center"
+                                            >
+                                                <Ionicons
+                                                    name="reader-outline"
+                                                    size={12}
+                                                    color={
+                                                        colorScheme === "dark"
+                                                            ? "white"
+                                                            : "black"
+                                                    }
+                                                />
+                                                <Text className="font-GoogleSansRegular text-base text-secondaryBlack dark:text-general">
+                                                    Plate:
+                                                </Text>
+                                                <Text
+                                                    numberOfLines={1}
+                                                    className="font-GoogleSansMedium text-base text-secondaryBlack dark:text-tertiaryGray"
+                                                >
+                                                    XYZ 123 ZZ
+                                                </Text>
                                             </View>
                                         </View>
 
-                                        <View style={{height: 1, marginBottom: 16}} className="bg-tertiaryWhite w-full dark:bg-tertiaryGray"/>
-                                        <>
-                                            <Text  className="font-GoogleSansMedium flex-shrink dark:text-general">
-                                                Booking code
-                                            </Text>
-                                            <Text style={{ marginBottom: 12 }} className="font-GoogleSansRegular text-xs flex-shrink dark:text-tertiaryGray">
-                                                Share this code with the driver for verification
-                                            </Text>
+                                        <View
+                                            style={{
+                                                height: 1,
+                                                marginBottom: 16,
+                                            }}
+                                            className="bg-tertiaryWhite w-full dark:bg-tertiaryGray"
+                                        />
 
-                                            <TouchableOpacity
+                                        <Text className="font-GoogleSansMedium text-secondaryBlack text-lg flex-shrink dark:text-general">
+                                            Booking code
+                                        </Text>
+
+                                        <Text
+                                            style={{ marginBottom: 12 }}
+                                            className="font-GoogleSansRegular text-sm flex-shrink dark:text-tertiaryGray"
+                                        >
+                                            Share this code with the driver for verification
+                                        </Text>
+
+                                        <TouchableOpacity
+                                            style={{ paddingVertical: 16 }}
+                                            className="rounded-xl gap-4 border-2 border-dashed border-primary flex justify-center items-center bg-primary/20 w-full"
+                                        >
+                                            <Text
+                                                className="font-GoogleSansBold dark:text-general"
                                                 style={{
-                                                    paddingVertical: 16,
+                                                    fontSize: 32,
+                                                    letterSpacing: 4,
                                                 }}
-                                                className="rounded-xl gap-4 border-2 border-dashed border-primary flex justify-center items-center bg-primary/20 w-full"
                                             >
-                                                <Text className="font-GoogleSansBold dark:text-general" style={{ fontSize: 32, letterSpacing: 4 }}>
-                                                    {bookingCode}
-                                                </Text>
-                                            </TouchableOpacity>
-                                        </>
+                                                {bookingCode}
+                                            </Text>
+                                        </TouchableOpacity>
+                                    </View>
+
+                                    {/* Cancel button after driver is found */}
+                                    <View
+                                        className="flex justify-center items-center mb-4"
+                                        style={{
+                                            width: "100%",
+                                            paddingHorizontal: 20,
+                                            paddingTop: 20,
+                                            paddingBottom: 12,
+                                        }}
+                                    >
+                                        <CancelRideButton
+                                            name="Cancel Ride"
+                                            disabled={false}
+                                            onPress={handleCancelRide}
+                                        />
                                     </View>
                                 </View>
                             ) : (
-                                <View className="flex-1 w-full">
+                                /* Searching state */
+                                <View
+                                    style={{
+                                        flex: 1,
+                                        width: "100%",
+                                        paddingHorizontal: 24,
+                                        paddingTop: 16,
+                                        paddingBottom: 12,
+                                    }}
+                                >
+                                    {/* Centered searching animation */}
+                                    <View
+                                        style={{
+                                            flex: 1,
+                                            width: "100%",
+                                            justifyContent: "center",
+                                            alignItems: "center",
+                                        }}
+                                    >
+                                        <SearchingDriver />
+                                    </View>
 
-
-                                    <View className="flex-1 w-full justify-center items-center">
-
-                                        <View className="justify-center items-center">
-
-                                            <LottieView
-                                                source={require("../../../assets/video/loadingdots.json")}
-                                                autoPlay
-                                                loop
-                                                style={{
-                                                    width: 300,
-                                                    height: 300,
-                                                }}
+                                    {/* Bottom-anchored cancel button */}
+                                    <View
+                                        style={{
+                                            width: "100%",
+                                            paddingTop: 16,
+                                            paddingBottom: 12,
+                                            alignItems: "center",
+                                            justifyContent: "center",
+                                        }}
+                                    >
+                                        <View className="flex justify-center items-center mb-2" style={{ width: "100%" }}>
+                                            <CancelRideButton
+                                                name="Cancel Ride"
+                                                disabled={false}
+                                                onPress={handleCancelRide}
                                             />
-
-                                            <View className="absolute bottom-10">
-                                                <Text className="font-GoogleSansRegular dark:text-tertiaryGray text-center">
-                                                    Searching for a driver. Please be patient...
-                                                </Text>
-                                            </View>
-
                                         </View>
-
                                     </View>
-
-
-                                    <View className="justify-center w-full items-center pb-10">
-                                        <PrimaryButton
-                                            name="Cancel Ride"
-                                            disabled={false}
-                                            onPress={() => router.replace("/homepage")}
-                                        />
-                                    </View>
-
                                 </View>
                             )}
                         </View>
                     </BottomSheetView>
                 </BottomSheet>
 
-
-
-                {driverFound && (
-                    <View style={{ bottom: 32 }} className="absolute w-full flex items-center">
-                        <View className="w-full flex justify-center items-center">
-                            <PrimaryButton name="Cancel Ride" disabled={false} onPress={handleCancelRide} />
-                        </View>
-                    </View>
-                )}
-
+                {/* Chat bottom sheet */}
                 {chatOpen && (
                     <BottomSheet
                         ref={chatBottomRef}
@@ -695,69 +881,128 @@ const SearchDriver = () => {
                         snapPoints={chatSnapPoints}
                         enablePanDownToClose
                         backgroundStyle={{
-                            backgroundColor: colorScheme === "dark"? "#000000" : "#ffffff",
-
+                            backgroundColor:
+                                colorScheme === "dark" ? "#000000" : "#ffffff",
                         }}
                         handleIndicatorStyle={{
-                            backgroundColor: colorScheme === "dark"? "gray": "gray",
+                            backgroundColor: "gray",
                         }}
                         onClose={() => setChatOpen(false)}
                     >
                         <BottomSheetView style={{ flex: 1 }}>
                             <KeyboardAvoidingView
-                                behavior={Platform.OS === "ios" ? "padding" : undefined}
+                                behavior={
+                                    Platform.OS === "ios" ? "padding" : undefined
+                                }
                                 style={{ flex: 1 }}
-                                keyboardVerticalOffset={Platform.OS === "ios" ? 90 : 80}
+                                keyboardVerticalOffset={
+                                    Platform.OS === "ios" ? 90 : 80
+                                }
                             >
                                 <KeyboardAwareScrollView
                                     keyboardShouldPersistTaps="handled"
-                                    contentContainerStyle={{flex: 1}}
+                                    contentContainerStyle={{ flexGrow: 1 }}
                                 >
-                                    <View style={{ padding: 16, flex: 1 }}>
-                                        <View className="flex flex-row justify-between items-center" style={{ marginBottom: 12, gap: 10 }}>
+                                    <View
+                                        style={{
+                                            padding: 16,
+                                            flex: 1,
+                                        }}
+                                    >
+                                        <View
+                                            className="flex flex-row justify-between items-center"
+                                            style={{
+                                                marginBottom: 12,
+                                                gap: 10,
+                                            }}
+                                        >
                                             <View
-                                                style={{width: 42, height: 42, padding: 10, backgroundColor: "#ffcc0033" }}
+                                                style={{
+                                                    width: 42,
+                                                    height: 42,
+                                                    padding: 10,
+                                                    backgroundColor: "#ffcc0033",
+                                                }}
                                                 className="flex justify-center items-center rounded-full border-2 border-primary"
                                             >
-                                                <Ionicons name="person" color="#ffcc00" size={16} />
+                                                <Ionicons
+                                                    name="person"
+                                                    color="#ffcc00"
+                                                    size={16}
+                                                />
                                             </View>
 
-                                            <View  className="flex-1 flex flex-col justify-start">
-                                                <Text numberOfLines={1} className="font-GoogleSansMedium dark:text-general">Kelvin Agyeman</Text>
-
+                                            <View className="flex-1 flex flex-col justify-start">
+                                                <Text
+                                                    numberOfLines={1}
+                                                    className="font-GoogleSansMedium text-lg text-secondaryBlack dark:text-general"
+                                                >
+                                                    Kelvin Agyeman
+                                                </Text>
                                             </View>
 
-                                            <TouchableOpacity style={{padding: 5}} className="rounded-full bg-tertiaryWhite dark:bg-secondaryBlack" onPress={closeChat}>
-                                                <Ionicons name="close" size={24} color={colorScheme === "dark"? "#ffffff":"#333"} />
+                                            <TouchableOpacity
+                                                style={{ padding: 5 }}
+                                                className="rounded-full bg-tertiaryWhite dark:bg-secondaryBlack"
+                                                onPress={closeChat}
+                                            >
+                                                <Ionicons
+                                                    name="close"
+                                                    size={24}
+                                                    color={
+                                                        colorScheme === "dark"
+                                                            ? "#ffffff"
+                                                            : "#333"
+                                                    }
+                                                />
                                             </TouchableOpacity>
                                         </View>
 
                                         <View style={{ flex: 1 }}>
                                             <FlatList
                                                 scrollEnabled={false}
-                                                nestedScrollEnabled={true}
+                                                nestedScrollEnabled
                                                 ref={flatListRef}
                                                 data={messages}
                                                 keyExtractor={(item) => item.id}
                                                 renderItem={renderMessage}
-                                                contentContainerStyle={{ paddingBottom: 12 }}
-                                                onContentSizeChange={() => flatListRef.current?.scrollToEnd({ animated: true })}
-                                                onLayout={() => flatListRef.current?.scrollToEnd({ animated: true })}
+                                                contentContainerStyle={{
+                                                    paddingBottom: 12,
+                                                }}
+                                                onContentSizeChange={() =>
+                                                    flatListRef.current?.scrollToEnd({
+                                                        animated: true,
+                                                    })
+                                                }
+                                                onLayout={() =>
+                                                    flatListRef.current?.scrollToEnd({
+                                                        animated: true,
+                                                    })
+                                                }
                                             />
                                         </View>
 
-                                        <View style={{
-                                            flexDirection: "row",
-                                            alignItems: "flex-end",
-                                            paddingTop: 8,
-                                            borderTopWidth: 1,
-                                            borderTopColor: colorScheme === "dark"? "#0a0a0a":"#eee",
-                                        }}>
+                                        <View
+                                            style={{
+                                                flexDirection: "row",
+                                                alignItems: "flex-end",
+                                                paddingTop: 8,
+                                                borderTopWidth: 1,
+                                                borderTopColor:
+                                                    colorScheme === "dark"
+                                                        ? "#0a0a0a"
+                                                        : "#eee",
+                                            }}
+                                        >
                                             <TextInput
                                                 className="font-GoogleSansRegular dark:text-general"
                                                 value={inputText}
                                                 onChangeText={setInputText}
-                                                placeholderTextColor={colorScheme === "dark"? "#f0f0f0":"#e4e4e4"}
+                                                placeholderTextColor={
+                                                    colorScheme === "dark"
+                                                        ? "#f0f0f0"
+                                                        : "#e4e4e4"
+                                                }
                                                 placeholder="Type a message..."
                                                 style={{
                                                     flex: 1,
@@ -765,22 +1010,39 @@ const SearchDriver = () => {
                                                     maxHeight: 120,
                                                     paddingHorizontal: 12,
                                                     paddingVertical: 8,
-                                                    backgroundColor: colorScheme === "dark"? "black":"white",
+                                                    backgroundColor:
+                                                        colorScheme === "dark"
+                                                            ? "black"
+                                                            : "white",
                                                     borderRadius: 24,
                                                     marginRight: 8,
                                                     borderWidth: 1,
-                                                    borderColor: "#e6e6e6",}}
+                                                    borderColor: "#e6e6e6",
+                                                }}
                                                 multiline
                                                 returnKeyType="send"
                                                 onSubmitEditing={() => {
-                                                    if (!Platform.OS || Platform.OS === "android") {
+                                                    if (
+                                                        Platform.OS === "android"
+                                                    ) {
                                                         sendMessage();
                                                     }
                                                 }}
                                             />
 
-                                            <TouchableOpacity style={styles.sendButton} onPress={sendMessage}>
-                                                <Ionicons name="send" size={20} color={colorScheme === "dark"? "black":"white"} />
+                                            <TouchableOpacity
+                                                style={styles.sendButton}
+                                                onPress={sendMessage}
+                                            >
+                                                <Ionicons
+                                                    name="send"
+                                                    size={20}
+                                                    color={
+                                                        colorScheme === "dark"
+                                                            ? "black"
+                                                            : "white"
+                                                    }
+                                                />
                                             </TouchableOpacity>
                                         </View>
                                     </View>
@@ -812,7 +1074,6 @@ const styles = StyleSheet.create({
         paddingHorizontal: 12,
         borderRadius: 16,
     },
-
     bubbleDriver: {
         backgroundColor: "#f1f1f1",
         borderBottomLeftRadius: 4,
@@ -824,8 +1085,6 @@ const styles = StyleSheet.create({
         color: "#111",
         fontSize: 14,
     },
-
-
     sendButton: {
         backgroundColor: "#ffcc00",
         width: 40,

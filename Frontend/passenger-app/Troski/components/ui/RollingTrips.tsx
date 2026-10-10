@@ -6,6 +6,7 @@ import * as Location from "expo-location";
 import { useAppStore } from "@/utils/store";
 import { router } from "expo-router";
 import {useColorScheme} from "nativewind";
+import PaginateRollingTrips from "@/components/ui/PaginateRollingTrips";
 
 type TripItem = {
     id: number;
@@ -182,28 +183,12 @@ const RollingTrips = () => {
             setDestinationCoords(null);
         }
 
-        router.push("/homepage/bookings/selectRide");
+        router.push("/homepage/bookings");
     };
 
     return (
         <FlashList
-            ListEmptyComponent={
-                <View className="flex-1 justify-center items-center py-20">
-                    <Ionicons
-                        name="document-text-outline"
-                        size={48}
-                        color="gray"
-                    />
-
-                    <Text className="mt-4 text-base font-GoogleSansMedium text-secondaryGray dark:text-tertiaryGray">
-                        No items found
-                    </Text>
-
-                    <Text className="mt-1 text-sm text-center px-10 font-GoogleSansRegular text-tertiaryGray">
-                        There’s nothing to display right now.
-                    </Text>
-                </View>
-            }
+            ListEmptyComponent={<PaginateRollingTrips/>}
 
             data={data}
             keyExtractor={(item) => item.id.toString()}
