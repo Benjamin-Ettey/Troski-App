@@ -1,14 +1,8 @@
-
 import {
     View,
     Text,
     Modal,
     TouchableOpacity,
-    TextInput,
-    FlatList,
-    KeyboardAvoidingView,
-    Platform,
-    StyleSheet,
     Image,
     Alert,
 } from "react-native";
@@ -16,8 +10,8 @@ import {
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import BottomSheet, { BottomSheetView } from "@gorhom/bottom-sheet";
 import { Ionicons } from "@expo/vector-icons";
-import PrimaryButton from "@/components/PrimaryButton";
 import SearchingDriver from "@/components/ui/SearchingDriver";
+import ChatDriver from "@/components/ui/ChatDriver";
 import { router } from "expo-router";
 import MapView, { Marker, Polyline } from "react-native-maps";
 import { useAppStore } from "@/utils/store";
@@ -25,28 +19,17 @@ import { useAppStore } from "@/utils/store";
 // @ts-ignore
 import call from "react-native-phone-call";
 
-import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
 import { useAudioPlayer } from "expo-audio";
 import { useColorScheme } from "nativewind";
 import CancelRideButton from "@/components/CancelRideButton";
-
-type Message = {
-    id: string;
-    text: string;
-    from: "user" | "driver";
-    time: number;
-};
 
 const audioSource = require("../../../assets/audio/driverarrived.mp3");
 
 const SearchDriver = () => {
     const snapPoints = useMemo(() => ["55%"], []);
-    const chatSnapPoints = useMemo(() => ["85%"], []);
 
     const bottomSheetRef = useRef<BottomSheet>(null);
-    const chatBottomRef = useRef<BottomSheet>(null);
     const mapRef = useRef<MapView>(null);
-    const flatListRef = useRef<FlatList<Message>>(null);
     const arrivalTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
     const [driverFound, setDriverFound] = useState(false);
@@ -54,8 +37,6 @@ const SearchDriver = () => {
     const [showModal, setShowModal] = useState(true);
 
     const [chatOpen, setChatOpen] = useState(false);
-    const [messages, setMessages] = useState<Message[]>([]);
-    const [inputText, setInputText] = useState("");
 
     const [routeCoordsLocal, setRouteCoordsLocal] = useState<
         { latitude: number; longitude: number }[]
@@ -132,7 +113,7 @@ const SearchDriver = () => {
                     setDriverEta(null);
                     setShowArrivedMessage(true);
 
-                    const soundTimer = setTimeout(() => {
+                    setTimeout(() => {
                         player.play();
                     }, 2000);
 
@@ -330,97 +311,9 @@ const SearchDriver = () => {
         );
     };
 
+    // Open the separate chat component.
     const openChat = () => {
         setChatOpen(true);
-
-        setTimeout(() => {
-            chatBottomRef.current?.snapToIndex(0);
-        }, 50);
-    };
-
-    const closeChat = () => {
-        chatBottomRef.current?.close();
-
-        setTimeout(() => setChatOpen(false), 200);
-    };
-
-    const sendMessage = () => {
-        const text = inputText.trim();
-
-        if (!text) return;
-
-        const newMsg: Message = {
-            id: `${Date.now()}`,
-            text,
-            from: "user",
-            time: Date.now(),
-        };
-
-        setMessages((prev) => [...prev, newMsg]);
-        setInputText("");
-
-        setTimeout(() => {
-            const reply: Message = {
-                id: `${Date.now()}-r`,
-                text: "Okay, on my way.",
-                from: "driver",
-                time: Date.now(),
-            };
-
-            setMessages((prev) => [...prev, reply]);
-
-            setTimeout(() => {
-                flatListRef.current?.scrollToEnd({ animated: true });
-            }, 50);
-        }, 1200);
-
-        setTimeout(() => {
-            flatListRef.current?.scrollToEnd({ animated: true });
-        }, 50);
-    };
-
-    const renderMessage = ({ item }: { item: Message }) => {
-        const isUser = item.from === "user";
-
-        return (
-            <View
-                style={[
-                    styles.messageRow,
-                    isUser ? styles.messageRowUser : styles.messageRowDriver,
-                ]}
-            >
-                <View
-                    style={[
-                        styles.bubble,
-                        isUser
-                            ? {
-                                backgroundColor:
-                                    colorScheme === "dark"
-                                        ? "#ffcc00"
-                                        : "#0165FC",
-                                borderBottomRightRadius: 4,
-                            }
-                            : styles.bubbleDriver,
-                    ]}
-                >
-                    <Text
-                        className="font-GoogleSansRegular"
-                        style={
-                            isUser
-                                ? {
-                                    color:
-                                        colorScheme === "dark"
-                                            ? "black"
-                                            : "white",
-                                }
-                                : styles.textDriver
-                        }
-                    >
-                        {item.text}
-                    </Text>
-                </View>
-            </View>
-        );
     };
 
     return (
@@ -794,13 +687,13 @@ const SearchDriver = () => {
                                         </Text>
 
                                         <TouchableOpacity
-                                            style={{ paddingVertical: 16 }}
-                                            className="rounded-xl gap-4 border-2 border-dashed border-primary flex justify-center items-center bg-primary/20 w-full"
+                                            style={{ paddingVertical: 12 }}
+                                            className="rounded-xl gap-2 flex justify-center items-center w-full"
                                         >
                                             <Text
                                                 className="font-GoogleSansBold dark:text-general"
                                                 style={{
-                                                    fontSize: 32,
+                                                    fontSize: 36,
                                                     letterSpacing: 4,
                                                 }}
                                             >
@@ -859,7 +752,10 @@ const SearchDriver = () => {
                                             justifyContent: "center",
                                         }}
                                     >
-                                        <View className="flex justify-center items-center mb-2" style={{ width: "100%" }}>
+                                        <View
+                                            className="flex justify-center items-center mb-2"
+                                            style={{ width: "100%" }}
+                                        >
                                             <CancelRideButton
                                                 name="Cancel Ride"
                                                 disabled={false}
@@ -873,226 +769,13 @@ const SearchDriver = () => {
                     </BottomSheetView>
                 </BottomSheet>
 
-                {/* Chat bottom sheet */}
+                {/* Chat UI */}
                 {chatOpen && (
-                    <BottomSheet
-                        ref={chatBottomRef}
-                        index={0}
-                        snapPoints={chatSnapPoints}
-                        enablePanDownToClose
-                        backgroundStyle={{
-                            backgroundColor:
-                                colorScheme === "dark" ? "#000000" : "#ffffff",
-                        }}
-                        handleIndicatorStyle={{
-                            backgroundColor: "gray",
-                        }}
-                        onClose={() => setChatOpen(false)}
-                    >
-                        <BottomSheetView style={{ flex: 1 }}>
-                            <KeyboardAvoidingView
-                                behavior={
-                                    Platform.OS === "ios" ? "padding" : undefined
-                                }
-                                style={{ flex: 1 }}
-                                keyboardVerticalOffset={
-                                    Platform.OS === "ios" ? 90 : 80
-                                }
-                            >
-                                <KeyboardAwareScrollView
-                                    keyboardShouldPersistTaps="handled"
-                                    contentContainerStyle={{ flexGrow: 1 }}
-                                >
-                                    <View
-                                        style={{
-                                            padding: 16,
-                                            flex: 1,
-                                        }}
-                                    >
-                                        <View
-                                            className="flex flex-row justify-between items-center"
-                                            style={{
-                                                marginBottom: 12,
-                                                gap: 10,
-                                            }}
-                                        >
-                                            <View
-                                                style={{
-                                                    width: 42,
-                                                    height: 42,
-                                                    padding: 10,
-                                                    backgroundColor: "#ffcc0033",
-                                                }}
-                                                className="flex justify-center items-center rounded-full border-2 border-primary"
-                                            >
-                                                <Ionicons
-                                                    name="person"
-                                                    color="#ffcc00"
-                                                    size={16}
-                                                />
-                                            </View>
-
-                                            <View className="flex-1 flex flex-col justify-start">
-                                                <Text
-                                                    numberOfLines={1}
-                                                    className="font-GoogleSansMedium text-lg text-secondaryBlack dark:text-general"
-                                                >
-                                                    Kelvin Agyeman
-                                                </Text>
-                                            </View>
-
-                                            <TouchableOpacity
-                                                style={{ padding: 5 }}
-                                                className="rounded-full bg-tertiaryWhite dark:bg-secondaryBlack"
-                                                onPress={closeChat}
-                                            >
-                                                <Ionicons
-                                                    name="close"
-                                                    size={24}
-                                                    color={
-                                                        colorScheme === "dark"
-                                                            ? "#ffffff"
-                                                            : "#333"
-                                                    }
-                                                />
-                                            </TouchableOpacity>
-                                        </View>
-
-                                        <View style={{ flex: 1 }}>
-                                            <FlatList
-                                                scrollEnabled={false}
-                                                nestedScrollEnabled
-                                                ref={flatListRef}
-                                                data={messages}
-                                                keyExtractor={(item) => item.id}
-                                                renderItem={renderMessage}
-                                                contentContainerStyle={{
-                                                    paddingBottom: 12,
-                                                }}
-                                                onContentSizeChange={() =>
-                                                    flatListRef.current?.scrollToEnd({
-                                                        animated: true,
-                                                    })
-                                                }
-                                                onLayout={() =>
-                                                    flatListRef.current?.scrollToEnd({
-                                                        animated: true,
-                                                    })
-                                                }
-                                            />
-                                        </View>
-
-                                        <View
-                                            style={{
-                                                flexDirection: "row",
-                                                alignItems: "flex-end",
-                                                paddingTop: 8,
-                                                borderTopWidth: 1,
-                                                borderTopColor:
-                                                    colorScheme === "dark"
-                                                        ? "#0a0a0a"
-                                                        : "#eee",
-                                            }}
-                                        >
-                                            <TextInput
-                                                className="font-GoogleSansRegular dark:text-general"
-                                                value={inputText}
-                                                onChangeText={setInputText}
-                                                placeholderTextColor={
-                                                    colorScheme === "dark"
-                                                        ? "#f0f0f0"
-                                                        : "#e4e4e4"
-                                                }
-                                                placeholder="Type a message..."
-                                                style={{
-                                                    flex: 1,
-                                                    minHeight: 40,
-                                                    maxHeight: 120,
-                                                    paddingHorizontal: 12,
-                                                    paddingVertical: 8,
-                                                    backgroundColor:
-                                                        colorScheme === "dark"
-                                                            ? "black"
-                                                            : "white",
-                                                    borderRadius: 24,
-                                                    marginRight: 8,
-                                                    borderWidth: 1,
-                                                    borderColor: "#e6e6e6",
-                                                }}
-                                                multiline
-                                                returnKeyType="send"
-                                                onSubmitEditing={() => {
-                                                    if (
-                                                        Platform.OS === "android"
-                                                    ) {
-                                                        sendMessage();
-                                                    }
-                                                }}
-                                            />
-
-                                            <TouchableOpacity
-                                                style={styles.sendButton}
-                                                onPress={sendMessage}
-                                            >
-                                                <Ionicons
-                                                    name="send"
-                                                    size={20}
-                                                    color={
-                                                        colorScheme === "dark"
-                                                            ? "black"
-                                                            : "white"
-                                                    }
-                                                />
-                                            </TouchableOpacity>
-                                        </View>
-                                    </View>
-                                </KeyboardAwareScrollView>
-                            </KeyboardAvoidingView>
-                        </BottomSheetView>
-                    </BottomSheet>
+                    <ChatDriver onClose={() => setChatOpen(false)} />
                 )}
             </View>
         </Modal>
     );
 };
-
-const styles = StyleSheet.create({
-    messageRow: {
-        marginVertical: 6,
-        paddingHorizontal: 8,
-        flexDirection: "row",
-    },
-    messageRowUser: {
-        justifyContent: "flex-end",
-    },
-    messageRowDriver: {
-        justifyContent: "flex-start",
-    },
-    bubble: {
-        maxWidth: "80%",
-        paddingVertical: 8,
-        paddingHorizontal: 12,
-        borderRadius: 16,
-    },
-    bubbleDriver: {
-        backgroundColor: "#f1f1f1",
-        borderBottomLeftRadius: 4,
-    },
-    textUser: {
-        fontSize: 14,
-    },
-    textDriver: {
-        color: "#111",
-        fontSize: 14,
-    },
-    sendButton: {
-        backgroundColor: "#ffcc00",
-        width: 40,
-        height: 40,
-        borderRadius: 22,
-        alignItems: "center",
-        justifyContent: "center",
-    },
-});
 
 export default SearchDriver;
