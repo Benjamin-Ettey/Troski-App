@@ -14,6 +14,7 @@ import PaginateHomepage from "@/components/ui/PaginateHomepage";
 
 import { useAppStore } from "@/utils/store";
 import { loginPassenger } from "@/api/auth";
+import DisabledPrimaryButton from "@/components/DisabledPrimaryButton";
 
 const PinScreen = () => {
     const { colorScheme } = useColorScheme();
@@ -24,6 +25,7 @@ const PinScreen = () => {
     const [error, setError] = useState("");
     const [attempts, setAttempts] = useState(0);
     const [isLoggingIn, setIsLoggingIn] = useState(false);
+
 
     const disable = value.length !== 6 || isLoggingIn;
 
@@ -58,7 +60,8 @@ const PinScreen = () => {
             setValue("");
 
             router.replace("/homepage");
-        } catch (error: any) {
+        }
+        catch (error: any) {
             console.log(
                 "Passenger login failed:",
                 error.response?.data || error.message
@@ -66,29 +69,49 @@ const PinScreen = () => {
 
             const status = error.response?.status;
 
-            const backendMessage =
-                error.response?.data?.msg ||
-                error.response?.data?.message;
-
             if (status === 400 || status === 401) {
                 setAttempts((prev) => prev + 1);
 
+                setError("Incorrect phone number or PIN. Please try again.");
+            } else if (status === 403) {
                 setError(
-                    backendMessage ||
-                    "Incorrect Phone number or Pin. Please try again."
+                    "You don't have permission to access this account. Please contact support."
+                );
+            } else if (status === 404) {
+                setError(
+                    "We couldn't find your account. Please check your details and try again."
+                );
+            } else if (status === 408) {
+                setError(
+                    "The request took too long. Please try again."
+                );
+            } else if (status === 409) {
+                setError(
+                    "We couldn't complete your request. Please try again."
+                );
+            } else if (status === 422) {
+                setError(
+                    "The information provided is invalid. Please check your details."
                 );
             } else if (status === 429) {
                 setError(
-                    backendMessage ||
-                    "Too many attempts. Please try again later."
+                    "Too many attempts. Please wait a while before trying again."
+                );
+            } else if (status >= 500 && status <= 599) {
+                setError(
+                    "Something went wrong on our end. Please try again later."
+                );
+            } else if (!error.response) {
+                setError(
+                    "Unable to connect. Check your internet connection and try again."
                 );
             } else {
                 setError(
-                    backendMessage ||
                     "Unable to log in. Please try again."
                 );
             }
-        } finally {
+        }
+    finally {
             setIsLoggingIn(false);
         }
     };
@@ -143,7 +166,7 @@ const PinScreen = () => {
                             <View
                                 key={index}
                                 className={`
-                                    w-14 h-16 rounded-2xl
+                                    w-12 h-16 rounded-2xl
                                     border
                                     items-center justify-center
                                     dark:bg-secondaryBlack
@@ -247,7 +270,7 @@ const PinScreen = () => {
                 </View>
 
                 <View className="w-full justify-center items-center">
-                    {attempts >= 3 && (
+                    {attempts >= 0 && (
                         <TouchableOpacity
                             activeOpacity={0.7}
                             onPress={() =>
@@ -267,14 +290,17 @@ const PinScreen = () => {
                 <View className="mt-auto mb-10 justify-center items-center">
                     {isLoggingIn ? (
                         <PaginateHomepage />
+                    ) : disable ? (
+                        <DisabledPrimaryButton name="Next" />
                     ) : (
                         <PrimaryButton
                             name="Next"
-                            disabled={disable}
                             onPress={handleNext}
                         />
                     )}
                 </View>
+
+
 
             </View>
         </View>

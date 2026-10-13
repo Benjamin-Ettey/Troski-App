@@ -1,4 +1,4 @@
-import React, { useRef, useState, useEffect } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
     Modal,
     View,
@@ -6,13 +6,15 @@ import {
     TextInput,
     TouchableOpacity,
     FlatList,
+    ScrollView,
     KeyboardAvoidingView,
     Platform,
     StyleSheet,
-    SafeAreaView,
     Keyboard,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
+import { Asset } from "expo-asset";
 import { useColorScheme } from "nativewind";
 
 type Message = {
@@ -27,9 +29,32 @@ type ChatDriverProps = {
     onClose: () => void;
 };
 
+
+
+const SUGGESTIONS = [
+    "I'm here",
+    "I'm at the pickup point",
+    "Where are you?",
+    "Please wait a moment",
+    "I'm coming out now",
+    "Thank you!",
+];
+
+const CONTROL_SIZE = 38;
+
+const formatTime = (timestamp: number) => {
+    return new Date(timestamp).toLocaleTimeString([], {
+        hour: "numeric",
+        minute: "2-digit",
+    });
+};
+
 const ChatDriver = ({ visible = true, onClose }: ChatDriverProps) => {
     const flatListRef = useRef<FlatList<Message>>(null);
+    const inputRef = useRef<TextInput>(null);
+    const replyTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
     const { colorScheme } = useColorScheme();
+    const isDark = colorScheme === "dark";
 
     const [messages, setMessages] = useState<Message[]>([]);
     const [inputText, setInputText] = useState("");
@@ -45,6 +70,7 @@ const ChatDriver = ({ visible = true, onClose }: ChatDriverProps) => {
         const showListener = Keyboard.addListener(showEvent, () => {
             setIsKeyboardVisible(true);
         });
+
         const hideListener = Keyboard.addListener(hideEvent, () => {
             setIsKeyboardVisible(false);
         });
@@ -55,76 +81,133 @@ const ChatDriver = ({ visible = true, onClose }: ChatDriverProps) => {
         };
     }, []);
 
-    const sendMessage = () => {
-        const text = inputText.trim();
+    // Clear any pending demo reply on unmount
+    useEffect(() => {
+        return () => {
+            if (replyTimeout.current) clearTimeout(replyTimeout.current);
+        };
+    }, []);
+
+
+    const handleModalShow = useCallback(() => {
+        inputRef.current?.focus();
+    }, []);
+
+    const submitMessage = (rawText: string) => {
+        const text = rawText.trim();
         if (!text) return;
 
+        const now = Date.now();
+
         const newMessage: Message = {
-            id: `${Date.now()}`,
+            id: `${now}`,
             text,
             from: "user",
-            time: Date.now(),
+            time: now,
         };
 
         setMessages((previous) => [...previous, newMessage]);
-        setInputText("");
 
         // Demo reply
-        setTimeout(() => {
+        replyTimeout.current = setTimeout(() => {
+            const replyTime = Date.now();
+
             const reply: Message = {
-                id: `${Date.now()}-reply`,
+                id: `${replyTime}-reply`,
                 text: "Okay, on my way.",
                 from: "driver",
-                time: Date.now(),
+                time: replyTime,
             };
+
             setMessages((previous) => [...previous, reply]);
         }, 1200);
     };
 
-    const renderMessage = ({ item }: { item: Message }) => {
-        const isUser = item.from === "user";
+    // Send what's typed in the input, then clear it
+    const handleSend = () => {
+        if (!inputText.trim()) return;
+        submitMessage(inputText);
+        setInputText("");
+    };
 
-        return (
-            <View
-                style={[
-                    styles.messageRow,
-                    isUser ? styles.messageRowUser : styles.messageRowDriver,
-                ]}
-            >
+    // Send a suggestion instantly (any half-typed draft is left untouched)
+    const handleSuggestionPress = (suggestion: string) => {
+        submitMessage(suggestion);
+    };
+
+    const renderMessage = useCallback(
+        ({ item }: { item: Message }) => {
+            const isUser = item.from === "user";
+            const timeLabel = formatTime(item.time);
+
+            const timeColor = isUser
+                ? "rgba(255,255,255,0.75)"
+                : isDark
+                    ? "#9ca3af"
+                    : "#64748b";
+
+            return (
                 <View
                     style={[
-                        styles.bubble,
+                        styles.messageRow,
                         isUser
-                            ? {
-                                backgroundColor: "#22c55e",
-                                borderBottomRightRadius: 4,
-                            }
-                            : {
-                                backgroundColor:
-                                    colorScheme === "dark"
-                                        ? "#44444455"
-                                        : "#ffffff",
-                                borderBottomLeftRadius: 4,
-                            },
+                            ? styles.messageRowUser
+                            : styles.messageRowDriver,
                     ]}
                 >
-                    <Text
-                        className="font-GoogleSansRegular"
-                        style={{
-                            color: isUser
-                                ? "#ffffff"
-                                : colorScheme === "dark"
-                                    ? "#ffffff"
-                                    : "#0f172a",
-                            fontSize: 14,
-                        }}
+                    <View
+                        style={[
+                            styles.bubble,
+                            isUser
+                                ? {
+                                    backgroundColor: "#22c55e",
+                                    borderBottomRightRadius: 4,
+                                }
+                                : {
+                                    backgroundColor: isDark
+                                        ? "#000000"
+                                        : "#ffffff",
+                                    borderBottomLeftRadius: 4,
+                                },
+                        ]}
                     >
-                        {item.text}
-                    </Text>
+                        <Text
+                            className="font-GoogleSansRegular"
+                            style={{
+                                color: isUser
+                                    ? "#ffffff"
+                                    : isDark
+                                        ? "#ffffff"
+                                        : "#0f172a",
+                                fontSize: 14,
+                            }}
+                        >
+                            {item.text}
+
+                            <Text
+                                style={{
+                                    color: "transparent",
+                                    fontSize: 11,
+                                }}
+                            >
+                                {`\u00A0\u00A0\u00A0${timeLabel}`}
+                            </Text>
+                        </Text>
+
+                        <Text
+                            className="font-GoogleSansRegular"
+                            style={[styles.time, { color: timeColor }]}
+                        >
+                            {timeLabel}
+                        </Text>
+                    </View>
                 </View>
-            </View>
-        );
-    };
+            );
+        },
+        [isDark]
+    );
+
+    const hasText = !!inputText.trim();
 
     return (
         <Modal
@@ -132,14 +215,12 @@ const ChatDriver = ({ visible = true, onClose }: ChatDriverProps) => {
             animationType="slide"
             presentationStyle="pageSheet"
             onRequestClose={onClose}
+            onShow={handleModalShow}
         >
             <SafeAreaView
                 style={[
                     styles.safeArea,
-                    {
-                        backgroundColor:
-                            colorScheme === "dark" ? "#000000" : "#ffffff",
-                    },
+                    { backgroundColor: isDark ? "#000000" : "#F5F0E855" },
                 ]}
             >
                 <KeyboardAvoidingView
@@ -152,28 +233,22 @@ const ChatDriver = ({ visible = true, onClose }: ChatDriverProps) => {
                             style={[
                                 styles.header,
                                 {
-                                    borderBottomColor:
-                                        colorScheme === "dark"
-                                            ? "#444444"
-                                            : "#f1f5f9",
+                                    borderBottomColor: isDark
+                                        ? "#44444433"
+                                        : "#EDE3D7",
                                 },
                             ]}
                         >
-
                             <TouchableOpacity
                                 style={styles.closeButton}
-                                className="p-2 rounded-full "
+                                className="p-2 rounded-full"
                                 onPress={onClose}
                                 accessibilityLabel="Close chat"
                             >
                                 <Ionicons
                                     name="chevron-back"
                                     size={28}
-                                    color={
-                                        colorScheme === "dark"
-                                            ? "#ffffff"
-                                            : "#334155"
-                                    }
+                                    color={isDark ? "#ffffff" : "#334155"}
                                 />
                             </TouchableOpacity>
 
@@ -192,14 +267,17 @@ const ChatDriver = ({ visible = true, onClose }: ChatDriverProps) => {
                                 >
                                     Kelvin Agyeman
                                 </Text>
-
                             </View>
-
-
                         </View>
 
-                        {/* Message List */}
-                        <View style={{ flex: 1 }} className="bg-tertiaryWhite dark:bg-secondaryBlack">
+                        {/* Message List with Background Image */}
+                        <View
+                            style={[
+                                styles.listWrapper,
+                                { backgroundColor: isDark ? "#0b0b0b" : "#FAF7F2" },
+                            ]}
+                        >
+
                             <FlatList
                                 ref={flatListRef}
                                 data={messages}
@@ -215,37 +293,42 @@ const ChatDriver = ({ visible = true, onClose }: ChatDriverProps) => {
                                 }}
                                 ListEmptyComponent={
                                     <View style={styles.emptyContainer}>
-                                        <View
-                                            style={[
-                                                styles.emptyIcon
-                                            ]}
-                                        >
-                                            <Ionicons
-                                                name="chatbubbles-outline"
-                                                size={96}
-                                                color={colorScheme==="dark"? "#444444":"#000000"}
-                                            />
+                                        <View className="bg-secondaryBlack w-[90%] rounded-xl flex justify-center items-center px-4 py-3">
+
+
+                                            <View className="flex flex-row gap-2 justify-center items-center">
+
+                                                <Ionicons
+                                                    name="paper-plane"
+                                                    size={16}
+                                                    color="white"
+                                                />
+                                                <Text
+                                                    className="font-GoogleSansRegular text-general "
+                                                    style={{
+                                                        fontSize: 16,
+
+                                                    }}
+                                                >
+                                                    No messages yet...
+                                                </Text>
+                                            </View>
+
+
+                                            <Text
+                                                className="font-GoogleSansRegular text-general "
+                                                style={{
+                                                    fontSize: 13,
+                                                    textAlign: "center",
+                                                    marginTop: 4,
+                                                }}
+                                            >
+                                                Chat with driver to coordinate your
+                                                pickup.
+                                            </Text>
+
                                         </View>
-                                        <Text
-                                            className="font-GoogleSansMedium text-secondaryBlack dark:text-general"
-                                            style={{
-                                                fontSize: 16,
-                                                marginTop: 12,
-                                            }}
-                                        >
-                                            Chat with your driver
-                                        </Text>
-                                        <Text
-                                            className="font-GoogleSansRegular text-secondaryGray dark:text-secondaryGray"
-                                            style={{
-                                                fontSize: 13,
-                                                textAlign: "center",
-                                                marginTop: 4,
-                                            }}
-                                        >
-                                            Send a message to coordinate your
-                                            pickup.
-                                        </Text>
+
                                     </View>
                                 }
                                 onContentSizeChange={() =>
@@ -256,19 +339,65 @@ const ChatDriver = ({ visible = true, onClose }: ChatDriverProps) => {
                             />
                         </View>
 
-                        {/* Bottom Composer with Dynamic Padding */}
+                        {/* Quick-reply suggestions */}
+                        <View
+                            style={{
+                                backgroundColor: isDark ? "#000000" : "#F5F0E855",
+                            }}
+                        >
+                            <ScrollView
+                                horizontal
+                                showsHorizontalScrollIndicator={false}
+                                keyboardShouldPersistTaps="handled"
+                                contentContainerStyle={styles.suggestionsContent}
+                            >
+                                {SUGGESTIONS.map((suggestion) => (
+                                    <TouchableOpacity
+                                        key={suggestion}
+                                        activeOpacity={0.7}
+                                        onPress={() =>
+                                            handleSuggestionPress(suggestion)
+                                        }
+                                        accessibilityLabel={`Send "${suggestion}"`}
+                                        style={[
+                                            styles.suggestionChip,
+                                            {
+                                                backgroundColor: isDark
+                                                    ? "#44444455"
+                                                    : "#ffffff",
+                                                borderColor: isDark
+                                                    ? "#44444455"
+                                                    : "#00000022",
+                                            },
+                                        ]}
+                                    >
+                                        <Text
+                                            className="font-GoogleSansRegular"
+                                            style={{
+                                                fontSize: 13,
+                                                color: isDark
+                                                    ? "#ffffff"
+                                                    : "#0f172a",
+                                            }}
+                                        >
+                                            {suggestion}
+                                        </Text>
+                                    </TouchableOpacity>
+                                ))}
+                            </ScrollView>
+                        </View>
+
+                        {/* Bottom Composer */}
                         <View
                             style={[
                                 styles.composer,
                                 {
-                                    borderTopColor:
-                                        colorScheme === "dark"
-                                            ? "#44444455"
-                                            : "#a9a9a933",
-                                    backgroundColor:
-                                        colorScheme === "dark"
-                                            ? "#000000"
-                                            : "#ffffff",
+                                    borderTopColor: isDark
+                                        ? "#000000"
+                                        : "#F5F0E855",
+                                    backgroundColor: isDark
+                                        ? "#000000"
+                                        : "#F5F0E855",
                                     paddingBottom: isKeyboardVisible
                                         ? 64
                                         : Platform.OS === "ios"
@@ -278,34 +407,27 @@ const ChatDriver = ({ visible = true, onClose }: ChatDriverProps) => {
                             ]}
                         >
                             <TextInput
+                                ref={inputRef}
                                 className="font-GoogleSansRegular dark:text-general"
                                 value={inputText}
                                 onChangeText={setInputText}
-                                autoFocus={true}
                                 autoCorrect={false}
                                 placeholder="Type a message.."
                                 placeholderTextColor={
-                                    colorScheme === "dark"
-                                        ? "#444444"
-                                        : "#a9a9a9"
+                                    isDark ? "#444444" : "#a9a9a9"
                                 }
                                 multiline
                                 blurOnSubmit={false}
                                 style={[
                                     styles.input,
                                     {
-                                        color:
-                                            colorScheme === "dark"
-                                                ? "#ffffff"
-                                                : "#0f172a",
-                                        backgroundColor:
-                                            colorScheme === "dark"
-                                                ? "#44444455"
-                                                : "#e4e4e455",
-                                        borderColor:
-                                            colorScheme === "dark"
-                                                ? "#44444455"
-                                                : "#e4e4e455",
+                                        color: isDark ? "#ffffff" : "#0f172a",
+                                        backgroundColor: isDark
+                                            ? "#44444455"
+                                            : "#ffffff",
+                                        borderColor: isDark
+                                            ? "#44444455"
+                                            : "#00000022",
                                     },
                                 ]}
                             />
@@ -314,25 +436,25 @@ const ChatDriver = ({ visible = true, onClose }: ChatDriverProps) => {
                                 style={[
                                     styles.sendButton,
                                     {
-                                        backgroundColor: inputText.trim()
+                                        backgroundColor: hasText
                                             ? "#22c55e"
-                                            : colorScheme === "dark"
+                                            : isDark
                                                 ? "#44444455"
                                                 : "#e4e4e455",
-                                        opacity: inputText.trim() ? 1 : 0.7,
+                                        opacity: hasText ? 1 : 0.7,
                                     },
                                 ]}
-                                onPress={sendMessage}
-                                disabled={!inputText.trim()}
+                                onPress={handleSend}
+                                disabled={!hasText}
                                 accessibilityLabel="Send message"
                             >
                                 <Ionicons
                                     name="send"
-                                    size={24}
+                                    size={18}
                                     color={
-                                        inputText.trim()
+                                        hasText
                                             ? "#ffffff"
-                                            : colorScheme === "dark"
+                                            : isDark
                                                 ? "#444444"
                                                 : "#94a3b8"
                                     }
@@ -352,6 +474,10 @@ const styles = StyleSheet.create({
     },
     container: {
         flex: 1,
+    },
+    listWrapper: {
+        flex: 1,
+        overflow: "hidden",
     },
     header: {
         flexDirection: "row",
@@ -398,31 +524,51 @@ const styles = StyleSheet.create({
     },
     bubble: {
         maxWidth: "82%",
-        paddingVertical: 10,
+        paddingTop: 10,
+        paddingBottom: 8,
         paddingHorizontal: 14,
         borderRadius: 16,
     },
+    time: {
+        position: "absolute",
+        right: 10,
+        bottom: 6,
+        fontSize: 11,
+    },
+    suggestionsContent: {
+        paddingHorizontal: 16,
+        paddingTop: 10,
+        gap: 8,
+    },
+    suggestionChip: {
+        paddingVertical: 7,
+        paddingHorizontal: 14,
+        borderRadius: 18,
+        borderWidth: 1,
+    },
     composer: {
         flexDirection: "row",
-        alignItems: "flex-end",
+        alignItems: "center",
         gap: 8,
         paddingHorizontal: 16,
-        paddingTop: 12,
+        paddingTop: 8,
         borderTopWidth: 1,
     },
     input: {
         flex: 1,
-        minHeight: 42,
-        maxHeight: 100,
-        borderRadius: 22,
+        height: CONTROL_SIZE,
+        borderRadius: CONTROL_SIZE / 2,
         borderWidth: 1,
         paddingHorizontal: 16,
-        paddingVertical: 14,
+        paddingTop: Platform.OS === "ios" ? 10 : 0,
+        paddingBottom: Platform.OS === "ios" ? 10 : 0,
+        textAlignVertical: "center",
         fontSize: 14,
     },
     sendButton: {
-        padding: 12,
-        borderRadius: 999,
+        width: CONTROL_SIZE,
+        height: CONTROL_SIZE,
+        borderRadius: CONTROL_SIZE / 2,
         alignItems: "center",
         justifyContent: "center",
     },

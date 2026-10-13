@@ -5,29 +5,7 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="564ac165-5879-4255-b187-31d269c93d35" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/Frontend/passenger-app/Troski/assets/video/splash.json" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Frontend/passenger-app/Troski/assets/video/splashdark.json" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Frontend/passenger-app/Troski/components/ui/PaginateHomepage.tsx" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Frontend/passenger-app/Troski/utils/authStorage.ts" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Backend/package-lock.json" beforeDir="false" afterPath="$PROJECT_DIR$/Backend/package-lock.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Frontend/passenger-app/Troski/api/auth.ts" beforeDir="false" afterPath="$PROJECT_DIR$/Frontend/passenger-app/Troski/api/auth.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Frontend/passenger-app/Troski/api/client.ts" beforeDir="false" afterPath="$PROJECT_DIR$/Frontend/passenger-app/Troski/api/client.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Frontend/passenger-app/Troski/app.json" beforeDir="false" afterPath="$PROJECT_DIR$/Frontend/passenger-app/Troski/app.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Frontend/passenger-app/Troski/app/_layout.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/Frontend/passenger-app/Troski/app/_layout.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Frontend/passenger-app/Troski/app/homepage/bookings/selectRide.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/Frontend/passenger-app/Troski/app/homepage/bookings/selectRide.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Frontend/passenger-app/Troski/app/index.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/Frontend/passenger-app/Troski/app/index.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Frontend/passenger-app/Troski/app/landingPage/login/index.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/Frontend/passenger-app/Troski/app/landingPage/login/index.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Frontend/passenger-app/Troski/app/landingPage/login/pinScreen.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/Frontend/passenger-app/Troski/app/landingPage/login/pinScreen.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Frontend/passenger-app/Troski/app/landingPage/signup/fullNameScreen.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/Frontend/passenger-app/Troski/app/landingPage/signup/fullNameScreen.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Frontend/passenger-app/Troski/app/landingPage/signup/otpScreen.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/Frontend/passenger-app/Troski/app/landingPage/signup/otpScreen.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Frontend/passenger-app/Troski/app/landingPage/signup/pinScreen.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/Frontend/passenger-app/Troski/app/landingPage/signup/pinScreen.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Frontend/passenger-app/Troski/assets/images/minibus.png" beforeDir="false" afterPath="$PROJECT_DIR$/Frontend/passenger-app/Troski/assets/images/minibus.png" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Frontend/passenger-app/Troski/components/ui/RollingTrips.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/Frontend/passenger-app/Troski/components/ui/RollingTrips.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Frontend/passenger-app/Troski/components/ui/SelectRideType.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/Frontend/passenger-app/Troski/components/ui/SelectRideType.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Frontend/passenger-app/Troski/package-lock.json" beforeDir="false" afterPath="$PROJECT_DIR$/Frontend/passenger-app/Troski/package-lock.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Frontend/passenger-app/Troski/package.json" beforeDir="false" afterPath="$PROJECT_DIR$/Frontend/passenger-app/Troski/package.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Frontend/passenger-app/Troski/utils/store.js" beforeDir="false" afterPath="$PROJECT_DIR$/Frontend/passenger-app/Troski/utils/store.js" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -244,6 +222,7 @@
       <workItem from="1791361905556" duration="18258000" />
       <workItem from="1791463018051" duration="15078000" />
       <workItem from="1791543115752" duration="13513000" />
+      <workItem from="1791725660322" duration="13132000" />
     </task>
     <task id="LOCAL-00001" summary="Added custom components in the components directory">
       <option name="closed" value="true" />
