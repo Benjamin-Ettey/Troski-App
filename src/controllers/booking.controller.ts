@@ -1,6 +1,67 @@
 import { Request, Response } from "express";
 import * as bookingService from "../services/booking/booking.service";
+import { matchRideService } from "../services/booking/match.service";
+import { bookingChannel } from "../services/booking/tracking.service";
+import { subscribe, sendTo } from "../services/realtime/sse";
+import Booking from "../models/Booking";
+import DriverProfile from "../models/DriverProfile";
+import DriverRun from "../models/DriverRun";
 import type { CancelledBy } from "../types/booking.types";
+
+/**
+ * Live-tracking SSE stream for a booking. The passenger (or the assigned driver)
+ * subscribes and receives `van_location` + `head_to_pickup` events as the van
+ * reports GPS. Kept open until the client disconnects.
+ */
+export const trackBooking = async (
+  req: Request,
+  res: Response,
+): Promise<void> => {
+  const bookingId = req.params.id as string;
+  const booking = await Booking.findById(bookingId);
+  if (!booking) {
+    res.status(404).json({ message: "Booking not found" });
+    return;
+  }
+
+  const userId = req.user!._id;
+  const isPassenger = String(booking.passenger) === String(userId);
+  let isDriver = false;
+  if (req.user!.role === "driver") {
+    const profile = await DriverProfile.findOne({ user: userId });
+    isDriver = !!profile && String(booking.driver) === String(profile._id);
+  }
+  if (!isPassenger && !isDriver) {
+    res.status(403).json({ message: "You are not allowed to track this booking" });
+    return;
+  }
+
+  subscribe(bookingChannel(bookingId), res);
+
+  // Send an initial snapshot so the map isn't blank before the next GPS tick.
+  if (booking.run) {
+    const run = await DriverRun.findById(booking.run);
+    if (run?.currentLocation?.coordinates) {
+      sendTo(res, "van_location", {
+        van: {
+          latitude: run.currentLocation.coordinates[1],
+          longitude: run.currentLocation.coordinates[0],
+        },
+        etaMinutes: booking.etaMinutes,
+        pickupPoint: booking.pickupPoint,
+        status: booking.status,
+      });
+    }
+  }
+};
+
+export const matchRide = async (
+  req: Request,
+  res: Response,
+): Promise<void> => {
+  const result = await matchRideService(req.user!._id, req.body);
+  res.status(result.status).json({ message: result.message, data: result.data });
+};
 
 export const estimateFare = async (
   req: Request,

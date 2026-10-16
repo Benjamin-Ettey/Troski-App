@@ -1,5 +1,6 @@
 import { Request, Response } from "express";
 import * as driverService from "../services/driver/driver.service";
+import * as runService from "../services/driver/run.service";
 
 export const submitKyc = async (req: Request, res: Response): Promise<void> => {
   const files = req.files as { [fieldname: string]: Express.Multer.File[] };
@@ -39,5 +40,39 @@ export const getMyStatus = async (
   res: Response,
 ): Promise<void> => {
   const result = await driverService.getVerificationStatusService(req.user!._id);
+  res.status(result.status).json({ message: result.message, data: result.data });
+};
+
+export const startRun = async (req: Request, res: Response): Promise<void> => {
+  const result = await runService.startRunService(req.user!._id, req.body);
+  res.status(result.status).json({ message: result.message, data: result.data });
+};
+
+export const updateRunLocation = async (
+  req: Request,
+  res: Response,
+): Promise<void> => {
+  const result = await runService.updateLocationService(req.user!._id, req.body);
+  res.status(result.status).json({ message: result.message, data: result.data });
+};
+
+export const updateRunSeats = async (
+  req: Request,
+  res: Response,
+): Promise<void> => {
+  const result = await runService.updateSeatsService(req.user!._id, req.body);
+  res.status(result.status).json({ message: result.message, data: result.data });
+};
+
+export const endRun = async (req: Request, res: Response): Promise<void> => {
+  const result = await runService.endRunService(req.user!._id);
+  res.status(result.status).json({ message: result.message, data: result.data });
+};
+
+export const getActiveRun = async (
+  req: Request,
+  res: Response,
+): Promise<void> => {
+  const result = await runService.getActiveRunService(req.user!._id);
   res.status(result.status).json({ message: result.message, data: result.data });
 };

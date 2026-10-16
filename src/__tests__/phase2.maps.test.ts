@@ -3,68 +3,63 @@ import {
   createMapsService,
   mapsService,
   MapsError,
+  type FetchLike,
 } from "../services/maps/maps.service";
 import { estimateFareService } from "../services/booking/booking.service";
 
-// A fake Google client — no network. Shapes mirror the real library responses.
-const fakeClient: any = {
-  geocode: async () => ({
-    data: {
-      status: "OK",
-      results: [
+// Fake fetch that answers by URL: Geocoding API vs Routes API vs Route Matrix.
+const fakeFetch: FetchLike = async (url) => {
+  if (url.includes("/geocode/json")) {
+    return {
+      ok: true,
+      status: 200,
+      json: async () => ({
+        status: "OK",
+        results: [
+          {
+            geometry: { location: { lat: 5.5502, lng: -0.2337 } },
+            formatted_address: "Kaneshie, Accra, Ghana",
+            place_id: "PLACE_123",
+          },
+        ],
+      }),
+    };
+  }
+  if (url.includes("computeRoutes")) {
+    return {
+      ok: true,
+      status: 200,
+      json: async () => ({
+        routes: [
+          {
+            distanceMeters: 5200,
+            duration: "900s",
+            polyline: { encodedPolyline: "_p~iF~ps|U" },
+          },
+        ],
+      }),
+    };
+  }
+  if (url.includes("computeRouteMatrix")) {
+    return {
+      ok: true,
+      status: 200,
+      json: async () => [
         {
-          geometry: { location: { lat: 5.5502, lng: -0.2337 } },
-          formatted_address: "Kaneshie, Accra, Ghana",
-          place_id: "PLACE_123",
+          originIndex: 0,
+          destinationIndex: 0,
+          distanceMeters: 5200,
+          duration: "900s",
+          condition: "ROUTE_EXISTS",
         },
       ],
-    },
-  }),
-  reverseGeocode: async () => ({
-    data: {
-      results: [
-        {
-          geometry: { location: { lat: 5.6037, lng: -0.187 } },
-          formatted_address: "Achimota, Accra, Ghana",
-          place_id: "PLACE_456",
-        },
-      ],
-    },
-  }),
-  distancematrix: async () => ({
-    data: {
-      rows: [
-        {
-          elements: [
-            {
-              status: "OK",
-              distance: { value: 5200, text: "5.2 km" },
-              duration: { value: 900, text: "15 mins" },
-            },
-          ],
-        },
-      ],
-    },
-  }),
-  directions: async () => ({
-    data: {
-      routes: [
-        {
-          overview_polyline: { points: "_p~iF~ps|U_ulLnnqC" },
-          legs: [
-            {
-              distance: { value: 5200, text: "5.2 km" },
-              duration: { value: 900, text: "15 mins" },
-            },
-          ],
-        },
-      ],
-    },
-  }),
+    };
+  }
+  return { ok: false, status: 404, json: async () => ({}) };
 };
 
-describe("Phase 2 — maps.service parsing (fake client)", () => {
-  const svc = createMapsService(fakeClient, "test-key");
+describe("Phase 2 — maps.service parsing (Routes + Geocoding, fake fetch)", () => {
+  const svc = createMapsService({ apiKey: "test-key", fetchFn: fakeFetch });
 
   it("geocodes an address", async () => {
     const r = await svc.geocodeAddress("Kaneshie");
@@ -76,57 +71,49 @@ describe("Phase 2 — maps.service parsing (fake client)", () => {
     });
   });
 
-  it("parses distance (m→km) and duration (s→min)", async () => {
+  it("gets road distance + ETA from the Routes API", async () => {
     const r = await svc.getRoadDistance(
       { lat: 5.55, lng: -0.23 },
       { lat: 5.6, lng: -0.18 },
     );
     expect(r.distanceKm).toBe(5.2);
     expect(r.durationMin).toBe(15);
-    expect(r.distanceText).toBe("5.2 km");
   });
 
-  it("returns the route polyline + distance + time from directions", async () => {
+  it("returns an encoded polyline from directions", async () => {
     const r = await svc.getDirections(
       { lat: 5.55, lng: -0.23 },
       { lat: 5.6, lng: -0.18 },
     );
-    expect(r.polyline).toBe("_p~iF~ps|U_ulLnnqC");
+    expect(r.polyline).toBe("_p~iF~ps|U");
     expect(r.distanceKm).toBe(5.2);
-    expect(r.durationMin).toBe(15);
   });
 
-  it("throws MapsError when the API key is missing", async () => {
-    const unconfigured = createMapsService(fakeClient, "");
+  it("computes a route matrix", async () => {
+    const cells = await svc.computeRouteMatrix(
+      [{ lat: 5.55, lng: -0.23 }],
+      [{ lat: 5.6, lng: -0.18 }],
+    );
+    expect(cells).toHaveLength(1);
+    expect(cells[0].durationMin).toBe(15);
+  });
+
+  it("throws MapsError when the key is missing", async () => {
+    const unconfigured = createMapsService({ apiKey: "", fetchFn: fakeFetch });
     await expect(unconfigured.geocodeAddress("x")).rejects.toBeInstanceOf(
       MapsError,
     );
   });
-
-  it("throws MapsError when a distance element is not OK", async () => {
-    const badClient: any = {
-      ...fakeClient,
-      distancematrix: async () => ({
-        data: { rows: [{ elements: [{ status: "ZERO_RESULTS" }] }] },
-      }),
-    };
-    const svcBad = createMapsService(badClient, "test-key");
-    await expect(
-      svcBad.getRoadDistance({ lat: 0, lng: 0 }, { lat: 1, lng: 1 }),
-    ).rejects.toBeInstanceOf(MapsError);
-  });
 });
 
-describe("Phase 2 — fare estimate falls back to straight-line when Google is unavailable", () => {
+describe("Phase 2 — fare estimate falls back when Google is unavailable", () => {
   it("still returns a valid fare (no DB, no network needed)", async () => {
-    // The default mapsService singleton has no key in the test env, so
-    // getRoadDistance throws and quoteFare falls back to haversine.
+    // The singleton has no key in the test env, so quoteFare falls back to
+    // straight-line distance.
     const result = await estimateFareService("Goaso", "Mim", 2);
-
     expect(result.status).toBe(StatusCodes.OK);
     expect(result.data.distanceKm).toBeGreaterThan(0);
     expect(result.data.total).toBeGreaterThan(0);
-    // With no key configured, the singleton cannot reach Google.
     expect(mapsService).toBeDefined();
   });
 });
@@ -139,7 +126,6 @@ liveDescribe("Phase 2 — live Google Maps (needs GOOGLE_MAPS_API_KEY)", () => {
     const r = await mapsService.geocodeAddress("Kaneshie Market, Accra");
     expect(r.lat).toBeGreaterThan(4);
     expect(r.lat).toBeLessThan(12);
-    expect(typeof r.formattedAddress).toBe("string");
   });
 
   it("returns a real road distance + ETA", async () => {

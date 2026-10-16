@@ -8,6 +8,11 @@ import { resolveTown, haversineKm } from "../../utils/locationLookup";
 import { calculateRouteFare } from "../fare/fare.service";
 import { mapsService } from "../maps/maps.service";
 import { paymentService } from "../payment/payment.service";
+import {
+  completeBooking,
+  returnSeatToRun,
+} from "./lifecycle.service";
+import { publish, bookingChannel } from "../realtime/sse";
 import zonesConfig from "../../data/zonesConfig";
 import type {
   BookingStatus,
@@ -413,24 +418,31 @@ export const updateBookingStatusService = async (
     };
   }
 
+  // Completion goes through the shared lifecycle (settles fare, frees the seat,
+  // notifies the passenger) so manual + geofence + run-end completion are one path.
+  if (nextStatus === "completed") {
+    await completeBooking(bookingId);
+    const completed = await Booking.findById(bookingId);
+    return {
+      status: StatusCodes.OK,
+      message: "Booking marked as completed",
+      data: { booking: completed },
+    };
+  }
+
   booking.status = nextStatus;
   const timestampField = STATUS_TIMESTAMP[nextStatus];
   if (timestampField) {
     (booking as any)[timestampField] = new Date();
   }
-
-  if (nextStatus === "completed") {
-    booking.fareFinal = booking.fareEstimate;
-  }
-
   await booking.save();
 
-  // On completion, release any escrowed payment to the driver's wallet. This is
-  // a no-op for rides paid off-platform in cash. The payments module owns the
-  // booking.paymentStatus transition to "released".
-  if (nextStatus === "completed") {
-    await paymentService.releaseEscrowForBooking(String(booking._id));
-  }
+  // Let the passenger's live-tracking stream know the trip advanced.
+  publish(
+    bookingChannel(bookingId),
+    nextStatus === "arrived" ? "driver_arrived" : "trip_started",
+    { status: nextStatus },
+  );
 
   return {
     status: StatusCodes.OK,
@@ -479,9 +491,15 @@ export const cancelBookingService = async (
     };
   }
 
+  const wasReserved = booking.run;
   booking.status = "cancelled";
   booking.cancellation = { by: role, reason, at: new Date() };
   await booking.save();
+
+  // Give the reserved seat back to the van.
+  if (wasReserved) {
+    await returnSeatToRun(wasReserved, booking.seatsRequested as number);
+  }
 
   // Refund any escrowed payment to the passenger. No-op for unpaid/cash rides;
   // the payments module owns the booking.paymentStatus -> refunded transition.
