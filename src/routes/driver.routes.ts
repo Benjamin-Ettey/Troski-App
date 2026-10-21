@@ -19,6 +19,8 @@ import {
   updateRunSeats,
   endRun,
   getActiveRun,
+  listDemand,
+  acceptDemand,
 } from "../controllers/driver.controller";
 const router = Router();
 
@@ -75,5 +77,9 @@ router.patch(
   updateRunSeats,
 );
 router.post("/runs/end", requireApprovedDriver, endRun);
+
+// ---- Demand (new-route offers from clustered unmet requests) ----
+router.get("/demand", requireApprovedDriver, listDemand);
+router.post("/demand/:id/accept", requireApprovedDriver, acceptDemand);
 
 export default router;

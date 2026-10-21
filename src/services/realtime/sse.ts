@@ -1,4 +1,9 @@
 import type { Response } from "express";
+import {
+  isRedisEnabled,
+  backplanePublish,
+  backplaneSubscribe,
+} from "./redis";
 
 /**
  * Minimal in-process Server-Sent Events (SSE) hub. SSE is a one-way stream from
@@ -16,6 +21,10 @@ const channels = new Map<string, Set<Response>>();
 /** Channel name for a booking's live-tracking stream. */
 export const bookingChannel = (bookingId: string): string =>
   `booking:${bookingId}`;
+
+/** Channel name for a passenger's demand-request updates. */
+export const demandChannel = (demandId: string): string =>
+  `demand:${demandId}`;
 
 const writeEvent = (res: Response, event: string, data: unknown): void => {
   try {
@@ -49,11 +58,40 @@ export const subscribe = (channel: string, res: Response): void => {
   });
 };
 
-/** Push an event to every subscriber on a channel. */
-export const publish = (channel: string, event: string, data: unknown): void => {
+/** Deliver an event to this instance's subscribers of a channel. */
+const localDeliver = (channel: string, event: string, data: unknown): void => {
   const set = channels.get(channel);
   if (!set) return;
   for (const res of set) writeEvent(res, event, data);
+};
+
+/**
+ * Push an event to every subscriber on a channel. With Redis enabled, this goes
+ * through the pub/sub backplane so subscribers on OTHER instances also receive
+ * it (the backplane echoes back to this instance too). Without Redis, it is
+ * delivered in-process.
+ */
+export const publish = (channel: string, event: string, data: unknown): void => {
+  if (isRedisEnabled()) {
+    backplanePublish(JSON.stringify({ channel, event, data }));
+  } else {
+    localDeliver(channel, event, data);
+  }
+};
+
+/** Handle a backplane message from Redis: deliver to local subscribers. */
+export const handleBackplaneMessage = (payload: string): void => {
+  try {
+    const { channel, event, data } = JSON.parse(payload);
+    localDeliver(channel, event, data);
+  } catch {
+    // malformed payload — ignore
+  }
+};
+
+/** Wire up the Redis backplane (no-op when Redis is disabled). */
+export const initSseBackplane = (): void => {
+  if (isRedisEnabled()) backplaneSubscribe(handleBackplaneMessage);
 };
 
 /** Push an event to a single response (e.g. an initial snapshot on connect). */

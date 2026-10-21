@@ -13,6 +13,7 @@ import {
 import { decodePolyline, nearestPointOnPath } from "../../utils/polyline";
 import { mapsService } from "../maps/maps.service";
 import { calculateRouteFare } from "../fare/fare.service";
+import { recordDemand, runClustering } from "./demand.service";
 import zonesConfig from "../../data/zonesConfig";
 
 const SEARCH_RADIUS_KM = 5;
@@ -117,9 +118,20 @@ export const matchRideService = async (
   });
 
   if (!candidates.length) {
+    // No van heading there — register the demand (so it can be clustered into a
+    // new route if enough people want it) and try to form clusters now.
+    const demand = await recordDemand(
+      passengerId,
+      { lat: payload.pickupLat, lng: payload.pickupLng },
+      destination,
+      payload.seats,
+    );
+    await runClustering();
+
     return {
       status: StatusCodes.NOT_FOUND,
-      message: `No trotro heading to ${destination.town} near you right now. Try again shortly.`,
+      message: `No trotro heading to ${destination.town} near you right now. We'll alert nearby drivers if more people want this route.`,
+      data: { demandId: demand._id },
     };
   }
 

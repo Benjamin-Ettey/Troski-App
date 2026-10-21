@@ -13,6 +13,7 @@ import {
   estimateFare,
   createBooking,
   matchRide,
+  getDemandStatus,
   getAvailableRequests,
   acceptBooking,
   updateBookingStatus,
@@ -47,6 +48,9 @@ router.post(
   validate(matchRideSchema),
   matchRide,
 );
+
+// Status of an unmet-demand request (created when a match finds no van).
+router.get("/demand/:id", authorizeRoles("passenger"), getDemandStatus);
 
 // ---- Driver endpoints ----
 router.get(

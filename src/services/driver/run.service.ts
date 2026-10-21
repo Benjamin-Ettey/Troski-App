@@ -8,6 +8,12 @@ import { resolvePlace } from "../../utils/locationLookup";
 import { mapsService } from "../maps/maps.service";
 import { broadcastRunLocation } from "../booking/tracking.service";
 import { resolveRunBookings } from "../booking/lifecycle.service";
+import {
+  isRedisEnabled,
+  geoUpsert,
+  geoRemove,
+  geoNearby,
+} from "../realtime/redis";
 
 const clampSeats = (n: number, max: number): number =>
   Math.max(0, Math.min(max, Math.floor(n)));
@@ -51,6 +57,9 @@ export const endStaleRuns = async (): Promise<void> => {
   await DriverProfile.updateMany(
     { _id: { $in: driverIds } },
     { $set: { isOnline: false } },
+  );
+  await Promise.all(
+    runIds.map((id) => geoRemove(String(id)).catch(() => {})),
   );
 };
 
@@ -167,6 +176,11 @@ export const startRunService = async (
   profile.lastSeenAt = new Date();
   await profile.save();
 
+  // Seed the Redis GEO index (no-op without Redis).
+  void geoUpsert(String(run._id), origin.longitude, origin.latitude).catch(
+    () => {},
+  );
+
   return {
     status: StatusCodes.CREATED,
     message: "Run started. You are now live.",
@@ -211,6 +225,14 @@ export const updateLocationService = async (
 
   profile.lastSeenAt = new Date();
   await profile.save();
+
+  // Update the Redis GEO index (no-op without Redis; fire-and-forget so the
+  // high-frequency heartbeat isn't blocked on Redis).
+  void geoUpsert(
+    String(run._id),
+    payload.longitude,
+    payload.latitude,
+  ).catch(() => {});
 
   // Push the new position to any passengers tracking this run (+ pickup alerts).
   await broadcastRunLocation(run);
@@ -274,6 +296,8 @@ export const endRunService = async (
   profile.isOnline = false;
   await profile.save();
 
+  void geoRemove(String(run._id)).catch(() => {});
+
   // Driver ended normally: complete passengers mid-trip (settle fares) and
   // expire + refund any who were matched but never boarded.
   await resolveRunBookings(String(run._id), { completeInProgress: true });
@@ -314,22 +338,36 @@ export const findNearbyRuns = async (opts: {
   // Self-heal first so we never match a passenger to a ghost run.
   await endStaleRuns();
 
-  const filter: Record<string, unknown> = {
+  const radiusKm = opts.radiusKm ?? 5;
+  const limit = opts.limit ?? 20;
+
+  // Filters applied regardless of how proximity is resolved.
+  const baseFilter: Record<string, unknown> = {
     status: "active",
     availableSeats: { $gte: opts.minSeats ?? 1 },
-    // Belt-and-suspenders freshness guard (in case a run goes stale between the
-    // sweep above and this query).
     lastLocationAt: { $gte: staleRunCutoff() },
+  };
+  if (opts.destinationZone) {
+    baseFilter["destination.zoneId"] = opts.destinationZone;
+  }
+
+  // Fast path: Redis GEO resolves proximity, Mongo applies the rest.
+  if (isRedisEnabled()) {
+    const ids = await geoNearby(opts.lng, opts.lat, radiusKm);
+    if (ids) {
+      if (!ids.length) return [];
+      return DriverRun.find({ _id: { $in: ids }, ...baseFilter }).limit(limit);
+    }
+  }
+
+  // Default: MongoDB 2dsphere $near (single node).
+  return DriverRun.find({
+    ...baseFilter,
     currentLocation: {
       $near: {
         $geometry: { type: "Point", coordinates: [opts.lng, opts.lat] },
-        $maxDistance: (opts.radiusKm ?? 5) * 1000,
+        $maxDistance: radiusKm * 1000,
       },
     },
-  };
-  if (opts.destinationZone) {
-    filter["destination.zoneId"] = opts.destinationZone;
-  }
-
-  return DriverRun.find(filter).limit(opts.limit ?? 20);
+  }).limit(limit);
 };

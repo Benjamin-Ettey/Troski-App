@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import * as bookingService from "../services/booking/booking.service";
 import { matchRideService } from "../services/booking/match.service";
+import { getDemandStatusService } from "../services/booking/demand.service";
 import { bookingChannel } from "../services/booking/tracking.service";
 import { subscribe, sendTo } from "../services/realtime/sse";
 import Booking from "../models/Booking";
@@ -60,6 +61,17 @@ export const matchRide = async (
   res: Response,
 ): Promise<void> => {
   const result = await matchRideService(req.user!._id, req.body);
+  res.status(result.status).json({ message: result.message, data: result.data });
+};
+
+export const getDemandStatus = async (
+  req: Request,
+  res: Response,
+): Promise<void> => {
+  const result = await getDemandStatusService(
+    req.user!._id,
+    req.params.id as string,
+  );
   res.status(result.status).json({ message: result.message, data: result.data });
 };
 
