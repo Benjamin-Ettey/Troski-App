@@ -39,6 +39,53 @@ export const resolveTown = (name: string): LocationPoint | null => {
 export const isSupportedTown = (name: string): boolean =>
   townMap.has(normalize(name));
 
+/**
+ * Resolve a place from EITHER coordinates (the app's map/place picker) OR a town
+ * name. Coordinates are first-class: we keep the exact point and borrow only the
+ * pricing *zone* from the nearest dataset town — so a passenger/driver can pick
+ * anywhere on the map, not just a listed town. A town name still works as a
+ * convenience. Returns null if neither is usable.
+ */
+export const resolvePlace = (input: {
+  lat?: number;
+  lng?: number;
+  town?: string;
+}): LocationPoint | null => {
+  if (input.lat != null && input.lng != null) {
+    const near = nearestTown(input.lat, input.lng);
+    return {
+      town: near?.town ?? "Dropped pin",
+      zoneId: near?.zoneId ?? "REGIONAL_RURAL",
+      latitude: input.lat,
+      longitude: input.lng,
+    };
+  }
+  if (input.town) return resolveTown(input.town);
+  return null;
+};
+
+/**
+ * Nearest supported town to a coordinate — used to derive a pricing zone for an
+ * arbitrary GPS pickup point. O(n) scan over the dataset; fine at MVP scale.
+ */
+export const nearestTown = (lat: number, lng: number): LocationPoint | null => {
+  let best: LocationPoint | null = null;
+  let bestDistance = Infinity;
+  for (const record of townMap.values()) {
+    const d = haversineKm(lat, lng, record.latitude, record.longitude);
+    if (d < bestDistance) {
+      bestDistance = d;
+      best = {
+        town: record.name,
+        zoneId: record.zoneID,
+        latitude: record.latitude,
+        longitude: record.longitude,
+      };
+    }
+  }
+  return best;
+};
+
 const EARTH_RADIUS_KM = 6371;
 const toRadians = (deg: number): number => (deg * Math.PI) / 180;
 

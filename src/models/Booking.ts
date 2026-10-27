@@ -31,8 +31,28 @@ const BookingSchema = new mongoose.Schema(
       default: null,
     },
 
+    // The live run (Phase 4) this booking was matched to.
+    run: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "DriverRun",
+      default: null,
+      index:true
+    },
+
     pickup: { type: LocationSchema, required: true },
     destination: { type: LocationSchema, required: true },
+
+    // The junction/point on the van's route the passenger walks to, plus the
+    // van's ETA there at match time.
+    pickupPoint: {
+      name: { type: String },
+      latitude: { type: Number },
+      longitude: { type: Number },
+    },
+    etaMinutes: { type: Number, default: null },
+
+    // Set once the "head to pickup" alert has been pushed, so it fires only once.
+    pickupAlertSent: { type: Boolean, default: false },
 
     distanceKm: { type: Number, required: true },
 

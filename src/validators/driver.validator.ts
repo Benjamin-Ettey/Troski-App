@@ -52,3 +52,36 @@ export const submitVehicleSchema = z.object({
   vehicleColor: z.string().min(2, "Vehicle color is required"),
   vehicleCapacity: z.coerce.number().int().min(1, "Capacity must be at least 1"),
 });
+
+export const startRunSchema = z
+  .object({
+    // Each endpoint: coordinates (dropped pin) OR a town name.
+    fromLat: z.coerce.number().min(-90).max(90).optional(),
+    fromLng: z.coerce.number().min(-180).max(180).optional(),
+    fromTown: z.string().trim().min(2).optional(),
+    toLat: z.coerce.number().min(-90).max(90).optional(),
+    toLng: z.coerce.number().min(-180).max(180).optional(),
+    toTown: z.string().trim().min(2).optional(),
+    availableSeats: z.coerce.number().int().min(0).optional(),
+  })
+  .refine((d) => (d.fromLat != null && d.fromLng != null) || !!d.fromTown, {
+    message: "Provide start coordinates (fromLat/fromLng) or fromTown",
+  })
+  .refine((d) => (d.toLat != null && d.toLng != null) || !!d.toTown, {
+    message: "Provide destination coordinates (toLat/toLng) or toTown",
+  });
+
+export const runLocationSchema = z.object({
+  latitude: z.coerce.number().min(-90).max(90),
+  longitude: z.coerce.number().min(-180).max(180),
+  availableSeats: z.coerce.number().int().min(0).optional(),
+});
+
+export const runSeatsSchema = z
+  .object({
+    availableSeats: z.coerce.number().int().min(0).optional(),
+    delta: z.coerce.number().int().optional(),
+  })
+  .refine((d) => d.availableSeats != null || d.delta != null, {
+    message: "Provide either availableSeats or delta",
+  });

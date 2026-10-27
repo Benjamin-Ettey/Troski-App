@@ -5,18 +5,22 @@ import { requireApprovedDriver } from "../middleware/requireApprovedDriver";
 import {
   estimateFareSchema,
   createBookingSchema,
+  matchRideSchema,
   updateBookingStatusSchema,
   cancelBookingSchema,
 } from "../validators/booking.validator";
 import {
   estimateFare,
   createBooking,
+  matchRide,
+  getDemandStatus,
   getAvailableRequests,
   acceptBooking,
   updateBookingStatus,
   cancelBooking,
   getMyBookings,
   getBookingById,
+  trackBooking,
 } from "../controllers/booking.controller";
 
 // Mounted behind authenticateUser (see server.ts). Role is enforced per-route.
@@ -36,6 +40,17 @@ router.post(
   validate(createBookingSchema),
   createBooking,
 );
+
+// Route-following match: find the best en-route trotro + pickup point.
+router.post(
+  "/match",
+  authorizeRoles("passenger"),
+  validate(matchRideSchema),
+  matchRide,
+);
+
+// Status of an unmet-demand request (created when a match finds no van).
+router.get("/demand/:id", authorizeRoles("passenger"), getDemandStatus);
 
 // ---- Driver endpoints ----
 router.get(
@@ -68,6 +83,13 @@ router.patch(
   authorizeRoles("passenger", "driver"),
   validate(cancelBookingSchema),
   cancelBooking,
+);
+
+// Live tracking stream (passenger or assigned driver). Declared before /:id.
+router.get(
+  "/:id/track",
+  authorizeRoles("passenger", "driver"),
+  trackBooking,
 );
 
 router.get("/:id", getBookingById);

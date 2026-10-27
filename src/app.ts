@@ -1,5 +1,6 @@
 import "dotenv/config";
 import express from "express";
+import mongoose from "mongoose";
 import morgan from "morgan";
 import helmet from "helmet";
 import cloudinary from "cloudinary";
@@ -35,6 +36,16 @@ app.post(
   express.raw({ type: "*/*" }),
   handlePaystackWebhook,
 );
+
+// Liveness/readiness probe (public, outside /api so it isn't rate-limited).
+app.get("/healthz", (_req, res) => {
+  const states = ["disconnected", "connected", "connecting", "disconnecting"];
+  res.status(200).json({
+    status: "ok",
+    db: states[mongoose.connection.readyState] ?? "unknown",
+    uptime: Math.round(process.uptime()),
+  });
+});
 
 app.use(express.json());
 app.use(helmet());
