@@ -10,7 +10,8 @@ import { postTransaction } from "./ledger.service";
 import { driverWalletKey } from "./ledger.core";
 import { calculateRouteFare } from "../fare/fare.service";
 import zonesConfig from "../../data/zonesConfig";
-import { paystackService, type PaystackService } from "./paystack.service";
+import { paystackService } from "./paystack.service";
+import { InitializeChargePayload } from "../../types/payment.types";
 
 const round2 = (n: number): number => Math.round(n * 100) / 100;
 
@@ -38,29 +39,21 @@ export const splitEarnings = (
   return { driverShare, platformShare };
 };
 
-// Only the parts of the Paystack client this service needs — so tests can pass
-// a small fake.
-export type PaymentPaystack = Pick<
-  PaystackService,
-  | "initializeTransaction"
-  | "verifyTransaction"
-  | "refund"
-  | "verifyWebhookSignature"
->;
-
 // Bookings that can still be paid for.
 const CHARGEABLE_BOOKING_STATUSES = ["requested", "accepted", "arrived"];
 
 const newReference = (): string =>
   `troski_${crypto.randomBytes(10).toString("hex")}`;
 
-const channelToMethod = (channel: string | null): "momo" | "card" | undefined => {
+const channelToMethod = (
+  channel: string | null,
+): "momo" | "card" | undefined => {
   if (channel === "mobile_money") return "momo";
   if (channel === "card") return "card";
   return undefined;
 };
 
-export const createPaymentService = (deps: { paystack: PaymentPaystack }) => {
+export const createPaymentService = (deps: { paystack: any }) => {
   const { paystack } = deps;
 
   /**
@@ -69,8 +62,18 @@ export const createPaymentService = (deps: { paystack: PaymentPaystack }) => {
    */
   const initializeCharge = async (
     passengerId: Types.ObjectId,
-    bookingId: string,
+    payload: InitializeChargePayload,
   ): Promise<ServiceResponse> => {
+    const { bookingId, phoneNumber, provider } = payload;
+
+    if (!phoneNumber || !provider) {
+      return {
+        status: StatusCodes.BAD_REQUEST,
+        message:
+          "Phone number and provider (mtn, tgo, vdc) are required for Mobile Money charge",
+      };
+    }
+
     const booking = await Booking.findById(bookingId);
     if (!booking) {
       return { status: StatusCodes.NOT_FOUND, message: "Booking not found" };
@@ -111,12 +114,18 @@ export const createPaymentService = (deps: { paystack: PaymentPaystack }) => {
     }
 
     const reference = newReference();
-    const init = await paystack.initializeTransaction({
+
+    // Send Direct MoMo Charge via Paystack
+    const charge = await paystackService.chargeMobileMoney({
       email: user.email,
       amount,
       reference,
-      channels: ["mobile_money", "card"],
-      metadata: { bookingId: String(booking._id), passengerId: String(passengerId) },
+      phoneNumber,
+      provider,
+      metadata: {
+        bookingId: String(booking._id),
+        passengerId: String(passengerId),
+      },
     });
 
     await PaymentTransaction.create({
@@ -130,10 +139,10 @@ export const createPaymentService = (deps: { paystack: PaymentPaystack }) => {
 
     return {
       status: StatusCodes.OK,
-      message: "Payment initialized",
+      message: "USSD Prompt sent to device",
       data: {
-        authorizationUrl: init.authorizationUrl,
-        accessCode: init.accessCode,
+        status: charge.status,
+        displayText: charge.displayText, // Instructions for the user (e.g., "Authorize prompt on phone")
         reference,
         amount,
       },
@@ -165,7 +174,7 @@ export const createPaymentService = (deps: { paystack: PaymentPaystack }) => {
     const claimed = await PaymentTransaction.findOneAndUpdate(
       { reference, escrowStatus: "none" },
       { $set: { escrowStatus: "processing" } },
-      { new: true },
+      { returnDocument: "after" },
     );
     if (!claimed) {
       return {
@@ -208,8 +217,16 @@ export const createPaymentService = (deps: { paystack: PaymentPaystack }) => {
             type: "charge",
             reference: { kind: "booking", id: String(claimed.booking) },
             entries: [
-              { account: "gateway", direction: "debit", amount: claimed.amount as number },
-              { account: "escrow", direction: "credit", amount: claimed.amount as number },
+              {
+                account: "gateway",
+                direction: "debit",
+                amount: claimed.amount as number,
+              },
+              {
+                account: "escrow",
+                direction: "credit",
+                amount: claimed.amount as number,
+              },
             ],
           },
           session,
@@ -301,7 +318,7 @@ export const createPaymentService = (deps: { paystack: PaymentPaystack }) => {
     const claimed = await PaymentTransaction.findOneAndUpdate(
       { _id: tx._id, escrowStatus: "held" },
       { $set: { escrowStatus: "releasing" } },
-      { new: true },
+      { returnDocument: "after" },
     );
     if (!claimed) {
       return {
@@ -413,7 +430,7 @@ export const createPaymentService = (deps: { paystack: PaymentPaystack }) => {
     const claimed = await PaymentTransaction.findOneAndUpdate(
       { _id: tx._id, escrowStatus: "held" },
       { $set: { escrowStatus: "refunding" } },
-      { new: true },
+      { returnDocument: "after"},
     );
     if (!claimed) {
       return {
@@ -557,4 +574,6 @@ export const createPaymentService = (deps: { paystack: PaymentPaystack }) => {
 
 export type PaymentService = ReturnType<typeof createPaymentService>;
 
-export const paymentService = createPaymentService({ paystack: paystackService });
+export const paymentService = createPaymentService({
+  paystack: paystackService,
+});

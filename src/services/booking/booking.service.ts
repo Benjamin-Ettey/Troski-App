@@ -58,7 +58,10 @@ const markStaleDriversOffline = async (): Promise<void> => {
   await DriverProfile.updateMany(
     {
       isOnline: true,
-      $or: [{ lastSeenAt: { $lt: cutoff } }, { lastSeenAt: { $exists: false } }],
+      $or: [
+        { lastSeenAt: { $lt: cutoff } },
+        { lastSeenAt: { $exists: false } },
+      ],
     },
     { $set: { isOnline: false } },
   );
@@ -209,7 +212,8 @@ export const createBookingService = async (
   if (existing) {
     return {
       status: StatusCodes.CONFLICT,
-      message: "You already have an active booking. Complete or cancel it first.",
+      message:
+        "You already have an active booking. Complete or cancel it first.",
       data: { bookingId: existing._id, status: existing.status },
     };
   }
@@ -270,7 +274,9 @@ export const getAvailableRequestsService = async (
       const to = resolveTown(pref.to);
       return from && to ? { fromZone: from.zoneId, toZone: to.zoneId } : null;
     })
-    .filter((pair): pair is { fromZone: string; toZone: string } => pair !== null);
+    .filter(
+      (pair): pair is { fromZone: string; toZone: string } => pair !== null,
+    );
 
   const openRequests = await Booking.find({
     status: "requested",
@@ -346,7 +352,7 @@ export const acceptBookingService = async (
         acceptedAt: new Date(),
       },
     },
-    { new: true },
+    { returnDocument: "after" },
   )
     .populate("passenger", "name phoneNumber profileImage")
     .populate("vehicle");
@@ -460,8 +466,7 @@ export const cancelBookingService = async (
     isParticipant = String(booking.passenger) === String(userId);
   } else if (role === "driver") {
     const profile = await DriverProfile.findOne({ user: userId });
-    isParticipant =
-      !!profile && String(booking.driver) === String(profile._id);
+    isParticipant = !!profile && String(booking.driver) === String(profile._id);
   }
 
   if (!isParticipant) {
@@ -579,7 +584,8 @@ export const getBookingByIdService = async (
     return { status: StatusCodes.NOT_FOUND, message: "Booking not found" };
   }
 
-  const isPassenger = String(booking.passenger?._id ?? booking.passenger) === String(userId);
+  const isPassenger =
+    String(booking.passenger?._id ?? booking.passenger) === String(userId);
   let isDriver = false;
   if (role === "driver") {
     const profile = await DriverProfile.findOne({ user: userId });

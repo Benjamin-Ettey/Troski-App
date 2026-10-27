@@ -9,6 +9,7 @@ import errorHandlerMiddleware from "./middleware/errorHandler.middleware";
 import authRouter from "./routes/auth.routes";
 import driverRouter from "./routes/driver.routes";
 import adminRouter from "./routes/admin.routes";
+import userRouter from "./routes/user.routes";
 import bookingRouter from "./routes/booking.routes";
 import paymentRouter from "./routes/payment.routes";
 import { handlePaystackWebhook } from "./controllers/payment.controller";
@@ -55,6 +56,7 @@ app.use(
   authorizeRoles("admin"),
   adminRouter,
 );
+app.use("/api/v1/users", authenticateUser, userRouter);
 app.use("/api/v1/bookings", authenticateUser, bookingRouter);
 app.use("/api/v1/payments", authenticateUser, paymentRouter);
 

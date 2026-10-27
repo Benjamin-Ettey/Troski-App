@@ -18,10 +18,6 @@ router.post(
   initializePayment,
 );
 
-router.get(
-  "/:reference/verify",
-  authorizeRoles("passenger"),
-  verifyPayment,
-);
+router.get("/:reference/verify", authorizeRoles("passenger"), verifyPayment);
 
 export default router;

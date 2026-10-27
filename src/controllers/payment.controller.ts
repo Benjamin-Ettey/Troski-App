@@ -5,11 +5,10 @@ export const initializePayment = async (
   req: Request,
   res: Response,
 ): Promise<void> => {
-  const result = await paymentService.initializeCharge(
-    req.user!._id,
-    req.body.bookingId,
-  );
-  res.status(result.status).json({ message: result.message, data: result.data });
+  const result = await paymentService.initializeCharge(req.user!._id, req.body);
+  res
+    .status(result.status)
+    .json({ message: result.message, data: result.data });
 };
 
 export const verifyPayment = async (
@@ -20,7 +19,9 @@ export const verifyPayment = async (
     req.user!._id,
     req.params.reference as string,
   );
-  res.status(result.status).json({ message: result.message, data: result.data });
+  res
+    .status(result.status)
+    .json({ message: result.message, data: result.data });
 };
 
 // Public endpoint hit by Paystack. Mounted with a raw body parser (see app.ts)
