@@ -16,6 +16,7 @@ const PinScreen = () => {
     const setPin = useAppStore((state) => state.setPin);
     const {colorScheme} = useColorScheme();
 
+
     const [disable, setDisable] = useState(true);
     const [value, setValue] = useState("");
 

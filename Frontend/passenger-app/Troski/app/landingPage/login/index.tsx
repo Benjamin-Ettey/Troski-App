@@ -14,6 +14,7 @@ const Index = () => {
     const isDisabled = value.length !== 10;
 
     const number = useAppStore((state)=> state.number);
+    const setNumber = useAppStore((state)=>state.setNumber);
 
     const validate = (text: string) => {
         const cleaned = text.replace(/[^0-9]/g, '');
@@ -34,10 +35,8 @@ const Index = () => {
             return;
         }
 
-        if (value !== number){
-            setError('Use your registered number to sign in, or create an account if this is your first time.')
-            return;
-        }
+        setNumber(value);
+
 
         router.push("/landingPage/login/pinScreen");
     };

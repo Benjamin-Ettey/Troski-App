@@ -36,7 +36,7 @@ const WhyCancelRide = () => {
                                 Why did you cancel ride?
                             </Text>
 
-                            <Text className="mt-2 text-secondaryGray font-GoogleSansRegular dark:text-tertiaryGray">
+                            <Text className="mt-1 text-secondaryGray text-base font-GoogleSansRegular dark:text-tertiaryGray">
                                 Select a reason to help us improve your experience.
                             </Text>
                         </View>
@@ -46,10 +46,10 @@ const WhyCancelRide = () => {
                                 <TouchableOpacity
                                     key={index}
                                     onPress={() => setSelectedReason(reason)}
-                                    className={`p-4 rounded-2xl mb-3 border  ${
+                                    className={`p-4 rounded-xl mb-3 border  ${
                                         selectedReason === reason
                                             ? "border-green-500 bg-green-50 dark:bg-secondaryBlack"
-                                            : "border-gray-200 bg-white dark:bg-secondaryBlack"
+                                            : "border-tertiaryWhite bg-white dark:bg-secondaryBlack"
                                     }`}
                                 >
                                     <Text

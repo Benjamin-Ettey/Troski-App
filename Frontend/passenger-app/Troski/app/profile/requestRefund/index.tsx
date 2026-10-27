@@ -105,7 +105,7 @@ const RequestRefund = () => {
 
                                 textAlignVertical: "top",
                             }}
-                            className="bg-general px-5 py-4 dark:bg-secondaryBlack dark:text-general border border-gray-200 rounded-xl font-GoogleSansRegular text-sm"
+                            className="bg-general px-5 py-4 dark:bg-secondaryBlack dark:text-general border border-tertiaryWhite rounded-xl font-GoogleSansRegular text-sm"
                         />
 
                         <View className="flex flex-row justify-between items-center mt-2">
@@ -131,7 +131,7 @@ const RequestRefund = () => {
                                 Refund Notice
                             </Text>
                             <Text
-                                className="font-GoogleSansRegular text-xs leading-4 text-secondaryGray flex-1 dark:text-tertiaryGray"
+                                className="font-GoogleSansRegular text-sm leading-4 text-secondaryGray flex-1 dark:text-tertiaryGray"
                             >
                                 Refund requests are reviewed within 24-48 hours. Once approved, the
                                 amount will be credited to your wallet.

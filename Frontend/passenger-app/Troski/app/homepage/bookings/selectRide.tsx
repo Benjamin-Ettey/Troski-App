@@ -1,14 +1,21 @@
-import {View, Text, Pressable, TouchableOpacity} from "react-native";
 import React, { useMemo, useRef, useEffect, useState } from "react";
+import {
+    View,
+    Text,
+    TouchableOpacity,
+    Image,
+    Animated,
+} from "react-native";
+import * as Haptics from "expo-haptics";
 import BottomSheet, { BottomSheetView } from "@gorhom/bottom-sheet";
-import PrimaryButton from "@/components/PrimaryButton";
-import { router } from "expo-router";
-import SelectRideType from "@/components/ui/SelectRideType";
-
 import MapView, { Marker, Polyline } from "react-native-maps";
-import { useAppStore } from "@/utils/store";
 import { Ionicons } from "@expo/vector-icons";
-import {useColorScheme} from "nativewind";
+import { router } from "expo-router";
+import { useColorScheme } from "nativewind";
+
+import PrimaryButton from "@/components/PrimaryButton";
+import { useAppStore } from "@/utils/store";
+import BookRideButton from "@/components/BookRideButton";
 
 const GHANA_BOUNDS = {
     minLat: 4.5,
@@ -18,21 +25,52 @@ const GHANA_BOUNDS = {
 };
 
 const clampToGhana = (lat: number, lon: number) => {
-    const clampedLat = Math.max(GHANA_BOUNDS.minLat, Math.min(GHANA_BOUNDS.maxLat, lat));
-    const clampedLon = Math.max(GHANA_BOUNDS.minLon, Math.min(GHANA_BOUNDS.maxLon, lon));
-    return { latitude: clampedLat, longitude: clampedLon };
+    const clampedLat = Math.max(
+        GHANA_BOUNDS.minLat,
+        Math.min(GHANA_BOUNDS.maxLat, lat)
+    );
+    const clampedLon = Math.max(
+        GHANA_BOUNDS.minLon,
+        Math.min(GHANA_BOUNDS.maxLon, lon)
+    );
+
+    return {
+        latitude: clampedLat,
+        longitude: clampedLon,
+    };
+};
+
+const haversineKm = (
+    lat1: number,
+    lon1: number,
+    lat2: number,
+    lon2: number
+) => {
+    const R = 6371;
+    const dLat = ((lat2 - lat1) * Math.PI) / 180;
+    const dLon = ((lon2 - lon1) * Math.PI) / 180;
+
+    const a =
+        Math.sin(dLat / 2) ** 2 +
+        Math.cos((lat1 * Math.PI) / 180) *
+            Math.cos((lat2 * Math.PI) / 180) *
+            Math.sin(dLon / 2) ** 2;
+
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+
+    return (R * c).toFixed(1);
 };
 
 const decodePolyline = (t: string) => {
-    let points: any[] = [];
-    let index = 0,
-        lat = 0,
-        lng = 0;
+    const points: any[] = [];
+    let index = 0;
+    let lat = 0;
+    let lng = 0;
 
     while (index < t.length) {
-        let b,
-            shift = 0,
-            result = 0;
+        let b;
+        let shift = 0;
+        let result = 0;
 
         do {
             b = t.charCodeAt(index++) - 63;
@@ -40,7 +78,7 @@ const decodePolyline = (t: string) => {
             shift += 5;
         } while (b >= 0x20);
 
-        let dlat = result & 1 ? ~(result >> 1) : result >> 1;
+        const dlat = result & 1 ? ~(result >> 1) : result >> 1;
         lat += dlat;
 
         shift = 0;
@@ -52,7 +90,7 @@ const decodePolyline = (t: string) => {
             shift += 5;
         } while (b >= 0x20);
 
-        let dlng = result & 1 ? ~(result >> 1) : result >> 1;
+        const dlng = result & 1 ? ~(result >> 1) : result >> 1;
         lng += dlng;
 
         points.push({
@@ -67,29 +105,209 @@ const decodePolyline = (t: string) => {
 const SelectRide = () => {
     const bottomSheetRef = useRef<BottomSheet>(null);
     const mapRef = useRef<MapView>(null);
+    const { colorScheme } = useColorScheme();
 
-    const snapPoints = useMemo(() => ["50%"], []);
-
+    // Store state
+    const paymentMethods = useAppStore((s) => s.paymentMethods);
     const pickupCoordsRaw = useAppStore((s) => s.pickupCoords);
     const destinationCoordsRaw = useAppStore((s) => s.destinationCoords);
     const tripPrice = useAppStore((s) => s.tripPrice);
     const pickupPoint = useAppStore((s) => s.pickupPoint);
     const destinationPoint = useAppStore((s) => s.destinationPoint);
-    const { colorScheme } = useColorScheme();
+
+    const maxPassengersFromStore = useAppStore(
+        (s: any) => s.selectedRideMaxPassengers ?? null
+    );
 
     const pickupCoords = pickupCoordsRaw
-        ? clampToGhana(pickupCoordsRaw.latitude, pickupCoordsRaw.longitude)
+        ? clampToGhana(
+              pickupCoordsRaw.latitude,
+              pickupCoordsRaw.longitude
+          )
         : null;
+
     const destinationCoords = destinationCoordsRaw
-        ? clampToGhana(destinationCoordsRaw.latitude, destinationCoordsRaw.longitude)
+        ? clampToGhana(
+              destinationCoordsRaw.latitude,
+              destinationCoordsRaw.longitude
+          )
         : null;
 
+    // Local state
     const [routeCoords, setRouteCoords] = useState<any[]>([]);
-    const [durationText, setDurationText] = useState<string>("");
-    const [durationMinutes, setDurationMinutes] = useState<number | null>(null);
+    const [passengerCount, setPassengerCount] = useState<number>(1);
+    const [isProcessingPassengers, setIsProcessingPassengers] =
+        useState<boolean>(false);
 
+    const maxPassengers =
+        typeof maxPassengersFromStore === "number"
+            ? Math.max(1, maxPassengersFromStore)
+            : 8;
+
+    // Shake animation for the entire ride card
+    const shakeAnimation = useRef(new Animated.Value(0)).current;
+    const shakeSequenceRef = useRef<Animated.CompositeAnimation | null>(null);
+    const feedbackLockRef = useRef(false);
+
+    const triggerLimitFeedback = () => {
+        // Prevent overlapping shakes and repeated haptic calls
+        if (feedbackLockRef.current) return;
+
+        feedbackLockRef.current = true;
+
+        shakeSequenceRef.current?.stop();
+        shakeAnimation.setValue(0);
+
+        const sequence = Animated.sequence([
+            Animated.timing(shakeAnimation, {
+                toValue: -8,
+                duration: 45,
+                useNativeDriver: true,
+            }),
+            Animated.timing(shakeAnimation, {
+                toValue: 8,
+                duration: 45,
+                useNativeDriver: true,
+            }),
+            Animated.timing(shakeAnimation, {
+                toValue: -6,
+                duration: 45,
+                useNativeDriver: true,
+            }),
+            Animated.timing(shakeAnimation, {
+                toValue: 6,
+                duration: 45,
+                useNativeDriver: true,
+            }),
+            Animated.timing(shakeAnimation, {
+                toValue: -3,
+                duration: 45,
+                useNativeDriver: true,
+            }),
+            Animated.timing(shakeAnimation, {
+                toValue: 0,
+                duration: 45,
+                useNativeDriver: true,
+            }),
+        ]);
+
+        shakeSequenceRef.current = sequence;
+
+        sequence.start(() => {
+            shakeAnimation.setValue(0);
+            feedbackLockRef.current = false;
+            shakeSequenceRef.current = null;
+        });
+
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(
+            () => {}
+        );
+    };
+
+    useEffect(() => {
+        return () => {
+            shakeSequenceRef.current?.stop();
+            shakeAnimation.stopAnimation();
+        };
+    }, [shakeAnimation]);
+
+    // Helper functions for price parsing and formatting
+    const extractNumericFromString = (
+        s: any
+    ): { value: number; decimals: number } | null => {
+        if (typeof s === "number" && !isNaN(s)) {
+            return { value: s, decimals: 0 };
+        }
+
+        if (typeof s !== "string") return null;
+
+        const match = s.match(/-?\d+(\.\d+)?/);
+        if (!match) return null;
+
+        const numStr = match[0];
+        const value = parseFloat(numStr);
+        const decimals = (numStr.split(".")[1] || "").length;
+
+        if (isNaN(value)) return null;
+
+        return { value, decimals };
+    };
+
+    const formatLikeOriginal = (
+        original: any,
+        numericValue: number,
+        decimalsFallback = 2
+    ) => {
+        if (typeof original === "number") {
+            return `GH₵${numericValue.toFixed(decimalsFallback)}`;
+        }
+
+        if (typeof original === "string") {
+            const match = original.match(/-?\d+(\.\d+)?/);
+            const decimals =
+                match && match[0].includes(".")
+                    ? match[0].split(".")[1].length
+                    : decimalsFallback;
+
+            const formatted = numericValue.toFixed(decimals);
+
+            if (match) {
+                return original.replace(match[0], formatted);
+            }
+
+            return `GH₵${formatted}`;
+        }
+
+        return `GH₵${numericValue.toFixed(2)}`;
+    };
+
+    // Calculate base fare
+    const calculatedKm =
+        pickupCoords && destinationCoords
+            ? Number(
+                  haversineKm(
+                      pickupCoords.latitude,
+                      pickupCoords.longitude,
+                      destinationCoords.latitude,
+                      destinationCoords.longitude
+                  )
+              )
+            : 0;
+
+    const parsed = extractNumericFromString(tripPrice);
+
+    const baseFareNumeric = parsed
+        ? parsed.value
+        : typeof tripPrice === "number"
+          ? tripPrice
+          : calculatedKm * 3;
+
+    const baseFareDecimals = parsed ? parsed.decimals : 2;
+
+    const formattedPrice = formatLikeOriginal(
+        tripPrice,
+        baseFareNumeric * passengerCount,
+        baseFareDecimals
+    );
+
+    // Passenger counter handler
+    const changePassengerCount = (delta: number) => {
+        if (isProcessingPassengers) return;
+
+        setIsProcessingPassengers(true);
+
+        setPassengerCount((prev) =>
+            Math.max(1, Math.min(maxPassengers, prev + delta))
+        );
+
+        setTimeout(() => setIsProcessingPassengers(false), 80);
+    };
+
+    // Fit map view to bounds
     const animateToBounds = () => {
-        if (!mapRef.current || !pickupCoords || !destinationCoords) return;
+        if (!mapRef.current || !pickupCoords || !destinationCoords) {
+            return;
+        }
 
         mapRef.current.fitToCoordinates(
             [pickupCoords, destinationCoords],
@@ -97,7 +315,7 @@ const SelectRide = () => {
                 edgePadding: {
                     top: 80,
                     right: 80,
-                    bottom: 350,
+                    bottom: 380,
                     left: 80,
                 },
                 animated: true,
@@ -105,236 +323,401 @@ const SelectRide = () => {
         );
     };
 
+    // Route calculation logic
     useEffect(() => {
         const getRoute = async () => {
             if (!pickupCoords || !destinationCoords) {
                 setRouteCoords([]);
-                setDurationMinutes(null);
-                setDurationText("");
                 return;
             }
 
             try {
-                const GOOGLE_KEY = process.env.GOOGLE_MAPS_API_KEY || "";
+                const GOOGLE_KEY =
+                    process.env.GOOGLE_MAPS_API_KEY || "";
 
-                if (GOOGLE_KEY && GOOGLE_KEY.length > 0) {
-                    const url = `https://maps.googleapis.com/maps/api/directions/json?origin=${pickupCoords.latitude},${pickupCoords.longitude}&destination=${destinationCoords.latitude},${destinationCoords.longitude}&key=${GOOGLE_KEY}`;
-                    const res = await fetch(url);
-                    const data = await res.json();
+                if (GOOGLE_KEY.length > 0) {
+                    const url =
+                        `https://maps.googleapis.com/maps/api/directions/json?origin=` +
+    `${pickupCoords.latitude},${pickupCoords.longitude}` +
+    `&destination=${destinationCoords.latitude},${destinationCoords.longitude}` +
+    `&key=${GOOGLE_KEY}`;
 
-                    if (!data.routes || data.routes.length === 0) {
-                        setRouteCoords([]);
-                        setDurationMinutes(null);
-                        setDurationText("");
-                        return;
-                    }
+const res = await fetch(url);
+const data = await res.json();
 
-                    const route = data.routes[0];
-                    const encoded = route?.overview_polyline?.points;
-                    const legs = route?.legs?.[0];
+if (data.routes?.[0]?.overview_polyline?.points) {
+    const decoded = decodePolyline(
+        data.routes[0].overview_polyline.points
+    );
 
-                    if (encoded) {
-                        const decoded = decodePolyline(encoded);
-                        const safeCoords = decoded.filter((p) => p && typeof p.latitude === "number" && typeof p.longitude === "number");
-                        setRouteCoords(safeCoords);
-                    } else {
-                        setRouteCoords([]);
-                    }
+    setRouteCoords(
+        decoded.filter(
+            (p) =>
+                p &&
+                typeof p.latitude === "number"
+        )
+    );
+}
+} else {
+    const osrmUrl =
+        `https://router.project-osrm.org/route/v1/driving/` +
+        `${pickupCoords.longitude},${pickupCoords.latitude};` +
+        `${destinationCoords.longitude},${destinationCoords.latitude}` +
+        `?overview=full&geometries=polyline&steps=false`;
 
-                    const durationSeconds = legs?.duration?.value;
-                    if (typeof durationSeconds === "number") {
-                        setDurationMinutes(Math.max(1, Math.round(durationSeconds / 60)));
-                        setDurationText(`${Math.max(1, Math.round(durationSeconds / 60))} min`);
-                    } else if (legs?.duration?.text) {
-                        setDurationMinutes(null);
-                        setDurationText(legs.duration.text || "");
-                    } else {
-                        setDurationMinutes(null);
-                        setDurationText("");
-                    }
-                } else {
-                    const osrmUrl = `https://router.project-osrm.org/route/v1/driving/${pickupCoords.longitude},${pickupCoords.latitude};${destinationCoords.longitude},${destinationCoords.latitude}?overview=full&geometries=polyline&steps=false`;
+    const res = await fetch(osrmUrl);
+    const data = await res.json();
 
-                    const res = await fetch(osrmUrl);
-                    const data = await res.json();
+    if (data.routes?.[0]?.geometry) {
+        const decoded = decodePolyline(
+            data.routes[0].geometry
+        );
 
-                    if (!data.routes || data.routes.length === 0) {
-                        setRouteCoords([]);
-                        setDurationMinutes(null);
-                        setDurationText("");
-                        return;
-                    }
+        setRouteCoords(
+            decoded.filter(
+                (p) =>
+                    p &&
+                    typeof p.latitude === "number"
+            )
+        );
+    }
+}
 
-                    const route = data.routes[0];
+requestAnimationFrame(() => animateToBounds());
+} catch (err) {
+    console.log("Route fetch error:", err);
+    setRouteCoords([]);
+}
+};
 
-                    const durationSeconds = route?.duration;
-                    if (typeof durationSeconds === "number") {
-                        setDurationMinutes(Math.max(1, Math.round(durationSeconds / 60)));
-                        setDurationText(`${Math.max(1, Math.round(durationSeconds / 60))} min`);
-                    } else {
-                        setDurationMinutes(null);
-                        setDurationText("");
-                    }
+getRoute();
+}, [pickupCoordsRaw, destinationCoordsRaw]);
 
-                    const encoded = route?.geometry;
-                    if (encoded) {
-                        const decoded = decodePolyline(encoded);
-                        const safeCoords = decoded.filter((p) => p && typeof p.latitude === "number" && typeof p.longitude === "number");
-                        setRouteCoords(safeCoords);
-                    } else {
-                        setRouteCoords([]);
-                    }
-                }
+return (
+    <View
+        style={{ flex: 1 }}
+        className="w-full bg-general dark:bg-black"
+    >
+        {/* MAP VIEW */}
+        <MapView
+            ref={mapRef}
+            style={{ flex: 1 }}
+            initialRegion={{
+                latitude: pickupCoords?.latitude || 7.9465,
+                longitude: pickupCoords?.longitude || -1.0232,
+                latitudeDelta: 6.5,
+                longitudeDelta: 6.5,
+            }}
+        >
+            {pickupCoords && (
+                <Marker
+                    coordinate={pickupCoords}
+                    pinColor="#0165FC"
+                />
+            )}
 
-                requestAnimationFrame(() => {
-                    animateToBounds();
-                });
+            {destinationCoords && (
+                <Marker
+                    coordinate={destinationCoords}
+                    pinColor="#ffcc00"
+                />
+            )}
 
-            } catch (err) {
-                console.log("Route error:", err);
-                setRouteCoords([]);
-                setDurationMinutes(null);
-                setDurationText("");
-            }
-        };
+            {routeCoords.length > 1 && (
+                <Polyline
+                    coordinates={routeCoords}
+                    strokeWidth={6}
+                    strokeColor="#ffcc00"
+                    lineCap="round"
+                    lineJoin="round"
+                />
+            )}
+        </MapView>
 
-        getRoute();
-    }, [pickupCoordsRaw, destinationCoordsRaw]);
+        {/* BOTTOM SHEET */}
+        <BottomSheet
+            ref={bottomSheetRef}
+            index={0}
+            enablePanDownToClose={false}
+            backgroundStyle={{
+                backgroundColor:
+                    colorScheme === "dark" ? "#000000" : "#ffffff",
+            }}
+            handleIndicatorStyle={{
+                backgroundColor: "gray",
+            }}
+        >
+            <BottomSheetView className="flex-1 px-5 pt-2 pb-8 justify-between">
+                <View className="w-full flex-col gap-4">
+                    {/* RIDE CARD WITH SHAKE ANIMATION */}
+                    <Animated.View
+                        className="w-full bg-tertiaryWhite dark:bg-secondaryGray/20 rounded-[28px] border border-secondaryGray/10"
+                        style={{
+                            transform: [
+                                { translateX: shakeAnimation },
+                            ],
+                        }}
+                    >
+                        {/* TOP CARD ROW: Car info and dynamic price */}
+                        <View className="w-full flex-row justify-between items-center p-4 rounded-[28px] bg-general dark:bg-secondaryBlack">
+                            <View className="flex-row items-center gap-3">
+                                <Image
+                                    source={require("../../../assets/images/minibus.png")}
+                                    className="w-20 h-16"
+                                    resizeMode="cover"
+                                />
 
-    return (
-        <View style={{backgroundColor: colorScheme === "dark"? "#000000" : "#F5F7FA", flex: 1 }} className="w-full ">
-            <MapView
-                ref={mapRef}
-                style={{ flex: 1 }}
-                initialRegion={{
-                    latitude: pickupCoords?.latitude || 7.9465,
-                    longitude: pickupCoords?.longitude || -1.0232,
-                    latitudeDelta: 6.5,
-                    longitudeDelta: 6.5,
-                }}
-            >
-                {pickupCoords && (
-                    <Marker coordinate={pickupCoords} pinColor="#0165FC"/>
-                )}
+                                <View className="flex-col">
+                                    <View className="flex-row items-center gap-1">
+                                        <Text className="text-lg font-GoogleSansMedium text-secondaryBlack dark:text-general">
+                                            Troski
+                                        </Text>
+                                    </View>
 
-                {destinationCoords && (
-                    <Marker coordinate={destinationCoords} pinColor="#ffcc00"/>
-                )}
+                                    <View className="flex-row items-center gap-1">
+                                        <Ionicons
+                                            name="person"
+                                            size={12}
+                                            color={
+                                                colorScheme === "dark"
+                                                    ? "#a1a1aa"
+                                                    : "#666"
+                                            }
+                                        />
 
-                {routeCoords.length > 1 && (
-                    <Polyline
-                        coordinates={routeCoords}
-                        strokeWidth={6}
-                        strokeColor="#ffcc00"
-                        lineCap="round"
-                        lineJoin="round"
-                    />
-                )}
-            </MapView>
+                                        <Text className="text-sm font-GoogleSansMedium text-secondaryGray dark:text-tertiaryGray">
+                                            {maxPassengers}
+                                        </Text>
+                                    </View>
 
-            <BottomSheet
-                ref={bottomSheetRef}
-                index={0}
-                snapPoints={snapPoints}
-                enablePanDownToClose={false}
-                backgroundStyle={{
-                    backgroundColor: colorScheme === "dark"? "#000000" : "#ffffff",
-                }}
-                handleIndicatorStyle={{
-                    backgroundColor: colorScheme === "dark"? "gray": "gray",
-                }}
-                onChange={(index) => {
-                    if (index < 1) {
-                        bottomSheetRef.current?.snapToIndex(1);
-                    }
-                }}
-            >
-                <BottomSheetView
-                    className="flex-1"
-                >
-                    <View className="flex-1 pb-80">
-                        <View className="w-full gap-4 pb-4 flex flex-col justify-center items-center">
-                            <Text className="font-GoogleSansMedium text-base leading-5 dark:text-general">
-                                Choose a ride
-                            </Text>
+                                    <Text className="text-sm font-GoogleSansRegular text-secondaryGray dark:text-tertiaryGray">
+                                        Affordable fares
+                                    </Text>
+                                </View>
+                            </View>
 
-                            <View
-                                style={{ height: 1 }}
-                                className="w-full bg-tertiaryWhite dark:bg-secondaryGray"
-                            />
+                            {/* PRICE */}
+                            <View className="items-end">
+                                <Text className="text-xl font-GoogleSansBold text-secondaryBlack dark:text-primary">
+                                    {formattedPrice}
+                                </Text>
+                            </View>
                         </View>
 
-                        <SelectRideType
-                            duration={durationMinutes ? `${durationMinutes} min` : durationText} price={tripPrice}
-                        />
-                    </View>
+                        <View className="flex flex-1 justify-center items-center">
+                            <View className="h-[1px] w-[95%] bg-secondaryGray/20 my-2" />
+                        </View>
 
-                    <View
-                        className="absolute justify-center items-center bottom-0 left-0 right-0 px-4 pb-10"
-                    >
-                        <PrimaryButton
-                            name="Select Troski"
-                            disabled={false}
-                            onPress={() =>
-                                router.push("/homepage/bookings/numberOfPassengers")
-                            }
-                        />
-                    </View>
-                </BottomSheetView>
-            </BottomSheet>
+                        {/* PASSENGER COUNTER */}
+                        <View className="w-full flex-row items-center justify-between p-4">
+                            {/* MINUS BUTTON */}
+                            <TouchableOpacity
+                                onPress={() => {
+                                    if (isProcessingPassengers) return;
 
+                                    if (passengerCount <= 1) {
+                                        triggerLimitFeedback();
+                                        return;
+                                    }
 
+                                    changePassengerCount(-1);
+                                }}
+                                disabled={isProcessingPassengers}
+                                className="w-14 h-14 rounded-full bg-white dark:bg-secondaryBlack justify-center items-center"
+                                style={{
+                                    opacity:
+                                        passengerCount <= 1 ? 0.4 : 1,
+                                }}
+                            >
+                                <Ionicons
+                                    name="remove"
+                                    size={28}
+                                    color={
+                                        colorScheme === "dark"
+                                            ? "white"
+                                            : "black"
+                                    }
+                                />
+                            </TouchableOpacity>
 
-            <View
+                            {/* PASSENGER COUNT */}
+                            <View className="items-center">
+                                <Text className="text-3xl font-GoogleSansBold text-secondaryBlack dark:text-general">
+                                    {passengerCount}
+                                </Text>
 
-                className="w-full absolute top-12 left-0 pl-4 right-0 flex-row justify-center items-center"
-            >
-                <TouchableOpacity
-                    onPress={() => router.back()}
-                    className="flex justify-center items-center rounded-full p-2"
-                    style={{
-                        backgroundColor: colorScheme === "dark"? "black":"white",
+                                <Text className="text-base font-GoogleSansMedium text-secondaryGray dark:text-tertiaryGray">
+                                    Number of passengers
+                                </Text>
+                            </View>
 
-                    }}
-                >
-                    <Ionicons name="chevron-back" size={28} color={colorScheme === "dark"? "white":"black"} />
-                </TouchableOpacity>
+                            {/* PLUS BUTTON */}
+                            <TouchableOpacity
+                                onPress={() => {
+                                    if (isProcessingPassengers) return;
 
-                <View
-                    className="flex-1 items-center justify-center px-2"
-                    pointerEvents="none">
-                    <View
-                        className="rounded-full bg-general w-full h-12 flex-row justify-center items-center dark:bg-secondaryBlack"
-                    >
-                        <Text
-                            numberOfLines={1}
-                            className="text-base leading-5 font-GoogleSansMedium max-w-24 text-right"
-                            style={{
-                                color: colorScheme === "dark"? "white":"black",
+                                    if (
+                                        passengerCount >= maxPassengers
+                                    ) {
+                                        triggerLimitFeedback();
+                                        return;
+                                    }
 
-                            }}
-                        >
-                            {pickupPoint || "Pickup"}
-                        </Text>
-
-                        <Ionicons name="arrow-forward" size={14} color={colorScheme === "dark"? "white":"black"} style={{ marginHorizontal: 8 }} />
-
-                        <Text
-                            numberOfLines={1}
-                            className="text-base leading-5 font-GoogleSansMedium max-w-24 text-left"
-                            style={{
-                                color: colorScheme === "dark"? "#ffcc00":"black",
-                            }}
-                        >
-                            {destinationPoint || "Destination"}
-                        </Text>
-                    </View>
+                                    changePassengerCount(1);
+                                }}
+                                disabled={isProcessingPassengers}
+                                className="w-14 h-14 rounded-full bg-white dark:bg-secondaryBlack justify-center items-center"
+                                style={{
+                                    opacity:
+                                        passengerCount >= maxPassengers
+                                            ? 0.4
+                                            : 1,
+                                }}
+                            >
+                                <Ionicons
+                                    name="add"
+                                    size={28}
+                                    color={
+                                        colorScheme === "dark"
+                                            ? "white"
+                                            : "black"
+                                    }
+                                />
+                            </TouchableOpacity>
+                        </View>
+                    </Animated.View>
                 </View>
 
-                <View style={{ width: 52 }} />
+                {/* ACTION BUTTONS */}
+                <View className="w-full flex-col items-center justify-end pt-2 ">
+                    <TouchableOpacity
+                        onPress={() =>
+                            router.push(
+                                "/profile/paymentMethod/setupPaymentMethod"
+                            )
+                        }
+                        className="w-full flex-row justify-start items-center mt-4 mb-2 gap-1">
+
+                        <View
+
+                            className="flex flex-row gap-4 mb-2"
+                        >
+                            <Ionicons
+                                name="card"
+                                size={24}
+                                color={
+                                    colorScheme === "dark"
+                                        ? "#a1a1aa"
+                                        : "#000000"
+                                }
+                            />
+
+                            <Text className="text-lg font-GoogleSansMedium text-secondaryBlack dark:text-general">Add payment method</Text>
+
+
+                        </View>
+
+                        <View className="flex-row flex-1 justify-start items-center mb-2">
+
+                            <Ionicons
+                                name="chevron-down"
+                                size={16}
+                                color={
+                                    colorScheme === "dark"
+                                        ? "#a1a1aa"
+                                        : "#00000077"
+                                }
+                            />
+                        </View>
+                    </TouchableOpacity>
+
+                    <BookRideButton
+                        name="Book a Ride"
+                        disabled={false}
+                        onPress={() => {
+                            const totalPrice =
+                                baseFareNumeric * passengerCount;
+
+                            useAppStore
+                                .getState()
+                                .setFinalTripPrice?.(totalPrice);
+
+                            if (paymentMethods.length === 0) {
+                                router.push(
+                                    "/profile/paymentMethod/setupPaymentMethod"
+                                );
+                            } else {
+                                router.push(
+                                    "/homepage/bookings/searchDriver"
+                                );
+                            }
+                        }}
+                    />
+                </View>
+            </BottomSheetView>
+        </BottomSheet>
+
+        {/* TOP NAVIGATION OVERLAY */}
+        <View className="w-full absolute top-12 left-0 pl-4 right-0 flex-row items-center">
+            <TouchableOpacity
+                onPress={() => router.back()}
+                className="rounded-full items-center justify-center"
+                style={{
+                    width: 44,
+                    height: 44,
+                    backgroundColor:
+                        colorScheme === "dark" ? "black" : "white",
+                }}
+            >
+                <Ionicons
+                    name="chevron-back"
+                    size={26}
+                    color={
+                        colorScheme === "dark" ? "white" : "black"
+                    }
+                    style={{
+                        marginRight: 2,
+                    }}
+                />
+            </TouchableOpacity>
+
+            <View
+                className="flex-1 items-center flex-row justify-start px-2"
+                pointerEvents="none"
+            >
+                <View className="rounded-3xl bg-general w-[95%] h-24 flex-col justify-center items-center dark:bg-secondaryBlack">
+                    <Text
+                        numberOfLines={1}
+                        className="text-base leading-5 font-GoogleSansMedium w-full px-4 text-center"
+                        style={{
+                            color:
+                                colorScheme === "dark"
+                                    ? "white"
+                                    : "black",
+                        }}
+                    >
+                        {pickupPoint || "Pickup"}
+                    </Text>
+
+                    <View className="h-[1px] w-[95%] bg-secondaryGray/20 my-2" />
+
+                    <Text
+                        numberOfLines={1}
+                        className="text-base font-GoogleSansMedium w-full px-4 text-center"
+                        style={{
+                            color:
+                                colorScheme === "dark"
+                                    ? "#ffcc00"
+                                    : "black",
+                        }}
+                    >
+                        {destinationPoint || "Destination"}
+                    </Text>
+                </View>
             </View>
         </View>
-    );
+    </View>
+);
 };
 
 export default SelectRide;

@@ -80,7 +80,7 @@ const Index = () => {
 
                         <TouchableOpacity className="w-full flex flex-col justify-between">
                             <View className="w-full flex flex-row justify-between items-center">
-                                <Text className="font-GoogleSansMedium text-base leading-4dark:text-tertiaryWhite">Send Feedback</Text>
+                                <Text className="font-GoogleSansMedium text-base leading-4 dark:text-tertiaryWhite">Send Feedback</Text>
                                 <Ionicons name="chevron-forward" size={16} color="gray"/>
                             </View>
 

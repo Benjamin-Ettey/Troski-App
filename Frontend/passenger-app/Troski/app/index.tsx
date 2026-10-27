@@ -3,39 +3,31 @@ import { View, StyleSheet } from "react-native";
 import { router } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { useAppStore } from "@/utils/store";
-import { VideoView, useVideoPlayer } from "expo-video";
 import { useAudioPlayer } from "expo-audio";
+import { useColorScheme } from "nativewind";
+import LottieView from "lottie-react-native";
 
-const videoSource = require("../assets/video/splash.mp4");
+const splashAnimation = require("../assets/video/splash.json");
+const splashDarkAnimation = require("../assets/video/splashdark.json");
 const audioSource = require("../assets/audio/splashhorn.mp3");
 
 const Splash: React.FC = () => {
     const loggedIn = useAppStore((state) => state.loggedIn);
+    const { colorScheme } = useColorScheme();
 
-    const player = useVideoPlayer(videoSource);
+    const isDarkMode = colorScheme === "dark";
+    const currentSplashAnimation = isDarkMode
+        ? splashDarkAnimation
+        : splashAnimation;
+
     const audioPlayer = useAudioPlayer(audioSource);
-
-
     const hasPlayedRef = useRef(false);
-
 
     useEffect(() => {
         if (hasPlayedRef.current) return;
+
         hasPlayedRef.current = true;
 
-        const playVideo = async () => {
-            try {
-                await player.play();
-            } catch (err) {
-                console.warn("Video play failed:", err);
-            }
-        };
-
-        playVideo();
-    }, [player]);
-
-
-    useEffect(() => {
         const timer = setTimeout(() => {
             try {
                 audioPlayer.play();
@@ -47,30 +39,33 @@ const Splash: React.FC = () => {
         return () => clearTimeout(timer);
     }, [audioPlayer]);
 
-
-    useEffect(() => {
-        const sub = player.addListener?.("playToEnd", () => {
-            if (!loggedIn) {
-                router.replace("/landingPage");
-            } else {
-                router.replace("/homepage");
-            }
-        });
-
-        return () => {
-            sub?.remove?.();
-        };
-    }, [player, loggedIn]);
+    const handleAnimationFinish = () => {
+        if (loggedIn) {
+            router.replace("/homepage");
+        } else {
+            router.replace("/landingPage");
+        }
+    };
 
     return (
-        <View style={styles.container}>
+        <View
+            style={[
+                styles.container,
+                {
+                    backgroundColor: isDarkMode ? "#000000" : "#FFFFFF",
+                },
+            ]}
+        >
             <StatusBar hidden />
 
-            <VideoView
-                player={player}
-                style={StyleSheet.absoluteFill}
-                contentFit="cover"
-                nativeControls={false}
+            <LottieView
+                key={isDarkMode ? "dark-splash" : "light-splash"}
+                source={currentSplashAnimation}
+                autoPlay
+                loop={false}
+                onAnimationFinish={handleAnimationFinish}
+                style={StyleSheet.absoluteFillObject}
+                resizeMode="cover"
             />
         </View>
     );
@@ -81,6 +76,6 @@ export default Splash;
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: "#000",
     },
 });
+
