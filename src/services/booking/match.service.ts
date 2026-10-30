@@ -10,14 +10,26 @@ import {
   nearestTown,
   haversineKm,
 } from "../../utils/locationLookup";
-import { decodePolyline, nearestPointOnPath } from "../../utils/polyline";
+import {
+  decodePolyline,
+  nearestPointOnPath,
+  type Point,
+} from "../../utils/polyline";
 import { mapsService } from "../maps/maps.service";
 import { calculateRouteFare } from "../fare/fare.service";
 import { recordDemand, runClustering } from "./demand.service";
 import zonesConfig from "../../data/zonesConfig";
 
 const SEARCH_RADIUS_KM = 5;
-const URBAN_SPEED_KMH = 25; // fallback ETA speed when maps is unavailable
+// How far off the van's route the passenger's destination may be and still count
+// as "the route passes there".
+const DEST_CORRIDOR_KM = Number(process.env.MATCH_DEST_CORRIDOR_KM || 1.5);
+const URBAN_SPEED_KMH = 25; // fallback van ETA speed when maps is unavailable
+const WALK_SPEED_KMH = 5; // fallback walking speed
+// Safety buffer added to the passenger's walk time before they're "ready".
+const READY_BUFFER_MIN = Number(process.env.MATCH_READY_BUFFER_MIN || 2);
+// Longest a passenger should wait at the stop after arriving, for a match.
+const MAX_WAIT_MIN = Number(process.env.MATCH_MAX_WAIT_MIN || 10);
 const ACTIVE_STATUSES: BookingStatus[] = [
   "requested",
   "accepted",
@@ -46,6 +58,58 @@ const vanPosition = (run: any): Coord => ({
   lat: run.currentLocation.coordinates[1],
 });
 
+/**
+ * Does a van's route actually serve this trip? Pure, offline-testable. A van
+ * qualifies only when, on its decoded route:
+ *   - the destination lies within the corridor of the route (route passes there)
+ *   - the destination is AHEAD of the pickup (van travels pickup -> dest)
+ *   - the van has NOT already passed the pickup point
+ * This replaces coarse destination-zone equality (which both over- and
+ * under-matched) when route geometry is available.
+ */
+export const assessCorridor = (
+  path: Point[],
+  van: Coord | null,
+  pickup: Coord,
+  dest: Coord,
+  corridorKm: number = DEST_CORRIDOR_KM,
+): { serves: boolean; pickupPoint?: Coord } => {
+  const p = nearestPointOnPath(path, pickup.lat, pickup.lng);
+  const d = nearestPointOnPath(path, dest.lat, dest.lng);
+  if (!p || !d) return { serves: false };
+
+  const destOnRoute = d.distanceKm <= corridorKm;
+  const forward = d.index > p.index; // destination further along than pickup
+  const vanProj = van ? nearestPointOnPath(path, van.lat, van.lng) : null;
+  const vanNotPast = vanProj ? vanProj.index <= p.index : true;
+
+  return {
+    serves: destOnRoute && forward && vanNotPast,
+    pickupPoint: { lat: p.point.lat, lng: p.point.lng },
+  };
+};
+
+/**
+ * Corridor check for a run. Uses the route polyline when present; falls back to
+ * destination-zone equality when there's no geometry (e.g. no maps key).
+ */
+const servesCorridor = (
+  run: any,
+  pickup: Coord,
+  dest: Coord,
+  passengerDestZone: string,
+): { serves: boolean; pickupPoint?: Coord } => {
+  if (run.routePolyline) {
+    return assessCorridor(
+      decodePolyline(run.routePolyline),
+      vanPosition(run),
+      pickup,
+      dest,
+    );
+  }
+  return { serves: run.destination?.zoneId === passengerDestZone };
+};
+
 /** ETA (minutes) for the van to reach the pickup point — Google, else estimate. */
 const etaToPickup = async (run: any, pickup: Coord): Promise<number> => {
   const van = vanPosition(run);
@@ -55,6 +119,36 @@ const etaToPickup = async (run: any, pickup: Coord): Promise<number> => {
   } catch {
     const km = haversineKm(van.lat, van.lng, pickup.lat, pickup.lng);
     return Math.max(1, Math.round((km / URBAN_SPEED_KMH) * 60));
+  }
+};
+
+/**
+ * Readiness-vs-arrival feasibility: a trotro does not wait, so the passenger
+ * must reach the boarding point before the van passes it, and not have to wait
+ * too long after arriving.
+ *   readyIn = walk time + safety buffer
+ *   feasible = readyIn <= vanEta  AND  (vanEta - readyIn) <= maxWait
+ */
+export const assessTiming = (
+  walkEta: number,
+  vanEta: number,
+  bufferMin: number = READY_BUFFER_MIN,
+  maxWaitMin: number = MAX_WAIT_MIN,
+): { readyIn: number; waitMin: number; feasible: boolean } => {
+  const readyIn = walkEta + bufferMin;
+  const waitMin = Math.max(0, vanEta - readyIn);
+  const feasible = readyIn <= vanEta && waitMin <= maxWaitMin;
+  return { readyIn, waitMin, feasible };
+};
+
+/** Walking ETA (minutes) for the passenger to reach the pickup point. */
+const walkingEta = async (from: Coord, to: Coord): Promise<number> => {
+  try {
+    const r = await mapsService.computeRoute(from, to, "WALK");
+    return r.durationMin;
+  } catch {
+    const km = haversineKm(from.lat, from.lng, to.lat, to.lng);
+    return Math.max(1, Math.round((km / WALK_SPEED_KMH) * 60));
   }
 };
 
@@ -109,17 +203,20 @@ export const matchRideService = async (
     };
   }
 
+  // Supply prefilter: vans near the passenger with seats (direction/destination
+  // is decided precisely by the corridor check below, not a coarse zone filter).
   const candidates = await findNearbyRuns({
     lat: payload.pickupLat,
     lng: payload.pickupLng,
-    destinationZone: destination.zoneId,
     minSeats: payload.seats,
     radiusKm: SEARCH_RADIUS_KM,
   });
 
-  if (!candidates.length) {
-    // No van heading there — register the demand (so it can be clustered into a
-    // new route if enough people want it) and try to form clusters now.
+  // No workable van -> record the demand (so it can be clustered into a new
+  // route) and return a no-van response.
+  const registerUnmetDemand = async (
+    message: string,
+  ): Promise<ServiceResponse> => {
     const demand = await recordDemand(
       passengerId,
       { lat: payload.pickupLat, lng: payload.pickupLng },
@@ -127,32 +224,75 @@ export const matchRideService = async (
       payload.seats,
     );
     await runClustering();
-
     return {
       status: StatusCodes.NOT_FOUND,
-      message: `No trotro heading to ${destination.town} near you right now. We'll alert nearby drivers if more people want this route.`,
+      message,
       data: { demandId: demand._id },
     };
+  };
+
+  if (!candidates.length) {
+    return registerUnmetDemand(
+      `No trotro heading to ${destination.town} near you right now. We'll alert nearby drivers if more people want this route.`,
+    );
   }
 
-  // Place a pickup point on each candidate's route and rank by ETA.
-  const evaluated = await Promise.all(
-    candidates.map(async (run) => {
-      const pickup = computePickupPoint(
-        run,
-        payload.pickupLat,
-        payload.pickupLng,
-      );
-      const eta = await etaToPickup(run, pickup);
-      return { run, pickup, eta };
-    }),
-  );
-  evaluated.sort((a, b) => a.eta - b.eta);
+  // Evaluate each candidate: (1) does its route actually serve this trip
+  // (corridor + direction + not-yet-passed), then (2) can the passenger reach
+  // the boarding point before the van passes (a trotro does not wait).
+  const passenger: Coord = { lat: payload.pickupLat, lng: payload.pickupLng };
+  const passengerDest: Coord = {
+    lat: destination.latitude,
+    lng: destination.longitude,
+  };
 
-  // Reserve a seat on the best candidate that still has room (atomic).
-  let chosen: (typeof evaluated)[number] | null = null;
+  const evaluated = (
+    await Promise.all(
+      candidates.map(async (run) => {
+        const corridor = servesCorridor(
+          run,
+          passenger,
+          passengerDest,
+          destination.zoneId,
+        );
+        if (!corridor.serves) return null;
+
+        const pickup =
+          corridor.pickupPoint ??
+          computePickupPoint(run, payload.pickupLat, payload.pickupLng);
+        const [vanEta, walkEta] = await Promise.all([
+          etaToPickup(run, pickup),
+          walkingEta(passenger, pickup),
+        ]);
+        const { readyIn, waitMin, feasible } = assessTiming(walkEta, vanEta);
+        return { run, pickup, vanEta, walkEta, readyIn, waitMin, feasible };
+      }),
+    )
+  ).filter((e): e is NonNullable<typeof e> => e !== null);
+
+  // None of the nearby vans' routes actually serve this destination/direction.
+  if (!evaluated.length) {
+    return registerUnmetDemand(
+      `No trotro whose route passes ${destination.town} near you right now. We'll alert nearby drivers if more people want this route.`,
+    );
+  }
+
+  // Of the route-compatible vans, keep only ones the passenger can catch.
+  const viable = evaluated.filter((e) => e.feasible);
+
+  if (!viable.length) {
+    return registerUnmetDemand(
+      `A trotro passes ${destination.town}, but you can't reach a boarding point before it passes. We'll alert drivers if more people want this route.`,
+    );
+  }
+
+  // Soonest catchable van first; prefer a shorter wait on ties.
+  viable.sort((a, b) => a.vanEta - b.vanEta || a.waitMin - b.waitMin);
+
+  // Reserve a seat on the best viable candidate that still has room (atomic).
+  let chosen: (typeof viable)[number] | null = null;
   let reservedRun: any = null;
-  for (const option of evaluated) {
+  for (const option of viable) {
     reservedRun = await DriverRun.findOneAndUpdate(
       {
         _id: option.run._id,
@@ -231,17 +371,22 @@ export const matchRideService = async (
     distanceKm: fare.distanceInKm,
     seatsRequested: payload.seats,
     fareEstimate: total,
-    etaMinutes: chosen.eta,
+    etaMinutes: chosen.vanEta,
+    walkMinutes: chosen.walkEta,
+    waitMinutes: chosen.waitMin,
     status: "accepted",
   });
 
   return {
     status: StatusCodes.CREATED,
-    message: `Matched! Walk to ${pickupName} — your trotro arrives in about ${chosen.eta} min.`,
+    message: `Matched! Walk to ${pickupName} (~${chosen.walkEta} min) — your trotro reaches it in about ${chosen.vanEta} min.`,
     data: {
       booking,
       pickupPoint: { name: pickupName, ...chosen.pickup },
-      etaMinutes: chosen.eta,
+      etaMinutes: chosen.vanEta, // van arrival at the boarding point
+      walkMinutes: chosen.walkEta, // passenger walk time to the point
+      readyInMinutes: chosen.readyIn, // walk + safety buffer
+      waitMinutes: chosen.waitMin, // expected wait at the stop
       seatsRemaining: reservedRun.availableSeats,
       fare: { total, ...fare },
     },

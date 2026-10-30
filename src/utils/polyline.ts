@@ -87,6 +87,35 @@ const nearestPointOnSegment = (
   return { point, distanceKm: haversineKm(p.lat, p.lng, point.lat, point.lng) };
 };
 
+/** Encode points into a Google polyline string (inverse of decodePolyline). */
+export const encodePolyline = (points: Point[], precision = 5): string => {
+  const factor = Math.pow(10, precision);
+  let lastLat = 0;
+  let lastLng = 0;
+  let result = "";
+
+  const encodeNumber = (value: number): string => {
+    let num = value < 0 ? ~(value << 1) : value << 1;
+    let out = "";
+    while (num >= 0x20) {
+      out += String.fromCharCode((0x20 | (num & 0x1f)) + 63);
+      num >>= 5;
+    }
+    out += String.fromCharCode(num + 63);
+    return out;
+  };
+
+  for (const pt of points) {
+    const lat = Math.round(pt.lat * factor);
+    const lng = Math.round(pt.lng * factor);
+    result += encodeNumber(lat - lastLat);
+    result += encodeNumber(lng - lastLng);
+    lastLat = lat;
+    lastLng = lng;
+  }
+  return result;
+};
+
 /**
  * Nearest point on a route to a coordinate. Projects onto every segment (not
  * just the vertices), so the pickup point can land between two polyline points —

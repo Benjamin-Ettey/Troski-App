@@ -129,6 +129,10 @@ export const createMapsService = (opts: {
         origin: waypoint(origin),
         destination: waypoint(destination),
         travelMode,
+        // Live-traffic-aware ETA for driving (ignored for walking).
+        ...(travelMode === "DRIVE"
+          ? { routingPreference: "TRAFFIC_AWARE" }
+          : {}),
       }),
     });
     const json = await res.json();
