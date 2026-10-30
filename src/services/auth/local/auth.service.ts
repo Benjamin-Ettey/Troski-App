@@ -572,3 +572,90 @@ export const loginAdminService = async (
     cookieData: { user: tokenUser, refreshToken },
   };
 };
+
+export const forgotPinService = async (payload: {
+  phoneNumber: string;
+  newPin: string;
+  otpCode: string;
+  expectedRole: RoleType;
+}): Promise<ServiceResponse> => {
+  const { phoneNumber, newPin, otpCode, expectedRole } = payload;
+
+  const user = await User.findOne({ phoneNumber, role: expectedRole });
+
+  if (!user) {
+    return {
+      status: StatusCodes.NOT_FOUND,
+      message: "User not found",
+    };
+  }
+
+  if (
+    user.accountStatus === "deactivated" ||
+    user.accountStatus === "suspended"
+  ) {
+    return {
+      status: StatusCodes.FORBIDDEN,
+      message: `Account is ${user.accountStatus}. Contact support.`,
+    };
+  }
+
+  const { error: otpError } = await verifyOtpInternal(
+    phoneNumber,
+    user.email || "",
+    otpCode,
+    "forgot-pin" as OtpPurpose,
+  );
+
+  if (otpError) return otpError;
+
+  user.pinHash = newPin;
+  user.failedLoginAttempts = 0;
+  user.lockUntil = undefined;
+  await user.save();
+
+  // Invalidate all existing sessions
+  await Token.deleteMany({ user: user._id });
+
+  return {
+    status: StatusCodes.OK,
+    message: "PIN updated successfully",
+  };
+};
+
+export const changePinService = async (
+  userId: string,
+  payload: {
+    currentPin: string;
+    newPin: string;
+  },
+): Promise<ServiceResponse> => {
+  const { currentPin, newPin } = payload;
+
+  const user = await User.findById(userId).select("+pinHash");
+  if (!user || !user.pinHash) {
+    return {
+      status: StatusCodes.NOT_FOUND,
+      message: "User not found",
+    };
+  }
+
+  const isPinCorrect = await bcrypt.compare(currentPin, user.pinHash);
+  if (!isPinCorrect) {
+    return {
+      status: StatusCodes.UNAUTHORIZED,
+      message: "Incorrect current PIN",
+    };
+  }
+
+  user.pinHash = newPin;
+  await user.save();
+
+  // Invalidate all existing sessions to force login
+  await Token.deleteMany({ user: user._id });
+
+  return {
+    status: StatusCodes.OK,
+    message: "PIN changed successfully. Please log in again.",
+  };
+};

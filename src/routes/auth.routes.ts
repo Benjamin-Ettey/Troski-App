@@ -13,6 +13,11 @@ import {
   registerAdmin,
   loginAdmin,
   googleAuth,
+  requestForgotPinSmsOtp,
+  requestForgotPinEmailOtp,
+  forgotPinPassenger,
+  forgotPinDriver,
+  changePin,
 } from "../controllers/auth.controller";
 import {
   requestSmsOtpSchema,
@@ -23,6 +28,8 @@ import {
   registerAdminSchema,
   loginAdminSchema,
   googleAuthSchema,
+  forgotPinSchema,
+  changePinSchema,
 } from "../validators/auth.validator";
 
 const router = Router();
@@ -66,6 +73,24 @@ router.post(
   validate(loginSchema),
   loginPassenger,
 );
+router.post(
+  "/passenger/forgot-pin/request-otp",
+  otpRequestLimiter,
+  validate(requestSmsOtpSchema),
+  requestForgotPinSmsOtp,
+);
+router.post(
+  "/passenger/forgot-pin/request-email-otp",
+  otpRequestLimiter,
+  validate(requestEmailOtpSchema),
+  requestForgotPinEmailOtp,
+);
+router.post(
+  "/passenger/forgot-pin",
+  apiLimiter,
+  validate(forgotPinSchema),
+  forgotPinPassenger,
+);
 
 // Driver App Auth
 router.post(
@@ -88,6 +113,27 @@ router.post(
 );
 router.post("/driver/login", apiLimiter, validate(loginSchema), loginDriver);
 
+router.post(
+  "/driver/forgot-pin/request-otp",
+  otpRequestLimiter,
+  validate(requestSmsOtpSchema),
+  requestForgotPinSmsOtp,
+);
+
+router.post(
+  "/driver/forgot-pin/request-email-otp",
+  otpRequestLimiter,
+  validate(requestEmailOtpSchema),
+  requestForgotPinEmailOtp,
+);
+
+router.post(
+  "/driver/forgot-pin",
+  apiLimiter,
+  validate(forgotPinSchema),
+  forgotPinDriver,
+);
+
 // Admin Auth
 router.post(
   "/admin/register",
@@ -102,5 +148,13 @@ router.post("/google", apiLimiter, validate(googleAuthSchema), googleAuth);
 
 // Logout
 router.route("/logout").delete(authenticateUser, logoutUser);
+
+router.patch(
+  "/change-pin",
+  authenticateUser,
+  apiLimiter,
+  validate(changePinSchema),
+  changePin,
+);
 
 export default router;

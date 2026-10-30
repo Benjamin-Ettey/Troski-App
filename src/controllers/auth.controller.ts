@@ -186,3 +186,80 @@ export const googleAuth = async (
     .status(result.status)
     .json({ message: result.message, data: result.data });
 };
+
+export const requestForgotPinSmsOtp = async (
+  req: Request,
+  res: Response,
+): Promise<void> => {
+  const { phoneNumber } = req.body;
+  const result = await authService.requestOtpService(
+    phoneNumber,
+    "sms",
+    "forgot-pin" as any,
+  );
+  res.status(result.status).json({ message: result.message });
+};
+
+export const requestForgotPinEmailOtp = async (
+  req: Request,
+  res: Response,
+): Promise<void> => {
+  const { email, name } = req.body;
+  const result = await authService.requestOtpService(
+    email,
+    "email",
+    "forgot-pin",
+    name,
+  );
+  res.status(result.status).json({ message: result.message });
+};
+
+export const forgotPinPassenger = async (
+  req: Request,
+  res: Response,
+): Promise<void> => {
+  const result = await authService.forgotPinService({
+    ...req.body,
+    expectedRole: "passenger",
+  });
+  res.status(result.status).json({ message: result.message });
+};
+
+export const forgotPinDriver = async (
+  req: Request,
+  res: Response,
+): Promise<void> => {
+  const result = await authService.forgotPinService({
+    ...req.body,
+    expectedRole: "driver",
+  });
+  res.status(result.status).json({ message: result.message });
+};
+
+export const changePin = async (req: Request, res: Response): Promise<void> => {
+  if (!req.user) {
+    res
+      .status(StatusCodes.UNAUTHORIZED)
+      .json({ message: "Authentication required" });
+    return;
+  }
+
+  const result = await authService.changePinService(
+    req.user._id.toString(),
+    req.body,
+  );
+
+  if (result.status === StatusCodes.OK) {
+    // Clear cookies immediately
+    res.cookie("accessToken", "logout", {
+      httpOnly: true,
+      expires: new Date(Date.now()),
+    });
+    res.cookie("refreshToken", "logout", {
+      httpOnly: true,
+      expires: new Date(Date.now()),
+    });
+  }
+
+  res.status(result.status).json({ message: result.message });
+};

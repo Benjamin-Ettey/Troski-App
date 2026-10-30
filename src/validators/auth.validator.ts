@@ -4,6 +4,7 @@ const pinSchema = z
   .string()
   .length(6, "PIN must be exactly 6 digits")
   .regex(/^\d+$/, "PIN must contain only numbers");
+
 const phoneSchema = z.string().min(10, "Invalid phone number");
 
 export const registerPassengerSchema = z.object({
@@ -41,9 +42,9 @@ export const verifyOtpSchema = z.object({
   purpose: z.enum([
     "signup",
     "login",
-    "reset_pin",
-    "change_phone",
-    "sensitive_transaction",
+    "forgot-pin",
+    "change-pin",
+    "sensitive-transaction",
   ]),
 });
 
@@ -69,3 +70,19 @@ export const googleAuthSchema = z.object({
   role: z.enum(["passenger", "driver"]).optional(),
   phoneNumber: z.string().optional(),
 });
+
+export const forgotPinSchema = z.object({
+  phoneNumber: phoneSchema,
+  newPin: pinSchema, // This acts as the new PIN
+  otpCode: z.string().length(6, "OTP must be 6 digits"),
+});
+
+export const changePinSchema = z
+  .object({
+    currentPin: pinSchema,
+    newPin: pinSchema,
+  })
+  .refine((data) => data.currentPin !== data.newPin, {
+    message: "New PIN must be different from the current PIN",
+    path: ["newPin"],
+  });

@@ -18,17 +18,17 @@ const OtpSchema = new mongoose.Schema(
       enum: [
         "signup",
         "login",
-        "reset_pin",
-        "change_phone",
-        "sensitive_transaction",
+        "forgot-pin",
+        "change-pin",
+        "sensitive-transaction",
       ],
       required: true,
     },
 
-    deliveryMethod: { 
+    deliveryMethod: {
       type: String,
       enum: ["sms", "email"],
-      required: true
+      required: true,
     },
 
     attemptCount: {

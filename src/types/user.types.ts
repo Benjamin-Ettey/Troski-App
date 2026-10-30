@@ -12,9 +12,9 @@ export type VehicleStatus = "pending" | "approved" | "rejected";
 export type OtpPurpose =
   | "signup"
   | "login"
-  | "reset_pin"
-  | "change_phone"
-  | "sensitive_transaction";
+  | "forgot-pin"
+  | "change-pin"
+  | "sensitive-transaction";
 
 export type RoutePreference = {
   from: string;
