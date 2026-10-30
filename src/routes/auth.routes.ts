@@ -18,6 +18,7 @@ import {
   forgotPinPassenger,
   forgotPinDriver,
   changePin,
+  refreshUserToken,
 } from "../controllers/auth.controller";
 import {
   requestSmsOtpSchema,
@@ -145,6 +146,9 @@ router.post("/admin/login", apiLimiter, validate(loginAdminSchema), loginAdmin);
 
 // Google Auth
 router.post("/google", apiLimiter, validate(googleAuthSchema), googleAuth);
+
+// Mobile / Explicit Token Refresh Route
+router.post("/refresh", apiLimiter, refreshUserToken);
 
 // Logout
 router.route("/logout").delete(authenticateUser, logoutUser);

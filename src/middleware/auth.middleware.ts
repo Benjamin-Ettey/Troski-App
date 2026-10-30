@@ -14,7 +14,13 @@ export const authenticateUser = async (
   res: Response,
   next: NextFunction,
 ): Promise<void> => {
-  const { refreshToken, accessToken } = req.signedCookies;
+  let { accessToken, refreshToken } = req.signedCookies;
+
+  // Mobile App Fallback: Check for Bearer token in headers
+  const authHeader = req.headers.authorization;
+  if (authHeader && authHeader.startsWith("Bearer ")) {
+    accessToken = authHeader.split(" ")[1];
+  }
 
   try {
     if (accessToken) {
@@ -23,6 +29,7 @@ export const authenticateUser = async (
       return next();
     }
 
+    // Web flow auto-refresh via cookies
     if (!refreshToken) {
       res
         .status(StatusCodes.UNAUTHORIZED)
@@ -67,7 +74,6 @@ export const authorizeRoles = (...roles: string[]) => {
       });
       return;
     }
-
     next();
   };
 };

@@ -7,6 +7,7 @@ import DriverProfile from "../../../models/DriverProfile";
 import Token from "../../../models/Token";
 import Otp from "../../../models/Otp";
 import { generateOtp, hashOtp, verifyOtpHash } from "../../../utils/otpUtils";
+import { isTokenValid } from "../../../utils/tokenUtils";
 import { sendOtpSms, sendWelcomeSms } from "../../sms/sms.service";
 import { sendOtpEmail, sendWelcomeEmail } from "../../email/email.service";
 import { TokenUser, RoleType, OtpPurpose } from "../../../types/user.types";
@@ -658,4 +659,46 @@ export const changePinService = async (
     status: StatusCodes.OK,
     message: "PIN changed successfully. Please log in again.",
   };
+};
+
+export const refreshUserTokenService = async (
+  clientRefreshTokenJWT: string,
+  ip: string,
+  userAgent: string | undefined,
+): Promise<ServiceResponse> => {
+  try {
+    const payload = isTokenValid(clientRefreshTokenJWT) as {
+      user: TokenUser;
+      refreshToken: string;
+    };
+
+    const existingToken = await Token.findOne({
+      user: payload.user._id,
+      refreshToken: payload.refreshToken,
+    });
+
+    if (!existingToken || !existingToken.isValid) {
+      return {
+        status: StatusCodes.UNAUTHORIZED,
+        message: "Invalid refresh session",
+      };
+    }
+
+    // Security practice: Rotate the raw refresh token on explicit refresh
+    const newRawRefreshToken = crypto.randomBytes(40).toString("hex");
+    existingToken.refreshToken = newRawRefreshToken;
+    existingToken.ip = ip;
+    existingToken.userAgent = userAgent || "";
+    await existingToken.save();
+
+    return {
+      status: StatusCodes.OK,
+      cookieData: { user: payload.user, refreshToken: newRawRefreshToken },
+    };
+  } catch (error) {
+    return {
+      status: StatusCodes.UNAUTHORIZED,
+      message: "Invalid or expired refresh token",
+    };
+  }
 };

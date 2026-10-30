@@ -40,18 +40,18 @@ export const registerPassenger = async (
     req.ip || "",
     req.headers["user-agent"],
   );
-
+  let tokens;
   if (result.cookieData) {
-    attachCookiesToResponse({
-      res,
-      user: result.cookieData.user,
-      refreshToken: result.cookieData.refreshToken,
-    });
+    tokens = attachCookiesToResponse({ res, ...result.cookieData });
   }
-
-  res
-    .status(result.status)
-    .json({ message: result.message, data: result.data });
+  res.status(result.status).json({
+    message: result.message,
+    data: result.data,
+    ...(tokens && {
+      accessToken: tokens.accessToken,
+      refreshToken: tokens.refreshToken,
+    }),
+  });
 };
 
 export const registerDriver = async (
@@ -63,18 +63,18 @@ export const registerDriver = async (
     req.ip || "",
     req.headers["user-agent"],
   );
-
+  let tokens;
   if (result.cookieData) {
-    attachCookiesToResponse({
-      res,
-      user: result.cookieData.user,
-      refreshToken: result.cookieData.refreshToken,
-    });
+    tokens = attachCookiesToResponse({ res, ...result.cookieData });
   }
-
-  res
-    .status(result.status)
-    .json({ message: result.message, data: result.data });
+  res.status(result.status).json({
+    message: result.message,
+    data: result.data,
+    ...(tokens && {
+      accessToken: tokens.accessToken,
+      refreshToken: tokens.refreshToken,
+    }),
+  });
 };
 
 export const loginPassenger = async (
@@ -86,11 +86,18 @@ export const loginPassenger = async (
     req.ip || "",
     req.headers["user-agent"],
   );
-
-  if (result.cookieData) attachCookiesToResponse({ res, ...result.cookieData });
-  res
-    .status(result.status)
-    .json({ message: result.message, data: result.data });
+  let tokens;
+  if (result.cookieData) {
+    tokens = attachCookiesToResponse({ res, ...result.cookieData });
+  }
+  res.status(result.status).json({
+    message: result.message,
+    data: result.data,
+    ...(tokens && {
+      accessToken: tokens.accessToken,
+      refreshToken: tokens.refreshToken,
+    }),
+  });
 };
 
 export const loginDriver = async (
@@ -102,11 +109,87 @@ export const loginDriver = async (
     req.ip || "",
     req.headers["user-agent"],
   );
+  let tokens;
+  if (result.cookieData) {
+    tokens = attachCookiesToResponse({ res, ...result.cookieData });
+  }
+  res.status(result.status).json({
+    message: result.message,
+    data: result.data,
+    ...(tokens && {
+      accessToken: tokens.accessToken,
+      refreshToken: tokens.refreshToken,
+    }),
+  });
+};
 
-  if (result.cookieData) attachCookiesToResponse({ res, ...result.cookieData });
-  res
-    .status(result.status)
-    .json({ message: result.message, data: result.data });
+export const registerAdmin = async (
+  req: Request,
+  res: Response,
+): Promise<void> => {
+  const result = await authService.registerAdminService(
+    req.body,
+    req.ip || "",
+    req.headers["user-agent"],
+  );
+  let tokens;
+  if (result.cookieData) {
+    tokens = attachCookiesToResponse({ res, ...result.cookieData });
+  }
+  res.status(result.status).json({
+    message: result.message,
+    data: result.data,
+    ...(tokens && {
+      accessToken: tokens.accessToken,
+      refreshToken: tokens.refreshToken,
+    }),
+  });
+};
+
+export const loginAdmin = async (
+  req: Request,
+  res: Response,
+): Promise<void> => {
+  const result = await authService.loginAdminService(
+    req.body,
+    req.ip || "",
+    req.headers["user-agent"],
+  );
+  let tokens;
+  if (result.cookieData) {
+    tokens = attachCookiesToResponse({ res, ...result.cookieData });
+  }
+  res.status(result.status).json({
+    message: result.message,
+    data: result.data,
+    ...(tokens && {
+      accessToken: tokens.accessToken,
+      refreshToken: tokens.refreshToken,
+    }),
+  });
+};
+
+export const googleAuth = async (
+  req: Request,
+  res: Response,
+): Promise<void> => {
+  const result = await googleAuthService(
+    req.body,
+    req.ip || "",
+    req.headers["user-agent"],
+  );
+  let tokens;
+  if (result.cookieData) {
+    tokens = attachCookiesToResponse({ res, ...result.cookieData });
+  }
+  res.status(result.status).json({
+    message: result.message,
+    data: result.data,
+    ...(tokens && {
+      accessToken: tokens.accessToken,
+      refreshToken: tokens.refreshToken,
+    }),
+  });
 };
 
 export const logoutUser = async (
@@ -129,62 +212,6 @@ export const logoutUser = async (
   });
 
   res.status(StatusCodes.OK).json({ message: "Logged out successfully" });
-};
-
-export const registerAdmin = async (
-  req: Request,
-  res: Response,
-): Promise<void> => {
-  const result = await authService.registerAdminService(
-    req.body,
-    req.ip || "",
-    req.headers["user-agent"],
-  );
-
-  if (result.cookieData) {
-    attachCookiesToResponse({
-      res,
-      user: result.cookieData.user,
-      refreshToken: result.cookieData.refreshToken,
-    });
-  }
-
-  res
-    .status(result.status)
-    .json({ message: result.message, data: result.data });
-};
-
-export const loginAdmin = async (
-  req: Request,
-  res: Response,
-): Promise<void> => {
-  const result = await authService.loginAdminService(
-    req.body,
-    req.ip || "",
-    req.headers["user-agent"],
-  );
-
-  if (result.cookieData) attachCookiesToResponse({ res, ...result.cookieData });
-  res
-    .status(result.status)
-    .json({ message: result.message, data: result.data });
-};
-
-export const googleAuth = async (
-  req: Request,
-  res: Response,
-): Promise<void> => {
-  const result = await googleAuthService(
-    req.body,
-    req.ip || "",
-    req.headers["user-agent"],
-  );
-
-  if (result.cookieData) attachCookiesToResponse({ res, ...result.cookieData });
-
-  res
-    .status(result.status)
-    .json({ message: result.message, data: result.data });
 };
 
 export const requestForgotPinSmsOtp = async (
@@ -262,4 +289,45 @@ export const changePin = async (req: Request, res: Response): Promise<void> => {
   }
 
   res.status(result.status).json({ message: result.message });
+};
+
+export const refreshUserToken = async (
+  req: Request,
+  res: Response,
+): Promise<void> => {
+  // Mobile sends in body, fallback to web cookie if someone hits this endpoint
+  const refreshTokenStr =
+    req.body.refreshToken || req.signedCookies?.refreshToken;
+
+  if (!refreshTokenStr) {
+    res
+      .status(StatusCodes.UNAUTHORIZED)
+      .json({ message: "Refresh token is missing" });
+    return;
+  }
+
+  const result = await authService.refreshUserTokenService(
+    refreshTokenStr,
+    req.ip || "",
+    req.headers["user-agent"],
+  );
+
+  if (result.status !== StatusCodes.OK || !result.cookieData) {
+    res.status(result.status).json({ message: result.message });
+    return;
+  }
+
+  // Creates new JWTs and sets cookies (for web fallback)
+  const tokens = attachCookiesToResponse({
+    res,
+    user: result.cookieData.user,
+    refreshToken: result.cookieData.refreshToken,
+  });
+
+  // Return new JSON tokens for mobile
+  res.status(StatusCodes.OK).json({
+    message: "Token refreshed successfully",
+    accessToken: tokens.accessToken,
+    refreshToken: tokens.refreshToken,
+  });
 };

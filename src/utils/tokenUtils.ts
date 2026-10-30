@@ -30,7 +30,7 @@ export const attachCookiesToResponse = ({
   res: Response;
   user: TokenUser;
   refreshToken: string;
-}): void => {
+}): { accessToken: string; refreshToken: string } => {
   const accessTokenJWT = createJWT({
     payload: { user },
   });
@@ -57,4 +57,7 @@ export const attachCookiesToResponse = ({
     signed: true,
     expires: new Date(Date.now() + thirtyDays),
   });
+
+  // Return the generated tokens for mobile clients
+  return { accessToken: accessTokenJWT, refreshToken: refreshTokenJWT };
 };
