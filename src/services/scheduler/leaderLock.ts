@@ -21,7 +21,7 @@ export const tryAcquireLock = async (
     await SchedulerLock.findOneAndUpdate(
       { key, expiresAt: { $lt: now } },
       { $set: { holder: INSTANCE_ID, expiresAt } },
-      { upsert: true, new: true },
+      { upsert: true, returnDocument: "after" },
     );
     return true;
   } catch (err: any) {

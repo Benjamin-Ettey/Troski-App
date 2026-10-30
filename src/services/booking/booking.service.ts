@@ -8,10 +8,7 @@ import { resolveTown, haversineKm } from "../../utils/locationLookup";
 import { calculateRouteFare } from "../fare/fare.service";
 import { mapsService } from "../maps/maps.service";
 import { paymentService } from "../payment/payment.service";
-import {
-  completeBooking,
-  returnSeatToRun,
-} from "./lifecycle.service";
+import { completeBooking, returnSeatToRun } from "./lifecycle.service";
 import { publish, bookingChannel } from "../realtime/sse";
 import zonesConfig from "../../data/zonesConfig";
 import type {

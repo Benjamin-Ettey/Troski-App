@@ -160,7 +160,7 @@ export const matchRideService = async (
         availableSeats: { $gte: payload.seats },
       },
       { $inc: { availableSeats: -payload.seats } },
-      { new: true },
+      { returnDocument: "after" },
     );
     if (reservedRun) {
       chosen = option;

@@ -5,7 +5,10 @@ export const initializePayment = async (
   req: Request,
   res: Response,
 ): Promise<void> => {
-  const result = await paymentService.initializeCharge(req.user!._id, req.body);
+  const result = await paymentService.initializeCharge(
+    req.user!._id,
+    req.body.bookingId,
+  );
   res
     .status(result.status)
     .json({ message: result.message, data: result.data });

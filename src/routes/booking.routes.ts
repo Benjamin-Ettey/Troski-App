@@ -42,7 +42,7 @@ router.post(
 );
 
 // Route-following match: find the best en-route trotro + pickup point.
-router.post(
+router.patch(
   "/match",
   authorizeRoles("passenger"),
   validate(matchRideSchema),
@@ -86,11 +86,7 @@ router.patch(
 );
 
 // Live tracking stream (passenger or assigned driver). Declared before /:id.
-router.get(
-  "/:id/track",
-  authorizeRoles("passenger", "driver"),
-  trackBooking,
-);
+router.get("/:id/track", authorizeRoles("passenger", "driver"), trackBooking);
 
 router.get("/:id", getBookingById);
 

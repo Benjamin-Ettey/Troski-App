@@ -50,11 +50,7 @@ router.post(
   submitVehicle,
 );
 
-router.patch(
-  "/toggle-online",
-  requireApprovedDriver,
-  toggleOnlineStatus,
-);
+router.patch("/toggle-online", requireApprovedDriver, toggleOnlineStatus);
 
 // ---- Live runs (declare route, share GPS, manage seats) ----
 router.get("/runs/active", requireApprovedDriver, getActiveRun);
@@ -76,7 +72,7 @@ router.patch(
   validate(runSeatsSchema),
   updateRunSeats,
 );
-router.post("/runs/end", requireApprovedDriver, endRun);
+router.patch("/runs/end", requireApprovedDriver, endRun);
 
 // ---- Demand (new-route offers from clustered unmet requests) ----
 router.get("/demand", requireApprovedDriver, listDemand);

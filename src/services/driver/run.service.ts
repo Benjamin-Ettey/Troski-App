@@ -58,9 +58,7 @@ export const endStaleRuns = async (): Promise<void> => {
     { _id: { $in: driverIds } },
     { $set: { isOnline: false } },
   );
-  await Promise.all(
-    runIds.map((id) => geoRemove(String(id)).catch(() => {})),
-  );
+  await Promise.all(runIds.map((id) => geoRemove(String(id)).catch(() => {})));
 };
 
 /**
@@ -82,7 +80,10 @@ export const startRunService = async (
 ): Promise<ServiceResponse> => {
   const profile = await DriverProfile.findOne({ user: driverUserId });
   if (!profile) {
-    return { status: StatusCodes.NOT_FOUND, message: "Driver profile not found" };
+    return {
+      status: StatusCodes.NOT_FOUND,
+      message: "Driver profile not found",
+    };
   }
 
   // Route endpoints may be dropped pins (coords) or town names.
@@ -125,7 +126,8 @@ export const startRunService = async (
   if (existing) {
     return {
       status: StatusCodes.CONFLICT,
-      message: "You already have an active run. End it before starting another.",
+      message:
+        "You already have an active run. End it before starting another.",
       data: { runId: existing._id },
     };
   }
@@ -207,7 +209,10 @@ export const updateLocationService = async (
 ): Promise<ServiceResponse> => {
   const { profile, run } = await getActiveRun(driverUserId);
   if (!profile) {
-    return { status: StatusCodes.NOT_FOUND, message: "Driver profile not found" };
+    return {
+      status: StatusCodes.NOT_FOUND,
+      message: "Driver profile not found",
+    };
   }
   if (!run) {
     return { status: StatusCodes.NOT_FOUND, message: "No active run" };
@@ -228,11 +233,9 @@ export const updateLocationService = async (
 
   // Update the Redis GEO index (no-op without Redis; fire-and-forget so the
   // high-frequency heartbeat isn't blocked on Redis).
-  void geoUpsert(
-    String(run._id),
-    payload.longitude,
-    payload.latitude,
-  ).catch(() => {});
+  void geoUpsert(String(run._id), payload.longitude, payload.latitude).catch(
+    () => {},
+  );
 
   // Push the new position to any passengers tracking this run (+ pickup alerts).
   await broadcastRunLocation(run);
@@ -257,7 +260,10 @@ export const updateSeatsService = async (
 ): Promise<ServiceResponse> => {
   const { profile, run } = await getActiveRun(driverUserId);
   if (!profile) {
-    return { status: StatusCodes.NOT_FOUND, message: "Driver profile not found" };
+    return {
+      status: StatusCodes.NOT_FOUND,
+      message: "Driver profile not found",
+    };
   }
   if (!run) {
     return { status: StatusCodes.NOT_FOUND, message: "No active run" };
@@ -283,7 +289,10 @@ export const endRunService = async (
 ): Promise<ServiceResponse> => {
   const { profile, run } = await getActiveRun(driverUserId);
   if (!profile) {
-    return { status: StatusCodes.NOT_FOUND, message: "Driver profile not found" };
+    return {
+      status: StatusCodes.NOT_FOUND,
+      message: "Driver profile not found",
+    };
   }
   if (!run) {
     return { status: StatusCodes.NOT_FOUND, message: "No active run" };
@@ -314,7 +323,10 @@ export const getActiveRunService = async (
 ): Promise<ServiceResponse> => {
   const { profile, run } = await getActiveRun(driverUserId);
   if (!profile) {
-    return { status: StatusCodes.NOT_FOUND, message: "Driver profile not found" };
+    return {
+      status: StatusCodes.NOT_FOUND,
+      message: "Driver profile not found",
+    };
   }
   if (!run) {
     return { status: StatusCodes.NOT_FOUND, message: "No active run" };

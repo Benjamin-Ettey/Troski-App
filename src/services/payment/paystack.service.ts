@@ -1,11 +1,5 @@
 import crypto from "crypto";
-import {
-  ChargeMobileMoneyParams,
-  ChargeMobileMoneyResult,
-  FetchLike,
-  PaystackConfig,
-  VerifyResult,
-} from "../../types/paystack.types";
+
 /**
  * Thin wrapper around the Paystack REST API. All Paystack access goes through
  * here so the secret key, request shaping, response parsing, amount conversion
@@ -28,6 +22,45 @@ export class PaystackError extends Error {
 
 // Minimal shape of the fetch we depend on — keeps DI simple and avoids coupling
 // to lib DOM/undici typings.
+export type FetchLike = (
+  url: string,
+  init?: {
+    method?: string;
+    headers?: Record<string, string>;
+    body?: string;
+  },
+) => Promise<{ ok: boolean; status: number; json: () => Promise<any> }>;
+
+export type PaystackConfig = {
+  secretKey: string;
+  baseUrl?: string;
+  fetchFn?: FetchLike;
+};
+
+export type InitializeParams = {
+  email: string;
+  amount: number; // whole GHS
+  reference: string;
+  metadata?: Record<string, unknown>;
+  channels?: string[]; // e.g. ["mobile_money", "card"]
+};
+
+export type InitializeResult = {
+  authorizationUrl: string;
+  accessCode: string;
+  reference: string;
+};
+
+export type VerifyResult = {
+  reference: string;
+  status: string; // "success" | "failed" | "abandoned" | ...
+  amount: number; // whole GHS
+  currency: string;
+  channel: string | null;
+  paidAt: string | null;
+  gatewayResponse: string | null;
+  customerEmail: string | null;
+};
 
 export const toSubunit = (amountGhs: number): number =>
   Math.round(amountGhs * 100);
@@ -63,9 +96,7 @@ export const createPaystackService = ({
     try {
       json = await res.json();
     } catch {
-      throw new PaystackError(
-        `Paystack returned a non-JSON response (${res.status})`,
-      );
+      throw new PaystackError(`Paystack returned a non-JSON response (${res.status})`);
     }
 
     // Paystack wraps everything as { status: boolean, message, data }.
@@ -79,35 +110,30 @@ export const createPaystackService = ({
   };
 
   /** Start a payment. Returns the URL/access code the client uses to pay. */
-  const chargeMobileMoney = async (
-    params: ChargeMobileMoneyParams,
-  ): Promise<ChargeMobileMoneyResult> => {
-    const json = await request("/charge", {
+  const initializeTransaction = async (
+    params: InitializeParams,
+  ): Promise<InitializeResult> => {
+    const json = await request("/transaction/initialize", {
       method: "POST",
       body: {
         email: params.email,
-        amount: toSubunit(params.amount), // Converts GHS to pesewas (amount * 100)
+        amount: toSubunit(params.amount),
         currency: "GHS",
         reference: params.reference,
         metadata: params.metadata,
-        mobile_money: {
-          phone: params.phoneNumber,
-          provider: params.provider, // "mtn", "tgo" (AirtelTigo/Telecel), or "vdc" (Vodafone)
-        },
+        channels: params.channels,
       },
     });
 
     return {
-      status: json.data.status,
+      authorizationUrl: json.data.authorization_url,
+      accessCode: json.data.access_code,
       reference: json.data.reference,
-      displayText: json.data.display_text,
     };
   };
 
   /** Confirm the true state of a payment with Paystack (source of truth). */
-  const verifyTransaction = async (
-    reference: string,
-  ): Promise<VerifyResult> => {
+  const verifyTransaction = async (reference: string): Promise<VerifyResult> => {
     const json = await request(
       `/transaction/verify/${encodeURIComponent(reference)}`,
     );
@@ -219,7 +245,7 @@ export const createPaystackService = ({
 
   return {
     request,
-    chargeMobileMoney,
+    initializeTransaction,
     verifyTransaction,
     refund,
     createTransferRecipient,

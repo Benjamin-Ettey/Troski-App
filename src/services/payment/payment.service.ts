@@ -10,8 +10,7 @@ import { postTransaction } from "./ledger.service";
 import { driverWalletKey } from "./ledger.core";
 import { calculateRouteFare } from "../fare/fare.service";
 import zonesConfig from "../../data/zonesConfig";
-import { paystackService } from "./paystack.service";
-import { InitializeChargePayload } from "../../types/payment.types";
+import { paystackService, type PaystackService } from "./paystack.service";
 
 const round2 = (n: number): number => Math.round(n * 100) / 100;
 
@@ -39,6 +38,16 @@ export const splitEarnings = (
   return { driverShare, platformShare };
 };
 
+// Only the parts of the Paystack client this service needs — so tests can pass
+// a small fake.
+export type PaymentPaystack = Pick<
+  PaystackService,
+  | "initializeTransaction"
+  | "verifyTransaction"
+  | "refund"
+  | "verifyWebhookSignature"
+>;
+
 // Bookings that can still be paid for.
 const CHARGEABLE_BOOKING_STATUSES = ["requested", "accepted", "arrived"];
 
@@ -53,7 +62,7 @@ const channelToMethod = (
   return undefined;
 };
 
-export const createPaymentService = (deps: { paystack: any }) => {
+export const createPaymentService = (deps: { paystack: PaymentPaystack }) => {
   const { paystack } = deps;
 
   /**
@@ -62,18 +71,8 @@ export const createPaymentService = (deps: { paystack: any }) => {
    */
   const initializeCharge = async (
     passengerId: Types.ObjectId,
-    payload: InitializeChargePayload,
+    bookingId: string,
   ): Promise<ServiceResponse> => {
-    const { bookingId, phoneNumber, provider } = payload;
-
-    if (!phoneNumber || !provider) {
-      return {
-        status: StatusCodes.BAD_REQUEST,
-        message:
-          "Phone number and provider (mtn, tgo, vdc) are required for Mobile Money charge",
-      };
-    }
-
     const booking = await Booking.findById(bookingId);
     if (!booking) {
       return { status: StatusCodes.NOT_FOUND, message: "Booking not found" };
@@ -114,14 +113,11 @@ export const createPaymentService = (deps: { paystack: any }) => {
     }
 
     const reference = newReference();
-
-    // Send Direct MoMo Charge via Paystack
-    const charge = await paystackService.chargeMobileMoney({
+    const init = await paystack.initializeTransaction({
       email: user.email,
       amount,
       reference,
-      phoneNumber,
-      provider,
+      channels: ["mobile_money", "card"],
       metadata: {
         bookingId: String(booking._id),
         passengerId: String(passengerId),
@@ -139,10 +135,10 @@ export const createPaymentService = (deps: { paystack: any }) => {
 
     return {
       status: StatusCodes.OK,
-      message: "USSD Prompt sent to device",
+      message: "Payment initialized",
       data: {
-        status: charge.status,
-        displayText: charge.displayText, // Instructions for the user (e.g., "Authorize prompt on phone")
+        authorizationUrl: init.authorizationUrl,
+        accessCode: init.accessCode,
         reference,
         amount,
       },
@@ -430,7 +426,7 @@ export const createPaymentService = (deps: { paystack: any }) => {
     const claimed = await PaymentTransaction.findOneAndUpdate(
       { _id: tx._id, escrowStatus: "held" },
       { $set: { escrowStatus: "refunding" } },
-      { returnDocument: "after"},
+      { returnDocument: "after" },
     );
     if (!claimed) {
       return {
