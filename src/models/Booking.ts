@@ -49,7 +49,9 @@ const BookingSchema = new mongoose.Schema(
       latitude: { type: Number },
       longitude: { type: Number },
     },
-    etaMinutes: { type: Number, default: null },
+    etaMinutes: { type: Number, default: null }, // van arrival at the pickup point
+    walkMinutes: { type: Number, default: null }, // passenger walk time to the point
+    waitMinutes: { type: Number, default: null }, // expected wait at the stop
 
     // Set once the "head to pickup" alert has been pushed, so it fires only once.
     pickupAlertSent: { type: Boolean, default: false },
