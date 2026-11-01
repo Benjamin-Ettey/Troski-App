@@ -3,11 +3,13 @@ export const calculateRouteFare = ({
   dropoffZone,
   distanceInKm,
   zonesConfig,
+  seats,
 }: {
   pickupZone: string;
   dropoffZone: string;
   distanceInKm: number;
   zonesConfig: any;
+  seats: number;
 }) => {
   const routeKey = `${pickupZone}-${dropoffZone}`;
   const reverseRouteKey = `${dropoffZone}-${pickupZone}`;
@@ -33,27 +35,37 @@ export const calculateRouteFare = ({
 
   // Platform fee on top
   const platformFee = 0.3;
-  let totalFare = fare + platformFee;
+  let totalFare = (fare + platformFee) * seats;
 
   // Round to nearest 0.5
   totalFare = Math.round(totalFare * 2) / 2;
 
   // Commission split
   const commissionRate = 0.1;
-  const commissionAmount = (totalFare - platformFee) * commissionRate;
-  const troskiEarnings = commissionAmount + platformFee;
-  const driverEarnings = totalFare - troskiEarnings;
+
+  const initPaymentToEscrow = totalFare - totalFare * 0.0195;
+
+  const finalFareAfterTroskiDeduction =
+    initPaymentToEscrow - initPaymentToEscrow * 0.1;
+
+  const driverPay =
+    finalFareAfterTroskiDeduction - finalFareAfterTroskiDeduction * 0.0195;
+
+  const troskiProfit = initPaymentToEscrow * commissionRate;
+
+  const paystackCharges = totalFare - (driverPay + troskiProfit);
 
   return {
     pickupZone,
     basePrice,
     distanceInKm: parseFloat(distanceInKm.toFixed(2)),
     finalFare: totalFare,
-    driverPay: parseFloat(driverEarnings.toFixed(2)),
-    troskiProfit: parseFloat(troskiEarnings.toFixed(2)),
+    driverPay: parseFloat(driverPay.toFixed(2)),
+    troskiProfit: parseFloat(troskiProfit.toFixed(2)),
+
     breakdown: {
-      commission: parseFloat(commissionAmount.toFixed(2)),
       platformFee,
+      paystackCharges: parseFloat(paystackCharges.toFixed(2)),
     },
   };
 };

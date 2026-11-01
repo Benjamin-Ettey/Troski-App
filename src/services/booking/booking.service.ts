@@ -79,51 +79,6 @@ export const expireStaleRequests = async (): Promise<void> => {
   }
 };
 
-const quoteFare = async (
-  pickup: LocationPoint,
-  destination: LocationPoint,
-  seats: number,
-) => {
-  let distanceInKm: number;
-  let etaMinutes: number | null = null;
-  let distanceSource: "google" | "straight-line" = "google";
-
-  try {
-    const road = await mapsService.getRoadDistance(
-      { lat: pickup.latitude, lng: pickup.longitude },
-      { lat: destination.latitude, lng: destination.longitude },
-    );
-    distanceInKm = road.distanceKm;
-    etaMinutes = road.durationMin;
-  } catch {
-    distanceInKm = haversineKm(
-      pickup.latitude,
-      pickup.longitude,
-      destination.latitude,
-      destination.longitude,
-    );
-    distanceSource = "straight-line";
-  }
-
-  const fare = calculateRouteFare({
-    pickupZone: pickup.zoneId,
-    dropoffZone: destination.zoneId,
-    distanceInKm,
-    zonesConfig,
-  });
-
-  const total = parseFloat((fare.finalFare * seats).toFixed(2));
-
-  return {
-    fare,
-    distanceKm: fare.distanceInKm,
-    total,
-    seats,
-    etaMinutes,
-    distanceSource,
-  };
-};
-
 export const estimateFareService = async (
   pickupLatitude: number,
   pickupLongitude: number,
@@ -155,21 +110,21 @@ export const estimateFareService = async (
     };
   }
 
-  const pickupPoint: LocationPoint = {
-    town: pickupTown.town,
-    zoneId: pickupTown.zoneId,
-    latitude: pickupLatitude,
-    longitude: pickupLongitude,
-  };
+  // Use straight-line distance matching the old calculateDistance implementation
+  const distanceInKm = haversineKm(
+    pickupLatitude,
+    pickupLongitude,
+    dropoffLatitude,
+    dropoffLongitude,
+  );
 
-  const destinationPoint: LocationPoint = {
-    town: dropoffTown.town,
-    zoneId: dropoffTown.zoneId,
-    latitude: dropoffLatitude,
-    longitude: dropoffLongitude,
-  };
-
-  const quote = await quoteFare(pickupPoint, destinationPoint, seats);
+  const fare = calculateRouteFare({
+    pickupZone: pickupTown.zoneId,
+    dropoffZone: dropoffTown.zoneId,
+    distanceInKm,
+    zonesConfig,
+    seats
+  });
 
   return {
     status: StatusCodes.OK,
@@ -178,11 +133,9 @@ export const estimateFareService = async (
       pickupTown: pickupTown.town,
       dropoffTown: dropoffTown.town,
       seats,
-      distanceKm: quote.distanceKm,
-      etaMinutes: quote.etaMinutes,
-      distanceSource: quote.distanceSource,
-      total: quote.total,
-      fare: quote.fare,
+      distanceKm: fare.distanceInKm,
+      distanceSource: "straight-line",
+      fare,
     },
   };
 };

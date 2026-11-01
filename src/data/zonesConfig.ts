@@ -5,126 +5,126 @@
 const zonesConfig = {
   // ACCRA
   ACCRA_CBD: {
-    baseFare: 1.5,
+    baseFare: 3.5,
     perKm: 0.95,
-    minFare: 6,
+    minFare: 8.0,
   },
   NORTH_ACC: {
-    baseFare: 2.1,
+    baseFare: 4.1,
     perKm: 0.85,
-    minFare: 7,
+    minFare: 9.0,
   },
   EAST_ACC: {
-    baseFare: 2.1,
+    baseFare: 4.1,
     perKm: 0.85,
-    minFare: 7,
+    minFare: 9.0,
   },
   WEST_ACC: {
-    baseFare: 2.5,
+    baseFare: 4.5,
     perKm: 0.8,
-    minFare: 8,
+    minFare: 10.0,
   },
   CENTRAL_ACC: {
-    baseFare: 1.5,
+    baseFare: 3.5,
     perKm: 0.8,
-    minFare: 6,
+    minFare: 8.0,
   },
 
   // KUMASI
   KUMASI_CBD: {
-    baseFare: 1.5,
+    baseFare: 3.5,
     perKm: 0.4,
-    minFare: 2.5,
+    minFare: 4.5,
   },
   KUMASI_NORTH: {
-    baseFare: 2.0,
+    baseFare: 4.0,
     perKm: 0.35,
-    minFare: 3.0,
+    minFare: 5.0,
   },
   KUMASI_SOUTH: {
-    baseFare: 2.0,
+    baseFare: 4.0,
     perKm: 0.35,
-    minFare: 3.0,
+    minFare: 5.0,
   },
   KUMASI_EAST: {
-    baseFare: 2.0,
+    baseFare: 4.0,
     perKm: 0.35,
-    minFare: 3.5,
+    minFare: 5.5,
   },
   KUMASI_WEST: {
-    baseFare: 2.0,
+    baseFare: 4.0,
     perKm: 0.35,
-    minFare: 3.5,
+    minFare: 5.5,
   },
 
   // TAKORADI
   TAKORADI_CORE: {
-    baseFare: 1.5,
+    baseFare: 3.5,
     perKm: 0.45,
-    minFare: 3.5,
+    minFare: 5.5,
   },
   TAKORADI_OUTSKIRTS: {
-    baseFare: 2.0,
+    baseFare: 4.0,
     perKm: 0.4,
-    minFare: 4.5,
+    minFare: 6.5,
   },
 
   // CAPE-COAST
   CAPE_COAST_CORE: {
-    baseFare: 1.5,
+    baseFare: 3.5,
     perKm: 0.45,
-    minFare: 3.5,
+    minFare: 5.5,
   },
   CAPE_COAST_OUTSKIRTS: {
-    baseFare: 2.0,
+    baseFare: 4.0,
     perKm: 0.4,
-    minFare: 4.5,
+    minFare: 6.5,
   },
 
   // TAMALE
   TAMALE_CORE: {
-    baseFare: 1.2,
+    baseFare: 3.2,
     perKm: 0.3,
-    minFare: 2.5,
+    minFare: 4.5,
   },
 
   // SUNYANI
   SUNYANI_CORE: {
-    baseFare: 1.2,
+    baseFare: 3.2,
     perKm: 0.3,
-    minFare: 2.5,
+    minFare: 4.5,
   },
 
   // HO
   HO_CORE: {
-    baseFare: 1.2,
+    baseFare: 3.2,
     perKm: 0.3,
-    minFare: 2.5,
+    minFare: 4.5,
   },
 
   // WA
   WA_CORE: {
-    baseFare: 1.2,
+    baseFare: 3.2,
     perKm: 0.3,
-    minFare: 2.5,
+    minFare: 4.5,
   },
 
   // BOLGATANGA
   BOLGA_CORE: {
-    baseFare: 1.2,
+    baseFare: 3.2,
     perKm: 0.3,
-    minFare: 2.5,
+    minFare: 4.5,
   },
 
   // TECHIMAN
   TECHIMAN_CORE: {
-    baseFare: 1.2,
+    baseFare: 3.2,
     perKm: 0.3,
-    minFare: 2.5,
+    minFare: 4.5,
   },
 
   // OTHERS
-  REGIONAL_RURAL: { baseFare: 1.0, perKm: 0.35, minFare: 2.0 },
+  REGIONAL_RURAL: { baseFare: 3.0, perKm: 0.35, minFare: 4.0 },
 
   routes: {
     "ACCRA_CBD-NORTH_ACC": 3.5,

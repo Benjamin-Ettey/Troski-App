@@ -1,3 +1,4 @@
+import { getDistance } from "geolib";
 import ghanaTownCoordinatesData from "../data/ghanaTownCoordinatesData";
 import type { LocationPoint } from "../types/booking.types";
 
@@ -53,11 +54,16 @@ export const resolvePlace = (input: {
 
 export const nearestTown = (lat: number, lng: number): LocationPoint | null => {
   let best: LocationPoint | null = null;
-  let bestDistance = Infinity;
+  let shortestDistance = Infinity;
+
   for (const record of townMap.values()) {
-    const d = haversineKm(lat, lng, record.latitude, record.longitude);
-    if (d < bestDistance) {
-      bestDistance = d;
+    const distance = getDistance(
+      { latitude: lat, longitude: lng },
+      { latitude: record.latitude, longitude: record.longitude },
+    );
+
+    if (distance < shortestDistance) {
+      shortestDistance = distance;
       best = {
         town: record.name,
         zoneId: record.zoneID,
@@ -66,6 +72,7 @@ export const nearestTown = (lat: number, lng: number): LocationPoint | null => {
       };
     }
   }
+
   return best;
 };
 
