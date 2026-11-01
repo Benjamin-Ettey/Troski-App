@@ -18,20 +18,10 @@ import {
 const clampSeats = (n: number, max: number): number =>
   Math.max(0, Math.min(max, Math.floor(n)));
 
-// A run whose GPS hasn't updated within this window is treated as stale (the
-// driver likely closed the app without ending the run). Active runs stream
-// location every few seconds, so this stays fresh for genuine runs.
 const STALE_RUN_MINUTES = 2;
 const staleRunCutoff = (): Date =>
   new Date(Date.now() - STALE_RUN_MINUTES * 60 * 1000);
 
-/**
- * End "ghost" runs: active runs that stopped reporting GPS. Marks the run ended
- * and the driver offline so they can't be matched to a passenger on a frozen,
- * out-of-date position. Runs lazily before each nearby search so the collection
- * self-heals without a background job (a scheduled sweep is the scale-time
- * upgrade).
- */
 export const endStaleRuns = async (): Promise<void> => {
   const cutoff = staleRunCutoff();
   const stale = await DriverRun.find({
@@ -44,8 +34,6 @@ export const endStaleRuns = async (): Promise<void> => {
   const runIds = stale.map((r) => r._id);
   const driverIds = stale.map((r) => r.driver);
 
-  // Resolve attached bookings. Ghost end: don't auto-pay ambiguous in-progress
-  // trips — only expire + refund passengers who never actually boarded.
   for (const run of stale) {
     await resolveRunBookings(String(run._id), { completeInProgress: false });
   }
@@ -61,11 +49,6 @@ export const endStaleRuns = async (): Promise<void> => {
   await Promise.all(runIds.map((id) => geoRemove(String(id)).catch(() => {})));
 };
 
-/**
- * Driver starts a run: declares a From -> To route, goes online, and begins
- * sharing location. Route geometry is fetched best-effort (null without a maps
- * key). One active run per driver.
- */
 export const startRunService = async (
   driverUserId: Types.ObjectId,
   payload: {
@@ -79,14 +62,12 @@ export const startRunService = async (
   },
 ): Promise<ServiceResponse> => {
   const profile = await DriverProfile.findOne({ user: driverUserId });
-  if (!profile) {
+  if (!profile)
     return {
       status: StatusCodes.NOT_FOUND,
       message: "Driver profile not found",
     };
-  }
 
-  // Route endpoints may be dropped pins (coords) or town names.
   const origin = resolvePlace({
     lat: payload.fromLat,
     lng: payload.fromLng,
@@ -97,18 +78,16 @@ export const startRunService = async (
     lng: payload.toLng,
     town: payload.toTown,
   });
-  if (!origin) {
+  if (!origin)
     return {
       status: StatusCodes.BAD_REQUEST,
       message: "A start location (coordinates or town) is required",
     };
-  }
-  if (!destination) {
+  if (!destination)
     return {
       status: StatusCodes.BAD_REQUEST,
       message: "A destination (coordinates or town) is required",
     };
-  }
   if (
     origin.latitude === destination.latitude &&
     origin.longitude === destination.longitude
@@ -123,14 +102,13 @@ export const startRunService = async (
     driver: profile._id,
     status: "active",
   });
-  if (existing) {
+  if (existing)
     return {
       status: StatusCodes.CONFLICT,
       message:
         "You already have an active run. End it before starting another.",
       data: { runId: existing._id },
     };
-  }
 
   const vehicle = await Vehicle.findOne({
     driver: profile._id,
@@ -142,7 +120,6 @@ export const startRunService = async (
       ? clampSeats(payload.availableSeats, capacity)
       : capacity;
 
-  // Best-effort route geometry (ignored if maps is unconfigured/unavailable).
   let routePolyline: string | null = null;
   let routeDistanceKm: number | null = null;
   try {
@@ -152,9 +129,7 @@ export const startRunService = async (
     );
     routePolyline = directions.polyline;
     routeDistanceKm = directions.distanceKm;
-  } catch {
-    // No maps key / provider error — continue without geometry.
-  }
+  } catch {}
 
   const run = await DriverRun.create({
     driver: profile._id,
@@ -178,7 +153,6 @@ export const startRunService = async (
   profile.lastSeenAt = new Date();
   await profile.save();
 
-  // Seed the Redis GEO index (no-op without Redis).
   void geoUpsert(String(run._id), origin.longitude, origin.latitude).catch(
     () => {},
   );
@@ -200,44 +174,31 @@ const getActiveRun = async (driverUserId: Types.ObjectId) => {
   return { profile, run };
 };
 
-/**
- * High-frequency GPS heartbeat: update live position (and optionally seats).
- */
 export const updateLocationService = async (
   driverUserId: Types.ObjectId,
-  payload: { latitude: number; longitude: number; availableSeats?: number },
+  payload: { latitude: number; longitude: number },
 ): Promise<ServiceResponse> => {
   const { profile, run } = await getActiveRun(driverUserId);
-  if (!profile) {
+  if (!profile)
     return {
       status: StatusCodes.NOT_FOUND,
       message: "Driver profile not found",
     };
-  }
-  if (!run) {
-    return { status: StatusCodes.NOT_FOUND, message: "No active run" };
-  }
+  if (!run) return { status: StatusCodes.NOT_FOUND, message: "No active run" };
 
   run.currentLocation = {
     type: "Point",
     coordinates: [payload.longitude, payload.latitude],
   };
   run.lastLocationAt = new Date();
-  if (payload.availableSeats != null) {
-    run.availableSeats = clampSeats(payload.availableSeats, run.totalSeats);
-  }
   await run.save();
 
   profile.lastSeenAt = new Date();
   await profile.save();
 
-  // Update the Redis GEO index (no-op without Redis; fire-and-forget so the
-  // high-frequency heartbeat isn't blocked on Redis).
   void geoUpsert(String(run._id), payload.longitude, payload.latitude).catch(
     () => {},
   );
-
-  // Push the new position to any passengers tracking this run (+ pickup alerts).
   await broadcastRunLocation(run);
 
   return {
@@ -250,24 +211,17 @@ export const updateLocationService = async (
   };
 };
 
-/**
- * Update available seats as passengers board/alight. Accepts either an absolute
- * `availableSeats` or a relative `delta` (e.g. -1 when someone boards).
- */
 export const updateSeatsService = async (
   driverUserId: Types.ObjectId,
   payload: { availableSeats?: number; delta?: number },
 ): Promise<ServiceResponse> => {
   const { profile, run } = await getActiveRun(driverUserId);
-  if (!profile) {
+  if (!profile)
     return {
       status: StatusCodes.NOT_FOUND,
       message: "Driver profile not found",
     };
-  }
-  if (!run) {
-    return { status: StatusCodes.NOT_FOUND, message: "No active run" };
-  }
+  if (!run) return { status: StatusCodes.NOT_FOUND, message: "No active run" };
 
   const next =
     payload.availableSeats != null
@@ -283,20 +237,16 @@ export const updateSeatsService = async (
   };
 };
 
-/** End the active run and go offline. */
 export const endRunService = async (
   driverUserId: Types.ObjectId,
 ): Promise<ServiceResponse> => {
   const { profile, run } = await getActiveRun(driverUserId);
-  if (!profile) {
+  if (!profile)
     return {
       status: StatusCodes.NOT_FOUND,
       message: "Driver profile not found",
     };
-  }
-  if (!run) {
-    return { status: StatusCodes.NOT_FOUND, message: "No active run" };
-  }
+  if (!run) return { status: StatusCodes.NOT_FOUND, message: "No active run" };
 
   run.status = "ended";
   run.endedAt = new Date();
@@ -306,9 +256,6 @@ export const endRunService = async (
   await profile.save();
 
   void geoRemove(String(run._id)).catch(() => {});
-
-  // Driver ended normally: complete passengers mid-trip (settle fares) and
-  // expire + refund any who were matched but never boarded.
   await resolveRunBookings(String(run._id), { completeInProgress: true });
 
   return {
@@ -322,23 +269,15 @@ export const getActiveRunService = async (
   driverUserId: Types.ObjectId,
 ): Promise<ServiceResponse> => {
   const { profile, run } = await getActiveRun(driverUserId);
-  if (!profile) {
+  if (!profile)
     return {
       status: StatusCodes.NOT_FOUND,
       message: "Driver profile not found",
     };
-  }
-  if (!run) {
-    return { status: StatusCodes.NOT_FOUND, message: "No active run" };
-  }
+  if (!run) return { status: StatusCodes.NOT_FOUND, message: "No active run" };
   return { status: StatusCodes.OK, message: "Active run", data: { run } };
 };
 
-/**
- * Find active runs near a point that have seats and (optionally) head to a given
- * destination zone. Sorted nearest-first by the 2dsphere index. Used by the
- * Phase 4 matcher.
- */
 export const findNearbyRuns = async (opts: {
   lat: number;
   lng: number;
@@ -347,23 +286,19 @@ export const findNearbyRuns = async (opts: {
   radiusKm?: number;
   limit?: number;
 }) => {
-  // Self-heal first so we never match a passenger to a ghost run.
   await endStaleRuns();
 
   const radiusKm = opts.radiusKm ?? 5;
   const limit = opts.limit ?? 20;
 
-  // Filters applied regardless of how proximity is resolved.
   const baseFilter: Record<string, unknown> = {
     status: "active",
     availableSeats: { $gte: opts.minSeats ?? 1 },
     lastLocationAt: { $gte: staleRunCutoff() },
   };
-  if (opts.destinationZone) {
+  if (opts.destinationZone)
     baseFilter["destination.zoneId"] = opts.destinationZone;
-  }
 
-  // Fast path: Redis GEO resolves proximity, Mongo applies the rest.
   if (isRedisEnabled()) {
     const ids = await geoNearby(opts.lng, opts.lat, radiusKm);
     if (ids) {
@@ -372,7 +307,6 @@ export const findNearbyRuns = async (opts: {
     }
   }
 
-  // Default: MongoDB 2dsphere $near (single node).
   return DriverRun.find({
     ...baseFilter,
     currentLocation: {

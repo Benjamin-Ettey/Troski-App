@@ -7,21 +7,14 @@ import DriverRun from "../../models/DriverRun";
 import { ServiceResponse } from "../auth/local/auth.service";
 import { mapsService } from "../maps/maps.service";
 import { publish, demandChannel } from "../realtime/sse";
-import { toCell, formClusters, type DemandItem } from "./demand.core";
+import { toCell, formClusters, type DemandItem } from "../../jobs/demand.core";
 import type { LocationPoint } from "../../types/booking.types";
 
-// Only recent demand is clustered; older unmet requests are considered stale.
 const DEMAND_WINDOW_MIN = 30;
-// How far a driver will see demand clusters from their current position.
 const DRIVER_DEMAND_RADIUS_KM = 8;
-
 const demandWindowCutoff = (): Date =>
   new Date(Date.now() - DEMAND_WINDOW_MIN * 60 * 1000);
 
-/**
- * Record an unmet ride request (no van was heading that way). Tagged with its
- * H3 cell so it can be clustered. Called by the matcher on a no-candidate result.
- */
 export const recordDemand = async (
   passengerId: Types.ObjectId,
   pickup: { lat: number; lng: number; zoneId?: string },
@@ -47,13 +40,7 @@ export const recordDemand = async (
   });
 };
 
-/**
- * Cluster recent pending demand into new-route offers. Forms a DemandCluster for
- * every group of >= MIN_CLUSTER passengers sharing a destination + area.
- */
-export const runClustering = async (): Promise<{
-  clustersFormed: number;
-}> => {
+export const runClustering = async (): Promise<{ clustersFormed: number }> => {
   const pending = await DemandRequest.find({
     status: "pending",
     createdAt: { $gte: demandWindowCutoff() },
@@ -77,7 +64,6 @@ export const runClustering = async (): Promise<{
   let clustersFormed = 0;
 
   for (const cluster of clusters) {
-    // Representative destination (all members share the zone).
     const rep = byId.get(cluster.requestIds[0]);
     const [doc] = await DemandCluster.create([
       {
@@ -97,17 +83,42 @@ export const runClustering = async (): Promise<{
         status: "open",
       },
     ]);
+
     await DemandRequest.updateMany(
       { _id: { $in: cluster.requestIds } },
       { $set: { status: "clustered", cluster: doc._id } },
     );
     clustersFormed++;
+
+    // Notify drivers if 5 or more passengers form a cluster
+    if (cluster.passengerCount >= 5) {
+      const nearbyRuns = await DriverRun.find({
+        status: "active",
+        currentLocation: {
+          $near: {
+            $geometry: {
+              type: "Point",
+              coordinates: [cluster.centroid.lng, cluster.centroid.lat],
+            },
+            $maxDistance: DRIVER_DEMAND_RADIUS_KM * 1000,
+          },
+        },
+      }).select("driver");
+
+      for (const run of nearbyRuns) {
+        publish(`driver_${run.driver}`, "high_demand_alert", {
+          clusterId: doc._id,
+          passengerCount: cluster.passengerCount,
+          location: doc.centroid?.coordinates,
+          destinationTown: doc.destination?.town,
+        });
+      }
+    }
   }
 
   return { clustersFormed };
 };
 
-/** A passenger checks the status of their demand request. */
 export const getDemandStatusService = async (
   passengerId: Types.ObjectId,
   demandId: string,
@@ -116,34 +127,35 @@ export const getDemandStatusService = async (
     "cluster",
     "status passengerCount destination run",
   );
-  if (!demand) {
-    return { status: StatusCodes.NOT_FOUND, message: "Demand request not found" };
-  }
-  if (String(demand.passenger) !== String(passengerId)) {
+  if (!demand)
+    return {
+      status: StatusCodes.NOT_FOUND,
+      message: "Demand request not found",
+    };
+  if (String(demand.passenger) !== String(passengerId))
     return { status: StatusCodes.FORBIDDEN, message: "Not your request" };
-  }
-  return {
-    status: StatusCodes.OK,
-    message: "Demand status",
-    data: { demand },
-  };
+  return { status: StatusCodes.OK, message: "Demand status", data: { demand } };
 };
 
-/** Open demand clusters near the driver's current position. */
 export const listDemandForDriverService = async (
   driverUserId: Types.ObjectId,
 ): Promise<ServiceResponse> => {
   const profile = await DriverProfile.findOne({ user: driverUserId });
-  if (!profile) {
-    return { status: StatusCodes.NOT_FOUND, message: "Driver profile not found" };
-  }
-  const run = await DriverRun.findOne({ driver: profile._id, status: "active" });
-  if (!run) {
+  if (!profile)
+    return {
+      status: StatusCodes.NOT_FOUND,
+      message: "Driver profile not found",
+    };
+
+  const run = await DriverRun.findOne({
+    driver: profile._id,
+    status: "active",
+  });
+  if (!run)
     return {
       status: StatusCodes.FORBIDDEN,
       message: "Start a run to see demand near you",
     };
-  }
 
   const [lng, lat] = run.currentLocation!.coordinates as number[];
   const clusters = await DemandCluster.find({
@@ -163,28 +175,27 @@ export const listDemandForDriverService = async (
   };
 };
 
-/**
- * Driver accepts a demand cluster: their active run is redirected to the
- * cluster's destination, the cluster is claimed, and the waiting passengers are
- * told a van is now coming (they can re-match to it).
- */
 export const acceptDemandService = async (
   driverUserId: Types.ObjectId,
   clusterId: string,
 ): Promise<ServiceResponse> => {
   const profile = await DriverProfile.findOne({ user: driverUserId });
-  if (!profile) {
-    return { status: StatusCodes.NOT_FOUND, message: "Driver profile not found" };
-  }
-  const run = await DriverRun.findOne({ driver: profile._id, status: "active" });
-  if (!run) {
+  if (!profile)
+    return {
+      status: StatusCodes.NOT_FOUND,
+      message: "Driver profile not found",
+    };
+
+  const run = await DriverRun.findOne({
+    driver: profile._id,
+    status: "active",
+  });
+  if (!run)
     return {
       status: StatusCodes.BAD_REQUEST,
       message: "You need an active run to accept demand",
     };
-  }
 
-  // Atomic claim so only one driver takes a cluster.
   const cluster = await DemandCluster.findOneAndUpdate(
     { _id: clusterId, status: "open" },
     {
@@ -197,14 +208,12 @@ export const acceptDemandService = async (
     },
     { new: true },
   );
-  if (!cluster) {
+  if (!cluster)
     return {
       status: StatusCodes.CONFLICT,
       message: "This demand is no longer available",
     };
-  }
 
-  // Redirect the run to the cluster's destination.
   run.destination = {
     town: cluster.destination?.town ?? "Destination",
     zoneId: cluster.destination?.zoneId as string,
@@ -222,12 +231,9 @@ export const acceptDemandService = async (
     );
     run.routePolyline = dir.polyline;
     run.routeDistanceKm = dir.distanceKm;
-  } catch {
-    // No maps key — leave previous geometry.
-  }
+  } catch {}
   await run.save();
 
-  // Notify each waiting passenger a van is now coming; they re-match to it.
   const requests = await DemandRequest.find({ cluster: cluster._id });
   for (const req of requests) {
     req.status = "served";

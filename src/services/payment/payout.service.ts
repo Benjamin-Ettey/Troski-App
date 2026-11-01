@@ -68,9 +68,7 @@ export const createPayoutService = (deps: { paystack: PayoutPaystack }) => {
   const { paystack } = deps;
 
   /** Ensure the driver has a Paystack transfer recipient; create + cache it. */
-  const ensureRecipient = async (
-    profile: any,
-  ): Promise<string | null> => {
+  const ensureRecipient = async (profile: any): Promise<string | null> => {
     if (profile.transferRecipientCode) return profile.transferRecipientCode;
     if (!profile.momoNumber) return null;
 
@@ -214,7 +212,9 @@ export const createPayoutService = (deps: { paystack: PayoutPaystack }) => {
     const results: PayoutResult[] = [];
 
     for (const wallet of wallets) {
-      const driverId = (wallet.key as string).slice(DRIVER_WALLET_PREFIX.length);
+      const driverId = (wallet.key as string).slice(
+        DRIVER_WALLET_PREFIX.length,
+      );
       const result = await payoutDriver(driverId);
       if (result.ok) paid++;
       else if (result.failed) failed++;

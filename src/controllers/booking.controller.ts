@@ -1,4 +1,5 @@
 import { Request, Response } from "express";
+import { StatusCodes } from "http-status-codes";
 import * as bookingService from "../services/booking/booking.service";
 import { matchRideService } from "../services/booking/match.service";
 import { getDemandStatusService } from "../services/booking/demand.service";
@@ -8,12 +9,11 @@ import Booking from "../models/Booking";
 import DriverProfile from "../models/DriverProfile";
 import DriverRun from "../models/DriverRun";
 import type { CancelledBy } from "../types/booking.types";
+import {
+  canAccessRideDetails,
+  getBookingRideDetailsService,
+} from "../services/booking/booking.service";
 
-/**
- * Live-tracking SSE stream for a booking. The passenger (or the assigned driver)
- * subscribes and receives `van_location` + `head_to_pickup` events as the van
- * reports GPS. Kept open until the client disconnects.
- */
 export const trackBooking = async (
   req: Request,
   res: Response,
@@ -21,7 +21,7 @@ export const trackBooking = async (
   const bookingId = req.params.id as string;
   const booking = await Booking.findById(bookingId);
   if (!booking) {
-    res.status(404).json({ message: "Booking not found" });
+    res.status(StatusCodes.NOT_FOUND).json({ message: "Booking not found" });
     return;
   }
 
@@ -33,14 +33,16 @@ export const trackBooking = async (
     isDriver = !!profile && String(booking.driver) === String(profile._id);
   }
   if (!isPassenger && !isDriver) {
-    res.status(403).json({ message: "You are not allowed to track this booking" });
+    res
+      .status(StatusCodes.FORBIDDEN)
+      .json({ message: "You are not allowed to track this booking" });
     return;
   }
 
   subscribe(bookingChannel(bookingId), res);
 
-  // Send an initial snapshot so the map isn't blank before the next GPS tick.
-  if (booking.run) {
+  // ENFORCEMENT: Only emit the initial GPS state if payment allows
+  if (booking.run && canAccessRideDetails(booking)) {
     const run = await DriverRun.findById(booking.run);
     if (run?.currentLocation?.coordinates) {
       sendTo(res, "van_location", {
@@ -56,12 +58,11 @@ export const trackBooking = async (
   }
 };
 
-export const matchRide = async (
-  req: Request,
-  res: Response,
-): Promise<void> => {
+export const matchRide = async (req: Request, res: Response): Promise<void> => {
   const result = await matchRideService(req.user!._id, req.body);
-  res.status(result.status).json({ message: result.message, data: result.data });
+  res
+    .status(result.status)
+    .json({ message: result.message, data: result.data });
 };
 
 export const getDemandStatus = async (
@@ -72,39 +73,46 @@ export const getDemandStatus = async (
     req.user!._id,
     req.params.id as string,
   );
-  res.status(result.status).json({ message: result.message, data: result.data });
+  res
+    .status(result.status)
+    .json({ message: result.message, data: result.data });
 };
 
 export const estimateFare = async (
   req: Request,
   res: Response,
 ): Promise<void> => {
-  const { pickupTown, destinationTown, seats } = req.body;
-  const result = await bookingService.estimateFareService(
-    pickupTown,
-    destinationTown,
+  const {
+    pickupLatitude,
+    pickupLongitude,
+    dropoffLatitude,
+    dropoffLongitude,
     seats,
-  );
-  res.status(result.status).json({ message: result.message, data: result.data });
-};
+  } = req.body;
 
-export const createBooking = async (
-  req: Request,
-  res: Response,
-): Promise<void> => {
-  const result = await bookingService.createBookingService(
-    req.user!._id,
-    req.body,
-  );
-  res.status(result.status).json({ message: result.message, data: result.data });
-};
+  if (
+    !pickupLatitude ||
+    !pickupLongitude ||
+    !dropoffLatitude ||
+    !dropoffLongitude
+  ) {
+    res.status(StatusCodes.BAD_REQUEST).json({
+      message: "Please provide all pickup and dropoff coordinates",
+    });
+    return;
+  }
 
-export const getAvailableRequests = async (
-  req: Request,
-  res: Response,
-): Promise<void> => {
-  const result = await bookingService.getAvailableRequestsService(req.user!._id);
-  res.status(result.status).json({ message: result.message, data: result.data });
+  const result = await bookingService.estimateFareService(
+    Number(pickupLatitude),
+    Number(pickupLongitude),
+    Number(dropoffLatitude),
+    Number(dropoffLongitude),
+    seats ? Number(seats) : 1,
+  );
+
+  res
+    .status(result.status)
+    .json({ message: result.message, data: result.data });
 };
 
 export const acceptBooking = async (
@@ -115,7 +123,22 @@ export const acceptBooking = async (
     req.user!._id,
     req.params.id as string,
   );
-  res.status(result.status).json({ message: result.message, data: result.data });
+  res
+    .status(result.status)
+    .json({ message: result.message, data: result.data });
+};
+
+export const declineBooking = async (
+  req: Request,
+  res: Response,
+): Promise<void> => {
+  const result = await bookingService.declineBookingService(
+    req.user!._id,
+    req.params.id as string,
+  );
+  res
+    .status(result.status)
+    .json({ message: result.message, data: result.data });
 };
 
 export const updateBookingStatus = async (
@@ -127,7 +150,9 @@ export const updateBookingStatus = async (
     req.params.id as string,
     req.body.status,
   );
-  res.status(result.status).json({ message: result.message, data: result.data });
+  res
+    .status(result.status)
+    .json({ message: result.message, data: result.data });
 };
 
 export const cancelBooking = async (
@@ -140,7 +165,9 @@ export const cancelBooking = async (
     req.params.id as string,
     req.body.reason,
   );
-  res.status(result.status).json({ message: result.message, data: result.data });
+  res
+    .status(result.status)
+    .json({ message: result.message, data: result.data });
 };
 
 export const getMyBookings = async (
@@ -156,7 +183,9 @@ export const getMyBookings = async (
       limit: req.query.limit ? Number(req.query.limit) : undefined,
     },
   );
-  res.status(result.status).json({ message: result.message, data: result.data });
+  res
+    .status(result.status)
+    .json({ message: result.message, data: result.data });
 };
 
 export const getBookingById = async (
@@ -168,5 +197,20 @@ export const getBookingById = async (
     req.user!.role,
     req.params.id as string,
   );
-  res.status(result.status).json({ message: result.message, data: result.data });
+  res
+    .status(result.status)
+    .json({ message: result.message, data: result.data });
+};
+
+export const getBookingRideDetails = async (
+  req: Request,
+  res: Response,
+): Promise<void> => {
+  const result = await getBookingRideDetailsService(
+    req.user!._id,
+    req.params.id as string,
+  );
+  res
+    .status(result.status)
+    .json({ message: result.message, data: result.data });
 };

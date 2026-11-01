@@ -11,14 +11,10 @@ import { driverWalletKey } from "./ledger.core";
 import { calculateRouteFare } from "../fare/fare.service";
 import zonesConfig from "../../data/zonesConfig";
 import { paystackService, type PaystackService } from "./paystack.service";
+import { publish, bookingChannel } from "../realtime/sse";
 
 const round2 = (n: number): number => Math.round(n * 100) / 100;
 
-/**
- * Split a held amount into the driver's share and the platform's share using
- * the fare algorithm's ratio, guaranteeing the two parts sum exactly to the
- * held amount (no rounding leakage).
- */
 export const splitEarnings = (
   heldAmount: number,
   pickupZone: string,
@@ -38,8 +34,6 @@ export const splitEarnings = (
   return { driverShare, platformShare };
 };
 
-// Only the parts of the Paystack client this service needs — so tests can pass
-// a small fake.
 export type PaymentPaystack = Pick<
   PaystackService,
   | "initializeTransaction"
@@ -48,12 +42,9 @@ export type PaymentPaystack = Pick<
   | "verifyWebhookSignature"
 >;
 
-// Bookings that can still be paid for.
-const CHARGEABLE_BOOKING_STATUSES = ["requested", "accepted", "arrived"];
-
+const CHARGEABLE_BOOKING_STATUSES = ["accepted", "arrived"];
 const newReference = (): string =>
   `troski_${crypto.randomBytes(10).toString("hex")}`;
-
 const channelToMethod = (
   channel: string | null,
 ): "momo" | "card" | undefined => {
@@ -65,30 +56,24 @@ const channelToMethod = (
 export const createPaymentService = (deps: { paystack: PaymentPaystack }) => {
   const { paystack } = deps;
 
-  /**
-   * Start a charge for a booking. Creates a pending PaymentTransaction and
-   * returns the Paystack checkout URL the passenger pays through.
-   */
   const initializeCharge = async (
     passengerId: Types.ObjectId,
     bookingId: string,
   ): Promise<ServiceResponse> => {
     const booking = await Booking.findById(bookingId);
-    if (!booking) {
+    if (!booking)
       return { status: StatusCodes.NOT_FOUND, message: "Booking not found" };
-    }
-    if (String(booking.passenger) !== String(passengerId)) {
+    if (String(booking.passenger) !== String(passengerId))
       return {
         status: StatusCodes.FORBIDDEN,
         message: "You cannot pay for a booking that is not yours",
       };
-    }
-    if (booking.paymentStatus === "escrow_held") {
+    if (booking.paymentStatus === "escrow_held")
       return {
         status: StatusCodes.CONFLICT,
         message: "This booking is already paid for",
       };
-    }
+
     if (!CHARGEABLE_BOOKING_STATUSES.includes(booking.status as string)) {
       return {
         status: StatusCodes.BAD_REQUEST,
@@ -96,19 +81,41 @@ export const createPaymentService = (deps: { paystack: PaymentPaystack }) => {
       };
     }
 
+    if (booking.paymentMethod === "cash") {
+      return {
+        status: StatusCodes.BAD_REQUEST,
+        message: "Cannot initialize digital payment for a cash booking",
+      };
+    }
+
     const amount = booking.fareEstimate as number;
-    if (!amount || amount <= 0) {
+    if (!amount || amount <= 0)
       return {
         status: StatusCodes.BAD_REQUEST,
         message: "Booking has no payable fare",
       };
-    }
 
     const user = await User.findById(passengerId).select("email");
-    if (!user?.email) {
+    if (!user?.email)
       return {
         status: StatusCodes.BAD_REQUEST,
         message: "Passenger has no email for payment receipts",
+      };
+
+    const activeTransaction = await PaymentTransaction.findOne({
+      booking: booking._id,
+      status: { $in: ["pending", "success"] },
+      escrowStatus: { $ne: "refunded" },
+    });
+
+    if (activeTransaction) {
+      return {
+        status: StatusCodes.CONFLICT,
+        message: "An active payment process already exists for this booking",
+        data: {
+          reference: activeTransaction.reference,
+          status: activeTransaction.status,
+        },
       };
     }
 
@@ -145,40 +152,30 @@ export const createPaymentService = (deps: { paystack: PaymentPaystack }) => {
     };
   };
 
-  /**
-   * Confirm a payment with Paystack and, if successful, place the funds into
-   * escrow (ledger: gateway debit, escrow credit) and mark the booking
-   * escrow_held. Idempotent and race-safe: only one caller ever posts the
-   * escrow entry for a given reference.
-   */
   const applyChargeSuccessByReference = async (
     reference: string,
   ): Promise<ServiceResponse> => {
     const tx = await PaymentTransaction.findOne({ reference });
-    if (!tx) {
+    if (!tx)
       return { status: StatusCodes.NOT_FOUND, message: "Payment not found" };
-    }
-    if (tx.escrowStatus === "held") {
+    if (tx.escrowStatus === "held")
       return {
         status: StatusCodes.OK,
-        message: "Payment already held in escrow",
+        message: "Payment already held",
         data: { reference, escrowStatus: "held" },
       };
-    }
 
-    // Atomic claim: only the caller that flips none -> processing proceeds.
     const claimed = await PaymentTransaction.findOneAndUpdate(
       { reference, escrowStatus: "none" },
       { $set: { escrowStatus: "processing" } },
       { returnDocument: "after" },
     );
-    if (!claimed) {
+    if (!claimed)
       return {
         status: StatusCodes.OK,
-        message: "Payment is already being processed",
+        message: "Payment processing",
         data: { reference, escrowStatus: tx.escrowStatus },
       };
-    }
 
     const verify = await paystack.verifyTransaction(reference);
 
@@ -192,9 +189,7 @@ export const createPaymentService = (deps: { paystack: PaymentPaystack }) => {
         message: `Payment not completed (${verify.status})`,
       };
     }
-
     if (Math.abs(verify.amount - (claimed.amount as number)) > 0.005) {
-      // Amount doesn't match what we asked for — do not hold funds.
       await PaymentTransaction.updateOne(
         { _id: claimed._id },
         { $set: { status: "success", escrowStatus: "none" } },
@@ -205,6 +200,7 @@ export const createPaymentService = (deps: { paystack: PaymentPaystack }) => {
       };
     }
 
+    const booking = await Booking.findById(claimed.booking);
     const session = await mongoose.startSession();
     try {
       await session.withTransaction(async () => {
@@ -254,7 +250,6 @@ export const createPaymentService = (deps: { paystack: PaymentPaystack }) => {
         );
       });
     } catch (err) {
-      // Release the claim so a retry (webhook/poll) can try again.
       await PaymentTransaction.updateOne(
         { _id: claimed._id, escrowStatus: "processing" },
         { $set: { escrowStatus: "none" } },
@@ -264,6 +259,27 @@ export const createPaymentService = (deps: { paystack: PaymentPaystack }) => {
       session.endSession();
     }
 
+    // NOTIFY: Broadcast the unlock event to trigger a data refetch on the client
+    if (claimed.booking) {
+      publish(bookingChannel(String(claimed.booking)), "ride_unlocked", {
+        bookingId: claimed.booking,
+      });
+    }
+
+    const terminalStatuses = ["cancelled", "no_drivers", "expired"];
+    if (booking && terminalStatuses.includes(booking.status as string)) {
+      console.warn(
+        `Late payment detected for ${booking.status} booking ${booking._id}. Triggering auto-refund.`,
+      );
+      await refundForBooking(String(booking._id));
+
+      return {
+        status: StatusCodes.OK,
+        message: `Payment received but booking was already ${booking.status}. A refund has been automatically initiated.`,
+        data: { reference, escrowStatus: "refunded", amount: claimed.amount },
+      };
+    }
+
     return {
       status: StatusCodes.OK,
       message: "Payment received and held in escrow",
@@ -271,58 +287,45 @@ export const createPaymentService = (deps: { paystack: PaymentPaystack }) => {
     };
   };
 
-  /**
-   * Release a booking's escrowed funds to the driver's wallet on ride
-   * completion. Ledger: escrow debit (full held amount), driver_wallet credit
-   * (driver share), platform_revenue credit (platform share). Idempotent and
-   * race-safe via a held -> releasing claim. No-op for rides with no escrowed
-   * payment (e.g. off-platform cash).
-   */
   const releaseEscrowForBooking = async (
     bookingId: string,
   ): Promise<ServiceResponse> => {
     const tx = await PaymentTransaction.findOne({ booking: bookingId });
-    if (!tx) {
+    if (!tx)
       return {
         status: StatusCodes.OK,
         message: "No escrowed payment to release",
       };
-    }
-    if (tx.escrowStatus === "released") {
+    if (tx.escrowStatus === "released")
       return {
         status: StatusCodes.OK,
         message: "Payment already released",
         data: { reference: tx.reference, escrowStatus: "released" },
       };
-    }
-    if (tx.escrowStatus !== "held") {
+    if (tx.escrowStatus !== "held")
       return {
         status: StatusCodes.CONFLICT,
         message: `Cannot release funds from state '${tx.escrowStatus}'`,
       };
-    }
 
     const booking = await Booking.findById(bookingId);
-    if (!booking?.driver) {
+    if (!booking?.driver)
       return {
         status: StatusCodes.BAD_REQUEST,
         message: "Cannot release: booking has no assigned driver",
       };
-    }
 
-    // Atomic claim so only one caller releases.
     const claimed = await PaymentTransaction.findOneAndUpdate(
       { _id: tx._id, escrowStatus: "held" },
       { $set: { escrowStatus: "releasing" } },
       { returnDocument: "after" },
     );
-    if (!claimed) {
+    if (!claimed)
       return {
         status: StatusCodes.OK,
         message: "Release already in progress",
         data: { reference: tx.reference },
       };
-    }
 
     const held = claimed.amount as number;
     const { driverShare, platformShare } = splitEarnings(
@@ -358,7 +361,6 @@ export const createPaymentService = (deps: { paystack: PaymentPaystack }) => {
           { $set: { escrowStatus: "released" } },
           { session },
         );
-
         await Booking.updateOne(
           { _id: bookingId },
           { $set: { paymentStatus: "released" } },
@@ -387,62 +389,25 @@ export const createPaymentService = (deps: { paystack: PaymentPaystack }) => {
     };
   };
 
-  /**
-   * Refund a booking's escrowed funds to the passenger on cancellation. Asks
-   * Paystack to refund to source, then reverses the escrow ledger (escrow debit,
-   * gateway credit — money leaving the platform back to the passenger) and marks
-   * the booking refunded. Idempotent and race-safe via a held -> refunding claim.
-   * No-op when nothing is held (e.g. unpaid or cash rides).
-   */
   const refundForBooking = async (
     bookingId: string,
   ): Promise<ServiceResponse> => {
     const tx = await PaymentTransaction.findOne({ booking: bookingId });
-    if (!tx) {
-      return { status: StatusCodes.OK, message: "No payment to refund" };
-    }
-    if (tx.escrowStatus === "refunded") {
-      return {
-        status: StatusCodes.OK,
-        message: "Payment already refunded",
-        data: { reference: tx.reference, escrowStatus: "refunded" },
-      };
-    }
-    if (tx.escrowStatus === "released") {
-      return {
-        status: StatusCodes.CONFLICT,
-        message: "Funds were already released to the driver; cannot refund",
-      };
-    }
-    if (tx.escrowStatus !== "held") {
-      // Nothing is actually held (pending/none) — no money to return.
-      return {
-        status: StatusCodes.OK,
-        message: "No held funds to refund",
-        data: { escrowStatus: tx.escrowStatus },
-      };
-    }
+    if (!tx || tx.escrowStatus !== "held")
+      return { status: StatusCodes.OK, message: "No held funds to refund" };
 
     const claimed = await PaymentTransaction.findOneAndUpdate(
       { _id: tx._id, escrowStatus: "held" },
       { $set: { escrowStatus: "refunding" } },
       { returnDocument: "after" },
     );
-    if (!claimed) {
-      return {
-        status: StatusCodes.OK,
-        message: "Refund already in progress",
-        data: { reference: tx.reference },
-      };
-    }
+    if (!claimed)
+      return { status: StatusCodes.OK, message: "Refund already in progress" };
 
     const amount = claimed.amount as number;
 
     try {
-      // Ask Paystack to send the money back to source first; only reverse our
-      // books if Paystack accepts the refund request.
       await paystack.refund({ reference: claimed.reference });
-
       const session = await mongoose.startSession();
       try {
         await session.withTransaction(async () => {
@@ -463,7 +428,6 @@ export const createPaymentService = (deps: { paystack: PaymentPaystack }) => {
             { $set: { escrowStatus: "refunded" } },
             { session },
           );
-
           await Booking.updateOne(
             { _id: bookingId },
             { $set: { paymentStatus: "refunded" } },
@@ -474,7 +438,6 @@ export const createPaymentService = (deps: { paystack: PaymentPaystack }) => {
         session.endSession();
       }
     } catch (err) {
-      // Roll the claim back so it can be retried.
       await PaymentTransaction.updateOne(
         { _id: claimed._id, escrowStatus: "refunding" },
         { $set: { escrowStatus: "held" } },
@@ -484,42 +447,137 @@ export const createPaymentService = (deps: { paystack: PaymentPaystack }) => {
 
     return {
       status: StatusCodes.OK,
-      message: "Refund issued to passenger",
+      message:
+        "Refund initiated. The passenger will receive funds in their account shortly.",
       data: { reference: claimed.reference, amount },
     };
   };
 
-  /**
-   * Passenger-facing poll after checkout: authorize ownership, then confirm.
-   */
+  const applyCancellationPenalty = async (
+    bookingId: string,
+  ): Promise<ServiceResponse> => {
+    const tx = await PaymentTransaction.findOne({ booking: bookingId });
+    if (!tx || tx.escrowStatus !== "held")
+      return { status: StatusCodes.OK, message: "No held funds to penalize" };
+
+    const booking = await Booking.findById(bookingId);
+    if (!booking?.driver)
+      return {
+        status: StatusCodes.BAD_REQUEST,
+        message: "Cannot apply penalty without assigned driver",
+      };
+
+    const claimed = await PaymentTransaction.findOneAndUpdate(
+      { _id: tx._id, escrowStatus: "held" },
+      { $set: { escrowStatus: "penalizing" as any } },
+      { returnDocument: "after" },
+    );
+    if (!claimed)
+      return {
+        status: StatusCodes.OK,
+        message: "Penalty action already in progress",
+      };
+
+    const held = claimed.amount as number;
+    const PENALTY_RATE = 0.3;
+    const penaltyAmount = round2(held * PENALTY_RATE);
+    const refundAmount = round2(held - penaltyAmount);
+
+    const { driverShare, platformShare } = splitEarnings(
+      penaltyAmount,
+      booking.pickup?.zoneId as string,
+      booking.destination?.zoneId as string,
+      booking.distanceKm as number,
+    );
+    const walletKey = driverWalletKey(String(booking.driver));
+
+    try {
+      if (refundAmount > 0) {
+        await paystack.refund({
+          reference: claimed.reference,
+          amount: refundAmount,
+        });
+      }
+
+      const session = await mongoose.startSession();
+      try {
+        await session.withTransaction(async () => {
+          await postTransaction(
+            {
+              type: "penalty",
+              reference: { kind: "booking", id: bookingId },
+              entries: [
+                { account: "escrow", direction: "debit", amount: held },
+                {
+                  account: "gateway",
+                  direction: "credit",
+                  amount: refundAmount,
+                },
+                {
+                  account: walletKey,
+                  direction: "credit",
+                  amount: driverShare,
+                },
+                {
+                  account: "platform_revenue",
+                  direction: "credit",
+                  amount: platformShare,
+                },
+              ],
+            },
+            session,
+          );
+
+          await PaymentTransaction.updateOne(
+            { _id: claimed._id },
+            { $set: { escrowStatus: "penalty_applied" as any } },
+            { session },
+          );
+          await Booking.updateOne(
+            { _id: bookingId },
+            { $set: { paymentStatus: "penalty_applied" as any } },
+            { session },
+          );
+        });
+      } finally {
+        session.endSession();
+      }
+    } catch (err) {
+      await PaymentTransaction.updateOne(
+        { _id: claimed._id, escrowStatus: "penalizing" as any },
+        { $set: { escrowStatus: "held" } },
+      );
+      throw err;
+    }
+
+    return {
+      status: StatusCodes.OK,
+      message: "Cancellation penalty processed successfully",
+      data: { driverShare, platformShare, refundAmount },
+    };
+  };
+
   const verifyAndApply = async (
     passengerId: Types.ObjectId,
     reference: string,
   ): Promise<ServiceResponse> => {
     const tx = await PaymentTransaction.findOne({ reference });
-    if (!tx) {
+    if (!tx)
       return { status: StatusCodes.NOT_FOUND, message: "Payment not found" };
-    }
-    if (String(tx.passenger) !== String(passengerId)) {
+    if (String(tx.passenger) !== String(passengerId))
       return {
         status: StatusCodes.FORBIDDEN,
         message: "This payment is not yours",
       };
-    }
     return applyChargeSuccessByReference(reference);
   };
 
-  /**
-   * Handle a Paystack webhook. Verifies the signature over the RAW body, dedupes
-   * by signature, and processes charge.success into escrow.
-   */
   const handleWebhook = async (
     rawBody: Buffer | string,
     signature: string | undefined,
   ): Promise<{ ok: boolean; status: number }> => {
-    if (!paystack.verifyWebhookSignature(rawBody, signature)) {
+    if (!paystack.verifyWebhookSignature(rawBody, signature))
       return { ok: false, status: StatusCodes.UNAUTHORIZED };
-    }
 
     let event: any;
     try {
@@ -532,12 +590,9 @@ export const createPaymentService = (deps: { paystack: PaymentPaystack }) => {
 
     const dedupeKey = signature as string;
     const existing = await WebhookEvent.findOne({ dedupeKey });
-    if (existing?.processed) {
-      return { ok: true, status: StatusCodes.OK };
-    }
+    if (existing?.processed) return { ok: true, status: StatusCodes.OK };
 
     if (event?.event === "charge.success" && event?.data?.reference) {
-      // applyChargeSuccessByReference is itself idempotent + race-safe.
       await applyChargeSuccessByReference(event.data.reference);
     }
 
@@ -554,7 +609,6 @@ export const createPaymentService = (deps: { paystack: PaymentPaystack }) => {
       },
       { upsert: true },
     );
-
     return { ok: true, status: StatusCodes.OK };
   };
 
@@ -563,6 +617,7 @@ export const createPaymentService = (deps: { paystack: PaymentPaystack }) => {
     applyChargeSuccessByReference,
     releaseEscrowForBooking,
     refundForBooking,
+    applyCancellationPenalty,
     verifyAndApply,
     handleWebhook,
   };

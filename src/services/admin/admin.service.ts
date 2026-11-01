@@ -15,11 +15,6 @@ const paginate = (query: ListQuery) => {
   return { page, limit, skip: (page - 1) * limit };
 };
 
-/**
- * List driver profiles for admin review. Defaults to those awaiting review
- * (verificationStatus "pending"); pass ?status=all for everyone, or a specific
- * status. Each driver is returned with their vehicle (if any) attached.
- */
 export const listDriversService = async (
   query: ListQuery,
 ): Promise<ServiceResponse> => {
@@ -45,9 +40,7 @@ export const listDriversService = async (
   const vehicles = await Vehicle.find({
     driver: { $in: drivers.map((d) => d._id) },
   });
-  const vehicleByDriver = new Map(
-    vehicles.map((v) => [String(v.driver), v]),
-  );
+  const vehicleByDriver = new Map(vehicles.map((v) => [String(v.driver), v]));
 
   const data = drivers.map((d) => ({
     ...d.toObject(),
@@ -64,10 +57,6 @@ export const listDriversService = async (
   };
 };
 
-/**
- * List vehicles for admin review. Defaults to those awaiting review
- * (vehicleStatus "pending"); pass ?status=all or a specific status.
- */
 export const listVehiclesService = async (
   query: ListQuery,
 ): Promise<ServiceResponse> => {
@@ -103,9 +92,6 @@ export const listVehiclesService = async (
   };
 };
 
-/**
- * Full detail for a single driver (profile + user + vehicle) for admin review.
- */
 export const getDriverDetailService = async (
   driverId: string,
 ): Promise<ServiceResponse> => {

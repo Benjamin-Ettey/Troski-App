@@ -18,7 +18,6 @@ const BookingSchema = new mongoose.Schema(
       required: true,
     },
 
-    // The DriverProfile that accepted the request. Null until a driver accepts.
     driver: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "DriverProfile",
@@ -31,19 +30,16 @@ const BookingSchema = new mongoose.Schema(
       default: null,
     },
 
-    // The live run (Phase 4) this booking was matched to.
     run: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "DriverRun",
       default: null,
-      index:true
+      index: true,
     },
 
     pickup: { type: LocationSchema, required: true },
     destination: { type: LocationSchema, required: true },
 
-    // The junction/point on the van's route the passenger walks to, plus the
-    // van's ETA there at match time.
     pickupPoint: {
       name: { type: String },
       latitude: { type: Number },
@@ -53,7 +49,6 @@ const BookingSchema = new mongoose.Schema(
     walkMinutes: { type: Number, default: null }, // passenger walk time to the point
     waitMinutes: { type: Number, default: null }, // expected wait at the stop
 
-    // Set once the "head to pickup" alert has been pushed, so it fires only once.
     pickupAlertSent: { type: Boolean, default: false },
 
     distanceKm: { type: Number, required: true },

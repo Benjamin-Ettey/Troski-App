@@ -4,29 +4,27 @@ import { authorizeRoles } from "../middleware/auth.middleware";
 import { requireApprovedDriver } from "../middleware/requireApprovedDriver";
 import {
   estimateFareSchema,
-  createBookingSchema,
   matchRideSchema,
   updateBookingStatusSchema,
   cancelBookingSchema,
 } from "../validators/booking.validator";
 import {
   estimateFare,
-  createBooking,
   matchRide,
   getDemandStatus,
-  getAvailableRequests,
   acceptBooking,
+  declineBooking,
   updateBookingStatus,
   cancelBooking,
   getMyBookings,
   getBookingById,
   trackBooking,
+  getBookingRideDetails,
 } from "../controllers/booking.controller";
 
-// Mounted behind authenticateUser (see server.ts). Role is enforced per-route.
 const router = Router();
 
-// ---- Passenger endpoints ----
+// Passenger endpoints
 router.post(
   "/estimate",
   authorizeRoles("passenger"),
@@ -34,14 +32,6 @@ router.post(
   estimateFare,
 );
 
-router.post(
-  "/",
-  authorizeRoles("passenger"),
-  validate(createBookingSchema),
-  createBooking,
-);
-
-// Route-following match: find the best en-route trotro + pickup point.
 router.patch(
   "/match",
   authorizeRoles("passenger"),
@@ -52,19 +42,19 @@ router.patch(
 // Status of an unmet-demand request (created when a match finds no van).
 router.get("/demand/:id", authorizeRoles("passenger"), getDemandStatus);
 
-// ---- Driver endpoints ----
-router.get(
-  "/available",
-  authorizeRoles("driver"),
-  requireApprovedDriver,
-  getAvailableRequests,
-);
-
+// Driver endpoints
 router.patch(
   "/:id/accept",
   authorizeRoles("driver"),
   requireApprovedDriver,
   acceptBooking,
+);
+
+router.patch(
+  "/:id/decline",
+  authorizeRoles("driver"),
+  requireApprovedDriver,
+  declineBooking,
 );
 
 router.patch(
@@ -75,7 +65,7 @@ router.patch(
   updateBookingStatus,
 );
 
-// ---- Shared endpoints (passenger or driver participant) ----
+// Shared endpoints (passenger or driver)
 router.get("/", authorizeRoles("passenger", "driver"), getMyBookings);
 
 router.patch(
@@ -85,9 +75,12 @@ router.patch(
   cancelBooking,
 );
 
-// Live tracking stream (passenger or assigned driver). Declared before /:id.
+router.get(
+  "/:id/details",
+  authorizeRoles("passenger", "driver"),
+  getBookingRideDetails,
+);
 router.get("/:id/track", authorizeRoles("passenger", "driver"), trackBooking);
-
 router.get("/:id", getBookingById);
 
 export default router;

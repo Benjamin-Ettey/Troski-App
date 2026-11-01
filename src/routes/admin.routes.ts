@@ -14,7 +14,6 @@ import {
 } from "../controllers/admin.controller";
 const router = Router();
 
-// Review queues (default to items awaiting approval; ?status=all|pending|approved|...)
 router.get("/drivers", listDrivers);
 router.get("/drivers/:driverId", getDriverDetail);
 router.get("/vehicles", listVehicles);

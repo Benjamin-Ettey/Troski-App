@@ -3,7 +3,8 @@ import mongoose from "mongoose";
 import app from "./app";
 import { connectDB } from "./config/db.config";
 import { startPayoutScheduler } from "./services/payment/payout.scheduler";
-import { startDemandScheduler } from "./services/booking/demand.scheduler";
+import { startDemandScheduler } from "./jobs/demand.scheduler";
+import { startBookingScheduler } from "./jobs/booking.scheduler";
 import { initRedis, closeRedis } from "./services/realtime/redis";
 import { initSseBackplane } from "./services/realtime/sse";
 
@@ -23,6 +24,7 @@ const start = async () => {
     // instance — only one instance actually runs a given job per tick.
     startPayoutScheduler();
     startDemandScheduler();
+    startBookingScheduler();
 
     const server = app.listen(port, () => {
       console.log(`Server running on port ${port}...`);

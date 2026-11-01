@@ -1,7 +1,5 @@
 import mongoose from "mongoose";
 
-// A formed cluster of passengers (>= MIN_CLUSTER) heading to the same
-// destination from the same area — offered to nearby vans to run as a new route.
 const DemandClusterSchema = new mongoose.Schema(
   {
     destination: {
@@ -11,16 +9,14 @@ const DemandClusterSchema = new mongoose.Schema(
       longitude: { type: Number, required: true },
     },
 
-    // Centre of the demand (average of pickups) as GeoJSON for proximity search
-    // by nearby drivers.
+    /* Centre of the demand (average of pickups) as GeoJSON for proximity search
+    by nearby drivers. */
     centroid: {
       type: { type: String, enum: ["Point"], default: "Point" },
       coordinates: { type: [Number], required: true }, // [lng, lat]
     },
 
-    requests: [
-      { type: mongoose.Schema.Types.ObjectId, ref: "DemandRequest" },
-    ],
+    requests: [{ type: mongoose.Schema.Types.ObjectId, ref: "DemandRequest" }],
 
     passengerCount: { type: Number, required: true },
     totalSeats: { type: Number, required: true },

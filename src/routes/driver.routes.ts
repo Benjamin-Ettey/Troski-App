@@ -24,8 +24,6 @@ import {
 } from "../controllers/driver.controller";
 const router = Router();
 
-// A driver checks their own verification/approval state. Intentionally not
-// behind requireApprovedDriver — they need this most before they're approved.
 router.get("/status", getMyStatus);
 
 router.post(
@@ -52,7 +50,7 @@ router.post(
 
 router.patch("/toggle-online", requireApprovedDriver, toggleOnlineStatus);
 
-// ---- Live runs (declare route, share GPS, manage seats) ----
+// Live runs (declare route, share GPS, manage seats)
 router.get("/runs/active", requireApprovedDriver, getActiveRun);
 router.post(
   "/runs/start",
@@ -74,7 +72,7 @@ router.patch(
 );
 router.patch("/runs/end", requireApprovedDriver, endRun);
 
-// ---- Demand (new-route offers from clustered unmet requests) ----
+// Demand (new-route offers from clustered unmet requests)
 router.get("/demand", requireApprovedDriver, listDemand);
 router.post("/demand/:id/accept", requireApprovedDriver, acceptDemand);
 

@@ -1,8 +1,5 @@
 import mongoose from "mongoose";
 
-// One row per account in the chart of accounts: system accounts (escrow,
-// platform_revenue, gateway) and one per driver wallet (driver_wallet:<id>).
-// Holds the cached balance and the head of that account's hash chain.
 const LedgerAccountSchema = new mongoose.Schema(
   {
     key: {

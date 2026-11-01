@@ -1,15 +1,3 @@
-/**
- * Google Maps access for the app — the current Routes API (computeRoutes /
- * computeRouteMatrix) for routing/ETA and the Geocoding API for addresses.
- *
- * Built via a factory that takes the API key + an injectable fetch, so tests can
- * supply a fake HTTP layer (no network, no module mocking) — same pattern as the
- * Paystack client. A default `mapsService` singleton is exported for app code.
- *
- * Without a key, methods throw MapsError; callers (fare quote, run start, the
- * matcher) catch it and fall back to straight-line math so the app still runs.
- */
-
 export class MapsError extends Error {
   constructor(message: string) {
     super(message);
@@ -57,8 +45,7 @@ export type FetchLike = (
 ) => Promise<{ ok: boolean; status: number; json: () => Promise<any> }>;
 
 const GEOCODE_URL = "https://maps.googleapis.com/maps/api/geocode/json";
-const ROUTES_URL =
-  "https://routes.googleapis.com/directions/v2:computeRoutes";
+const ROUTES_URL = "https://routes.googleapis.com/directions/v2:computeRoutes";
 const MATRIX_URL =
   "https://routes.googleapis.com/distanceMatrix/v2:computeRouteMatrix";
 
@@ -85,7 +72,9 @@ export const createMapsService = (opts: {
     if (!apiKey) throw new MapsError("GOOGLE_MAPS_API_KEY is not configured");
   };
 
-  const geocode = async (params: Record<string, string>): Promise<GeocodeResult> => {
+  const geocode = async (
+    params: Record<string, string>,
+  ): Promise<GeocodeResult> => {
     requireKey();
     const qs = new URLSearchParams({ ...params, key: apiKey }).toString();
     const res = await doFetch(`${GEOCODE_URL}?${qs}`);
@@ -169,10 +158,6 @@ export const createMapsService = (opts: {
     destination: LatLng,
   ): Promise<RouteResult> => computeRoute(origin, destination);
 
-  /**
-   * Many-to-many ETAs in one call (Routes API computeRouteMatrix). Used by the
-   * matcher to rank candidate vans by ETA to their pickup points.
-   */
   const computeRouteMatrix = async (
     origins: LatLng[],
     destinations: LatLng[],

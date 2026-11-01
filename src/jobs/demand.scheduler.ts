@@ -1,11 +1,9 @@
 import cron from "node-cron";
-import { runClustering } from "./demand.service";
-import { runSingleton } from "../scheduler/leaderLock";
+import { runClustering } from "../services/booking/demand.service";
+import { runSingleton } from "../services/scheduler/leaderLock";
 
 const LOCK_TTL_MS = 2 * 60 * 1000;
 
-// Periodically cluster recent unmet demand into new-route offers (in addition to
-// the clustering that runs opportunistically on each unmet match).
 let started = false;
 let running = false;
 
@@ -22,7 +20,8 @@ export const startDemandScheduler = (): void => {
     try {
       await runSingleton("demand-clustering", LOCK_TTL_MS, async () => {
         const { clustersFormed } = await runClustering();
-        if (clustersFormed) console.log(`[demand] formed ${clustersFormed} cluster(s)`);
+        if (clustersFormed)
+          console.log(`[demand] formed ${clustersFormed} cluster(s)`);
       });
     } catch (err) {
       console.error("[demand] clustering failed", err);

@@ -4,7 +4,7 @@ import {
   toCell,
   DEMAND_H3_RES,
   type DemandItem,
-} from "../services/booking/demand.core";
+} from "../jobs/demand.core";
 
 const item = (
   id: string,
@@ -34,8 +34,12 @@ describe("Booking Phase 7 — demand clustering (H3)", () => {
 
   it("does not merge passengers heading to different destinations", () => {
     const items = [
-      ...Array.from({ length: 3 }, (_, i) => item(`a${i}`, 5.6, -0.2, "NORTH_ACC")),
-      ...Array.from({ length: 3 }, (_, i) => item(`b${i}`, 5.6, -0.2, "EAST_ACC")),
+      ...Array.from({ length: 3 }, (_, i) =>
+        item(`a${i}`, 5.6, -0.2, "NORTH_ACC"),
+      ),
+      ...Array.from({ length: 3 }, (_, i) =>
+        item(`b${i}`, 5.6, -0.2, "EAST_ACC"),
+      ),
     ];
     // 3 + 3 to different zones — neither reaches 5.
     expect(formClusters(items)).toHaveLength(0);

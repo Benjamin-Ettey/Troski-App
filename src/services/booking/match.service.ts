@@ -1,7 +1,6 @@
 import { StatusCodes } from "http-status-codes";
 import { Types } from "mongoose";
 import Booking from "../../models/Booking";
-import DriverRun from "../../models/DriverRun";
 import { ServiceResponse } from "../auth/local/auth.service";
 import type { BookingStatus } from "../../types/booking.types";
 import { findNearbyRuns } from "../driver/run.service";
@@ -19,16 +18,13 @@ import { mapsService } from "../maps/maps.service";
 import { calculateRouteFare } from "../fare/fare.service";
 import { recordDemand, runClustering } from "./demand.service";
 import zonesConfig from "../../data/zonesConfig";
+import { publish } from "../realtime/sse";
 
 const SEARCH_RADIUS_KM = 5;
-// How far off the van's route the passenger's destination may be and still count
-// as "the route passes there".
 const DEST_CORRIDOR_KM = Number(process.env.MATCH_DEST_CORRIDOR_KM || 1.5);
-const URBAN_SPEED_KMH = 25; // fallback van ETA speed when maps is unavailable
-const WALK_SPEED_KMH = 5; // fallback walking speed
-// Safety buffer added to the passenger's walk time before they're "ready".
+const URBAN_SPEED_KMH = 25;
+const WALK_SPEED_KMH = 5;
 const READY_BUFFER_MIN = Number(process.env.MATCH_READY_BUFFER_MIN || 2);
-// Longest a passenger should wait at the stop after arriving, for a match.
 const MAX_WAIT_MIN = Number(process.env.MATCH_MAX_WAIT_MIN || 10);
 const ACTIVE_STATUSES: BookingStatus[] = [
   "requested",
@@ -39,11 +35,8 @@ const ACTIVE_STATUSES: BookingStatus[] = [
 
 type Coord = { lat: number; lng: number };
 
-/**
- * The pickup point is the nearest point on the van's route to the passenger
- * (so the passenger walks to the route). Falls back to the passenger's own
- * location when the run has no route geometry (e.g. no maps key).
- */
+export const bookingDeclinesCache = new Map<string, Set<string>>();
+
 const computePickupPoint = (run: any, lat: number, lng: number): Coord => {
   if (run.routePolyline) {
     const path = decodePolyline(run.routePolyline);
@@ -58,15 +51,6 @@ const vanPosition = (run: any): Coord => ({
   lat: run.currentLocation.coordinates[1],
 });
 
-/**
- * Does a van's route actually serve this trip? Pure, offline-testable. A van
- * qualifies only when, on its decoded route:
- *   - the destination lies within the corridor of the route (route passes there)
- *   - the destination is AHEAD of the pickup (van travels pickup -> dest)
- *   - the van has NOT already passed the pickup point
- * This replaces coarse destination-zone equality (which both over- and
- * under-matched) when route geometry is available.
- */
 export const assessCorridor = (
   path: Point[],
   van: Coord | null,
@@ -79,7 +63,7 @@ export const assessCorridor = (
   if (!p || !d) return { serves: false };
 
   const destOnRoute = d.distanceKm <= corridorKm;
-  const forward = d.index > p.index; // destination further along than pickup
+  const forward = d.index > p.index;
   const vanProj = van ? nearestPointOnPath(path, van.lat, van.lng) : null;
   const vanNotPast = vanProj ? vanProj.index <= p.index : true;
 
@@ -89,10 +73,6 @@ export const assessCorridor = (
   };
 };
 
-/**
- * Corridor check for a run. Uses the route polyline when present; falls back to
- * destination-zone equality when there's no geometry (e.g. no maps key).
- */
 const servesCorridor = (
   run: any,
   pickup: Coord,
@@ -110,7 +90,6 @@ const servesCorridor = (
   return { serves: run.destination?.zoneId === passengerDestZone };
 };
 
-/** ETA (minutes) for the van to reach the pickup point — Google, else estimate. */
 const etaToPickup = async (run: any, pickup: Coord): Promise<number> => {
   const van = vanPosition(run);
   try {
@@ -122,13 +101,6 @@ const etaToPickup = async (run: any, pickup: Coord): Promise<number> => {
   }
 };
 
-/**
- * Readiness-vs-arrival feasibility: a trotro does not wait, so the passenger
- * must reach the boarding point before the van passes it, and not have to wait
- * too long after arriving.
- *   readyIn = walk time + safety buffer
- *   feasible = readyIn <= vanEta  AND  (vanEta - readyIn) <= maxWait
- */
 export const assessTiming = (
   walkEta: number,
   vanEta: number,
@@ -141,7 +113,6 @@ export const assessTiming = (
   return { readyIn, waitMin, feasible };
 };
 
-/** Walking ETA (minutes) for the passenger to reach the pickup point. */
 const walkingEta = async (from: Coord, to: Coord): Promise<number> => {
   try {
     const r = await mapsService.computeRoute(from, to, "WALK");
@@ -161,11 +132,83 @@ const nameForPoint = async (point: Coord): Promise<string> => {
   }
 };
 
-/**
- * Match a passenger to the best nearby trotro already heading to their
- * destination: find candidate runs, place a pickup point on each route, rank by
- * ETA, reserve a seat atomically, and create the booking.
- */
+export const evaluateCandidates = async (
+  candidates: any[],
+  passenger: Coord,
+  passengerDest: Coord,
+  destinationZoneId: string,
+) => {
+  const evaluated = (
+    await Promise.all(
+      candidates.map(async (run) => {
+        const corridor = servesCorridor(
+          run,
+          passenger,
+          passengerDest,
+          destinationZoneId,
+        );
+        if (!corridor.serves) return null;
+
+        const pickup =
+          corridor.pickupPoint ??
+          computePickupPoint(run, passenger.lat, passenger.lng);
+        const [vanEta, walkEta] = await Promise.all([
+          etaToPickup(run, pickup),
+          walkingEta(passenger, pickup),
+        ]);
+
+        const { readyIn, waitMin, feasible } = assessTiming(
+          walkEta,
+          vanEta,
+          READY_BUFFER_MIN,
+          MAX_WAIT_MIN,
+        );
+        return { run, pickup, vanEta, walkEta, readyIn, waitMin, feasible };
+      }),
+    )
+  ).filter((e): e is NonNullable<typeof e> => e !== null);
+
+  const viable = evaluated.filter((e) => e.feasible);
+  viable.sort((a, b) => a.vanEta - b.vanEta || a.waitMin - b.waitMin);
+  return viable;
+};
+
+export const findNextBestDriver = async (
+  booking: any,
+  excludedDriverIds: Set<string>,
+) => {
+  const candidates = await findNearbyRuns({
+    lat: booking.pickup.latitude,
+    lng: booking.pickup.longitude,
+    minSeats: booking.seatsRequested,
+    radiusKm: SEARCH_RADIUS_KM,
+  });
+
+  const filteredCandidates = candidates.filter(
+    (run) => !excludedDriverIds.has(String(run.driver)),
+  );
+
+  if (!filteredCandidates.length) return null;
+
+  const passenger: Coord = {
+    lat: booking.pickup.latitude,
+    lng: booking.pickup.longitude,
+  };
+  const passengerDest: Coord = {
+    lat: booking.destination.latitude,
+    lng: booking.destination.longitude,
+  };
+
+  const viable = await evaluateCandidates(
+    filteredCandidates,
+    passenger,
+    passengerDest,
+    booking.destination.zoneId,
+  );
+
+  return viable.length > 0 ? viable[0] : null;
+};
+
 export const matchRideService = async (
   passengerId: Types.ObjectId,
   payload: {
@@ -175,36 +218,27 @@ export const matchRideService = async (
     destLng?: number;
     destinationTown?: string;
     seats: number;
+    paymentMethod: "cash" | "momo";
   },
 ): Promise<ServiceResponse> => {
-  // Destination may be a dropped pin (coords) or a town name.
   const destination = resolvePlace({
     lat: payload.destLat,
     lng: payload.destLng,
     town: payload.destinationTown,
   });
-  if (!destination) {
-    return {
-      status: StatusCodes.BAD_REQUEST,
-      message: "A destination (coordinates or town) is required",
-    };
-  }
+  if (!destination)
+    return { status: StatusCodes.BAD_REQUEST, message: "Destination required" };
 
-  // One active ride per passenger.
   const existing = await Booking.findOne({
     passenger: passengerId,
     status: { $in: ACTIVE_STATUSES },
   });
-  if (existing) {
+  if (existing)
     return {
       status: StatusCodes.CONFLICT,
       message: "You already have an active ride.",
-      data: { bookingId: existing._id, status: existing.status },
     };
-  }
 
-  // Supply prefilter: vans near the passenger with seats (direction/destination
-  // is decided precisely by the corridor check below, not a coarse zone filter).
   const candidates = await findNearbyRuns({
     lat: payload.pickupLat,
     lng: payload.pickupLng,
@@ -212,8 +246,6 @@ export const matchRideService = async (
     radiusKm: SEARCH_RADIUS_KM,
   });
 
-  // No workable van -> record the demand (so it can be clustered into a new
-  // route) and return a no-van response.
   const registerUnmetDemand = async (
     message: string,
   ): Promise<ServiceResponse> => {
@@ -231,110 +263,48 @@ export const matchRideService = async (
     };
   };
 
-  if (!candidates.length) {
+  if (!candidates.length)
     return registerUnmetDemand(
-      `No trotro heading to ${destination.town} near you right now. We'll alert nearby drivers if more people want this route.`,
+      `No trotro heading to ${destination.town} near you right now.`,
     );
-  }
 
-  // Evaluate each candidate: (1) does its route actually serve this trip
-  // (corridor + direction + not-yet-passed), then (2) can the passenger reach
-  // the boarding point before the van passes (a trotro does not wait).
   const passenger: Coord = { lat: payload.pickupLat, lng: payload.pickupLng };
   const passengerDest: Coord = {
     lat: destination.latitude,
     lng: destination.longitude,
   };
 
-  const evaluated = (
-    await Promise.all(
-      candidates.map(async (run) => {
-        const corridor = servesCorridor(
-          run,
-          passenger,
-          passengerDest,
-          destination.zoneId,
-        );
-        if (!corridor.serves) return null;
+  const viable = await evaluateCandidates(
+    candidates,
+    passenger,
+    passengerDest,
+    destination.zoneId,
+  );
 
-        const pickup =
-          corridor.pickupPoint ??
-          computePickupPoint(run, payload.pickupLat, payload.pickupLng);
-        const [vanEta, walkEta] = await Promise.all([
-          etaToPickup(run, pickup),
-          walkingEta(passenger, pickup),
-        ]);
-        const { readyIn, waitMin, feasible } = assessTiming(walkEta, vanEta);
-        return { run, pickup, vanEta, walkEta, readyIn, waitMin, feasible };
-      }),
-    )
-  ).filter((e): e is NonNullable<typeof e> => e !== null);
-
-  // None of the nearby vans' routes actually serve this destination/direction.
-  if (!evaluated.length) {
+  if (!viable.length)
     return registerUnmetDemand(
-      `No trotro whose route passes ${destination.town} near you right now. We'll alert nearby drivers if more people want this route.`,
+      `Cannot reach boarding point before available trotros pass.`,
     );
-  }
 
-  // Of the route-compatible vans, keep only ones the passenger can catch.
-  const viable = evaluated.filter((e) => e.feasible);
+  const chosen = viable[0];
 
-  if (!viable.length) {
-    return registerUnmetDemand(
-      `A trotro passes ${destination.town}, but you can't reach a boarding point before it passes. We'll alert drivers if more people want this route.`,
-    );
-  }
-
-  // Soonest catchable van first; prefer a shorter wait on ties.
-  viable.sort((a, b) => a.vanEta - b.vanEta || a.waitMin - b.waitMin);
-
-  // Reserve a seat on the best viable candidate that still has room (atomic).
-  let chosen: (typeof viable)[number] | null = null;
-  let reservedRun: any = null;
-  for (const option of viable) {
-    reservedRun = await DriverRun.findOneAndUpdate(
-      {
-        _id: option.run._id,
-        status: "active",
-        availableSeats: { $gte: payload.seats },
-      },
-      { $inc: { availableSeats: -payload.seats } },
-      { returnDocument: "after" },
-    );
-    if (reservedRun) {
-      chosen = option;
-      break;
-    }
-  }
-
-  if (!chosen || !reservedRun) {
-    return {
-      status: StatusCodes.CONFLICT,
-      message: "The nearby trotros just filled up. Please try again.",
-    };
-  }
-
-  // Fare for the passenger's segment (pickup -> destination).
   const pickupZone =
     nearestTown(chosen.pickup.lat, chosen.pickup.lng)?.zoneId ??
     destination.zoneId;
+  let distanceKm = haversineKm(
+    chosen.pickup.lat,
+    chosen.pickup.lng,
+    destination.latitude,
+    destination.longitude,
+  );
 
-  let distanceKm: number;
   try {
     const r = await mapsService.getRoadDistance(chosen.pickup, {
       lat: destination.latitude,
       lng: destination.longitude,
     });
     distanceKm = r.distanceKm;
-  } catch {
-    distanceKm = haversineKm(
-      chosen.pickup.lat,
-      chosen.pickup.lng,
-      destination.latitude,
-      destination.longitude,
-    );
-  }
+  } catch {}
 
   const fare = calculateRouteFare({
     pickupZone,
@@ -343,14 +313,13 @@ export const matchRideService = async (
     zonesConfig,
   });
   const total = parseFloat((fare.finalFare * payload.seats).toFixed(2));
-
   const pickupName = await nameForPoint(chosen.pickup);
 
   const booking = await Booking.create({
     passenger: passengerId,
-    run: reservedRun._id,
-    driver: reservedRun.driver,
-    vehicle: reservedRun.vehicle ?? null,
+    run: chosen.run._id,
+    driver: chosen.run.driver,
+    vehicle: chosen.run.vehicle ?? null,
     pickup: {
       town: pickupName,
       zoneId: pickupZone,
@@ -374,20 +343,46 @@ export const matchRideService = async (
     etaMinutes: chosen.vanEta,
     walkMinutes: chosen.walkEta,
     waitMinutes: chosen.waitMin,
-    status: "accepted",
+    paymentMethod: payload.paymentMethod,
+    status: "requested",
   });
+
+  publish(`driver_${chosen.run.driver}`, "new_booking_offer", {
+    bookingId: booking._id,
+    pickupPoint: booking.pickupPoint,
+    readyInMinutes: chosen.readyIn,
+    waitMinutes: chosen.waitMin,
+  });
+
+  const isLocked = payload.paymentMethod === "momo";
+
+  // FIX: Properly ensure driver, vehicle, and run properties are fully obscured in memory returned to client
+  let responseBooking = booking.toObject();
+  let responsePickupPoint = { name: pickupName, ...chosen.pickup };
+
+  if (isLocked) {
+    delete responseBooking.driver;
+    delete responseBooking.vehicle;
+    delete responseBooking.run;
+    if (responseBooking.pickupPoint) {
+      delete responseBooking.pickupPoint.latitude;
+      delete responseBooking.pickupPoint.longitude;
+    }
+    responsePickupPoint = { name: pickupName } as any;
+  }
 
   return {
     status: StatusCodes.CREATED,
-    message: `Matched! Walk to ${pickupName} (~${chosen.walkEta} min) — your trotro reaches it in about ${chosen.vanEta} min.`,
+    message: isLocked
+      ? "Request sent. Complete payment to unlock exact boarding point and driver details."
+      : `Request sent to driver. Walk to ${pickupName} (~${chosen.walkEta} min).`,
     data: {
-      booking,
-      pickupPoint: { name: pickupName, ...chosen.pickup },
-      etaMinutes: chosen.vanEta, // van arrival at the boarding point
-      walkMinutes: chosen.walkEta, // passenger walk time to the point
-      readyInMinutes: chosen.readyIn, // walk + safety buffer
-      waitMinutes: chosen.waitMin, // expected wait at the stop
-      seatsRemaining: reservedRun.availableSeats,
+      booking: responseBooking,
+      pickupPoint: responsePickupPoint,
+      etaMinutes: chosen.vanEta,
+      walkMinutes: chosen.walkEta,
+      readyInMinutes: chosen.readyIn,
+      waitMinutes: chosen.waitMin,
       fare: { total, ...fare },
     },
   };

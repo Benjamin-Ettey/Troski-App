@@ -1,8 +1,5 @@
 import mongoose from "mongoose";
 
-// An unmet ride request: a passenger wanted a trotro to some destination but no
-// van was heading there nearby. Collected so demand can be clustered into a new
-// route (Phase 7).
 const DemandRequestSchema = new mongoose.Schema(
   {
     passenger: {

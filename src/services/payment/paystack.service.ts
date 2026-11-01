@@ -1,18 +1,5 @@
 import crypto from "crypto";
 
-/**
- * Thin wrapper around the Paystack REST API. All Paystack access goes through
- * here so the secret key, request shaping, response parsing, amount conversion
- * and webhook verification live in one place.
- *
- * Built via a factory that takes the secret key + an injectable fetch, so tests
- * can supply a fake HTTP layer (no network, no module mocking) — same pattern as
- * the maps service. A default `paystackService` singleton is exported for app code.
- *
- * NOTE on amounts: Paystack works in the currency's minor unit. For GHS that is
- * pesewas (GHS 1 = 100). Callers pass amounts in whole GHS; we convert here.
- */
-
 export class PaystackError extends Error {
   constructor(message: string) {
     super(message);
@@ -20,8 +7,6 @@ export class PaystackError extends Error {
   }
 }
 
-// Minimal shape of the fetch we depend on — keeps DI simple and avoids coupling
-// to lib DOM/undici typings.
 export type FetchLike = (
   url: string,
   init?: {
@@ -96,7 +81,9 @@ export const createPaystackService = ({
     try {
       json = await res.json();
     } catch {
-      throw new PaystackError(`Paystack returned a non-JSON response (${res.status})`);
+      throw new PaystackError(
+        `Paystack returned a non-JSON response (${res.status})`,
+      );
     }
 
     // Paystack wraps everything as { status: boolean, message, data }.
@@ -133,7 +120,9 @@ export const createPaystackService = ({
   };
 
   /** Confirm the true state of a payment with Paystack (source of truth). */
-  const verifyTransaction = async (reference: string): Promise<VerifyResult> => {
+  const verifyTransaction = async (
+    reference: string,
+  ): Promise<VerifyResult> => {
     const json = await request(
       `/transaction/verify/${encodeURIComponent(reference)}`,
     );
@@ -150,11 +139,6 @@ export const createPaystackService = ({
     };
   };
 
-  /**
-   * Refund a transaction to source (the card/MoMo the passenger paid with).
-   * Omit `amount` for a full refund. Paystack processes asynchronously and later
-   * emits a refund webhook; this just requests it.
-   */
   const refund = async (params: {
     reference: string;
     amount?: number;
@@ -172,11 +156,6 @@ export const createPaystackService = ({
     };
   };
 
-  /**
-   * Create a transfer recipient (a payout destination). For Ghana Mobile Money
-   * pass type "mobile_money", the MoMo number as accountNumber, and the provider
-   * bank code (MTN / VOD / ATL).
-   */
   const createTransferRecipient = async (params: {
     name: string;
     accountNumber: string;
@@ -222,11 +201,6 @@ export const createPaystackService = ({
     };
   };
 
-  /**
-   * Verify a Paystack webhook. Paystack signs the RAW request body with
-   * HMAC-SHA512 using the secret key and sends it as `x-paystack-signature`.
-   * Pass the raw (unparsed) body.
-   */
   const verifyWebhookSignature = (
     rawBody: string | Buffer,
     signature: string | undefined,

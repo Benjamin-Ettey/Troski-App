@@ -1,8 +1,5 @@
 import mongoose from "mongoose";
 
-// Idempotency + audit log for provider webhooks. dedupeKey is the request
-// signature, which is identical across Paystack retries of the same event, so a
-// unique index lets us skip work we've already done.
 const WebhookEventSchema = new mongoose.Schema(
   {
     provider: {

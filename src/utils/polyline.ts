@@ -2,21 +2,6 @@ import { haversineKm } from "./locationLookup";
 
 export type Point = { lat: number; lng: number };
 
-/**
- * Decode a Google-encoded polyline into a list of { lat, lng } points.
- *
- * WHY THIS EXISTS: The Routes API returns a route's shape not as hundreds of
- * coordinate objects but as one compact ASCII string (the "Encoded Polyline
- * Algorithm Format") to keep responses small. The string stores each point as a
- * zig-zag-encoded *delta* from the previous point, in 5-bit chunks offset by 63.
- * This function reverses that: it reads the chunks, undoes the zig-zag, divides
- * by 1e5 (precision 5 ≈ ~1m), and accumulates the running lat/lng.
- *
- * It is pure + offline (no API key, no network) — the format is Google's, but
- * the decode is a small public algorithm we own because we call Routes over raw
- * REST rather than through Google's SDK. We need the decoded points to find the
- * pickup point on the route (see nearestPointOnPath).
- */
 export const decodePolyline = (encoded: string, precision = 5): Point[] => {
   const points: Point[] = [];
   const factor = Math.pow(10, precision);
@@ -50,15 +35,6 @@ export const decodePolyline = (encoded: string, precision = 5): Point[] => {
   return points;
 };
 
-/**
- * Shortest distance from a point to a single segment (a -> b), returning the
- * exact closest point ON the segment (not just an endpoint).
- *
- * The projection is done in a locally-flat frame: longitude is scaled by
- * cos(latitude) so that 1 unit east equals 1 unit north in ground distance
- * (1° lng shrinks away from the equator). This keeps the projection correct at
- * any latitude. The final distance is measured with haversine.
- */
 const nearestPointOnSegment = (
   p: Point,
   a: Point,
@@ -116,13 +92,6 @@ export const encodePolyline = (points: Point[], precision = 5): string => {
   return result;
 };
 
-/**
- * Nearest point on a route to a coordinate. Projects onto every segment (not
- * just the vertices), so the pickup point can land between two polyline points —
- * important where Google returns long straight segments. Returns the closest
- * point, its distance in km, and the index of the segment it lies on (its start
- * vertex), or null for an empty path.
- */
 export const nearestPointOnPath = (
   path: Point[],
   lat: number,

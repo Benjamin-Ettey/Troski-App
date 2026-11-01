@@ -1,8 +1,5 @@
 import mongoose from "mongoose";
 
-// Immutable double-entry ledger line. Entries are never updated or deleted;
-// corrections are made with new (reversing) postings. Each carries the hash
-// chain fields for tamper-evidence.
 const LedgerEntrySchema = new mongoose.Schema(
   {
     // Groups the entries of a single balanced posting together.

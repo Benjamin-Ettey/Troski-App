@@ -27,8 +27,6 @@ export const verifyPayment = async (
     .json({ message: result.message, data: result.data });
 };
 
-// Public endpoint hit by Paystack. Mounted with a raw body parser (see app.ts)
-// so the signature can be verified against the exact bytes Paystack signed.
 export const handlePaystackWebhook = async (
   req: Request,
   res: Response,

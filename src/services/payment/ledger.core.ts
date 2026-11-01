@@ -1,20 +1,5 @@
 import crypto from "crypto";
 
-/**
- * Pure double-entry accounting + hash-chain helpers. No database, no env — so
- * this is fully unit-testable offline. The DB-backed ledger service composes
- * these.
- *
- * Double-entry: every posting is a set of entries whose debits equal its
- * credits, so money is always conserved. Each account has a "normal side"
- * (assets/expenses grow on debit; liabilities/revenue grow on credit). A
- * driver's wallet is a liability (money the platform owes them).
- *
- * Hash chain: each account's entries form an HMAC chain — every entry signs the
- * previous entry's hash, so altering any past entry (or the order) breaks the
- * chain and is detectable.
- */
-
 export type AccountType = "asset" | "liability" | "revenue" | "expense";
 export type Direction = "debit" | "credit";
 

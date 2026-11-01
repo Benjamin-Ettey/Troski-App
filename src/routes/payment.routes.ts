@@ -7,8 +7,6 @@ import {
   verifyPayment,
 } from "../controllers/payment.controller";
 
-// Mounted behind authenticateUser (see app.ts). The webhook is NOT here — it is
-// public + raw-body and mounted directly in app.ts before express.json().
 const router = Router();
 
 router.post(

@@ -1,13 +1,5 @@
 import { latLngToCell, gridDisk } from "h3-js";
 
-/**
- * Pure demand-clustering logic (uses h3-js, which is pure JS — offline
- * testable). H3 is Uber's hexagonal grid: every point maps to a fixed cell at a
- * chosen resolution, so we can bucket passengers by "same area". Resolution 8
- * gives ~0.46 km hex edges — a walkable cluster. We also merge a cell with its
- * immediate neighbours (gridDisk k=1) so a cluster isn't split by a hex boundary.
- */
-
 export const DEMAND_H3_RES = 8;
 export const MIN_CLUSTER = 5;
 
@@ -41,11 +33,6 @@ const centroidOf = (items: DemandItem[]): { lat: number; lng: number } => {
   return { lat: sum.lat / n, lng: sum.lng / n };
 };
 
-/**
- * Form clusters from pending demand. Groups by destination zone, then greedily
- * builds clusters of passengers in the same H3 cell (plus adjacent cells). A
- * cluster is emitted only when it reaches `minCluster` passengers.
- */
 export const formClusters = (
   items: DemandItem[],
   minCluster = MIN_CLUSTER,

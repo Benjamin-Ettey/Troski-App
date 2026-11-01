@@ -23,7 +23,9 @@ export const listDrivers = async (
     page: req.query.page ? Number(req.query.page) : undefined,
     limit: req.query.limit ? Number(req.query.limit) : undefined,
   });
-  res.status(result.status).json({ message: result.message, data: result.data });
+  res
+    .status(result.status)
+    .json({ message: result.message, data: result.data });
 };
 
 export const listVehicles = async (
@@ -35,7 +37,9 @@ export const listVehicles = async (
     page: req.query.page ? Number(req.query.page) : undefined,
     limit: req.query.limit ? Number(req.query.limit) : undefined,
   });
-  res.status(result.status).json({ message: result.message, data: result.data });
+  res
+    .status(result.status)
+    .json({ message: result.message, data: result.data });
 };
 
 export const getDriverDetail = async (
@@ -45,7 +49,9 @@ export const getDriverDetail = async (
   const result = await adminService.getDriverDetailService(
     req.params.driverId as string,
   );
-  res.status(result.status).json({ message: result.message, data: result.data });
+  res
+    .status(result.status)
+    .json({ message: result.message, data: result.data });
 };
 
 export const updateDriverStatus = async (

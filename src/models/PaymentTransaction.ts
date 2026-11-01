@@ -1,7 +1,5 @@
 import mongoose from "mongoose";
 
-// One row per passenger charge for a ride. Tracks both the Paystack payment
-// state (status) and our escrow bookkeeping state (escrowStatus).
 const PaymentTransactionSchema = new mongoose.Schema(
   {
     passenger: {
@@ -56,6 +54,8 @@ const PaymentTransactionSchema = new mongoose.Schema(
         "released",
         "refunding",
         "refunded",
+        "penalizing",
+        "penalty_applied",
       ],
       default: "none",
     },
