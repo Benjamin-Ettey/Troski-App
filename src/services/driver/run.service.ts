@@ -52,12 +52,10 @@ export const endStaleRuns = async (): Promise<void> => {
 export const startRunService = async (
   driverUserId: Types.ObjectId,
   payload: {
-    fromLat?: number;
-    fromLng?: number;
-    fromTown?: string;
-    toLat?: number;
-    toLng?: number;
-    toTown?: string;
+    fromLat: number;
+    fromLng: number;
+    toLat: number;
+    toLng: number;
     availableSeats?: number;
   },
 ): Promise<ServiceResponse> => {
@@ -68,25 +66,26 @@ export const startRunService = async (
       message: "Driver profile not found",
     };
 
+  // Silently resolve towns on the backend using the coordinates
   const origin = resolvePlace({
     lat: payload.fromLat,
     lng: payload.fromLng,
-    town: payload.fromTown,
   });
+
   const destination = resolvePlace({
     lat: payload.toLat,
     lng: payload.toLng,
-    town: payload.toTown,
   });
+
   if (!origin)
     return {
       status: StatusCodes.BAD_REQUEST,
-      message: "A start location (coordinates or town) is required",
+      message: "A valid start location (coordinates) is required",
     };
   if (!destination)
     return {
       status: StatusCodes.BAD_REQUEST,
-      message: "A destination (coordinates or town) is required",
+      message: "A valid destination (coordinates) is required",
     };
   if (
     origin.latitude === destination.latitude &&

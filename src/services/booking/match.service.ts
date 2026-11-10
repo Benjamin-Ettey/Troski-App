@@ -5,7 +5,7 @@ import { ServiceResponse } from "../auth/local/auth.service";
 import type { BookingStatus } from "../../types/booking.types";
 import { findNearbyRuns } from "../driver/run.service";
 import {
-  resolvePlace,
+  resolveTown,
   nearestTown,
   haversineKm,
 } from "../../utils/locationLookup";
@@ -14,7 +14,6 @@ import {
   nearestPointOnPath,
   type Point,
 } from "../../utils/polyline";
-import { mapsService } from "../maps/maps.service";
 import { calculateRouteFare } from "../fare/fare.service";
 import { recordDemand, runClustering } from "./demand.service";
 import zonesConfig from "../../data/zonesConfig";
@@ -90,15 +89,11 @@ const servesCorridor = (
   return { serves: run.destination?.zoneId === passengerDestZone };
 };
 
-const etaToPickup = async (run: any, pickup: Coord): Promise<number> => {
+// Simplified to exactly match your straight-line distance preference
+const etaToPickup = (run: any, pickup: Coord): number => {
   const van = vanPosition(run);
-  try {
-    const r = await mapsService.getRoadDistance(van, pickup);
-    return r.durationMin;
-  } catch {
-    const km = haversineKm(van.lat, van.lng, pickup.lat, pickup.lng);
-    return Math.max(1, Math.round((km / URBAN_SPEED_KMH) * 60));
-  }
+  const km = haversineKm(van.lat, van.lng, pickup.lat, pickup.lng);
+  return Math.max(1, Math.round((km / URBAN_SPEED_KMH) * 60));
 };
 
 export const assessTiming = (
@@ -113,23 +108,10 @@ export const assessTiming = (
   return { readyIn, waitMin, feasible };
 };
 
-const walkingEta = async (from: Coord, to: Coord): Promise<number> => {
-  try {
-    const r = await mapsService.computeRoute(from, to, "WALK");
-    return r.durationMin;
-  } catch {
-    const km = haversineKm(from.lat, from.lng, to.lat, to.lng);
-    return Math.max(1, Math.round((km / WALK_SPEED_KMH) * 60));
-  }
-};
-
-const nameForPoint = async (point: Coord): Promise<string> => {
-  try {
-    const r = await mapsService.reverseGeocode(point);
-    return r.formattedAddress;
-  } catch {
-    return nearestTown(point.lat, point.lng)?.town ?? "Pickup point";
-  }
+// Simplified to exactly match your straight-line distance preference
+const walkingEta = (from: Coord, to: Coord): number => {
+  const km = haversineKm(from.lat, from.lng, to.lat, to.lng);
+  return Math.max(1, Math.round((km / WALK_SPEED_KMH) * 60));
 };
 
 export const evaluateCandidates = async (
@@ -138,35 +120,32 @@ export const evaluateCandidates = async (
   passengerDest: Coord,
   destinationZoneId: string,
 ) => {
-  const evaluated = (
-    await Promise.all(
-      candidates.map(async (run) => {
-        const corridor = servesCorridor(
-          run,
-          passenger,
-          passengerDest,
-          destinationZoneId,
-        );
-        if (!corridor.serves) return null;
+  const evaluated = candidates
+    .map((run) => {
+      const corridor = servesCorridor(
+        run,
+        passenger,
+        passengerDest,
+        destinationZoneId,
+      );
+      if (!corridor.serves) return null;
 
-        const pickup =
-          corridor.pickupPoint ??
-          computePickupPoint(run, passenger.lat, passenger.lng);
-        const [vanEta, walkEta] = await Promise.all([
-          etaToPickup(run, pickup),
-          walkingEta(passenger, pickup),
-        ]);
+      const pickup =
+        corridor.pickupPoint ??
+        computePickupPoint(run, passenger.lat, passenger.lng);
 
-        const { readyIn, waitMin, feasible } = assessTiming(
-          walkEta,
-          vanEta,
-          READY_BUFFER_MIN,
-          MAX_WAIT_MIN,
-        );
-        return { run, pickup, vanEta, walkEta, readyIn, waitMin, feasible };
-      }),
-    )
-  ).filter((e): e is NonNullable<typeof e> => e !== null);
+      const vanEta = etaToPickup(run, pickup);
+      const walkEta = walkingEta(passenger, pickup);
+
+      const { readyIn, waitMin, feasible } = assessTiming(
+        walkEta,
+        vanEta,
+        READY_BUFFER_MIN,
+        MAX_WAIT_MIN,
+      );
+      return { run, pickup, vanEta, walkEta, readyIn, waitMin, feasible };
+    })
+    .filter((e): e is NonNullable<typeof e> => e !== null);
 
   const viable = evaluated.filter((e) => e.feasible);
   viable.sort((a, b) => a.vanEta - b.vanEta || a.waitMin - b.waitMin);
@@ -221,13 +200,36 @@ export const matchRideService = async (
     paymentMethod: "cash" | "momo";
   },
 ): Promise<ServiceResponse> => {
-  const destination = resolvePlace({
-    lat: payload.destLat,
-    lng: payload.destLng,
-    town: payload.destinationTown,
-  });
-  if (!destination)
-    return { status: StatusCodes.BAD_REQUEST, message: "Destination required" };
+  // 1. Enforce exact alignment with EstimateFareService
+  const pickupTown = nearestTown(payload.pickupLat, payload.pickupLng);
+
+  let dropoffLat = payload.destLat;
+  let dropoffLng = payload.destLng;
+  let dropoffTown;
+
+  if (dropoffLat != null && dropoffLng != null) {
+    dropoffTown = nearestTown(dropoffLat, dropoffLng);
+  } else if (payload.destinationTown) {
+    dropoffTown = resolveTown(payload.destinationTown);
+    if (dropoffTown) {
+      dropoffLat = dropoffTown.latitude;
+      dropoffLng = dropoffTown.longitude;
+    }
+  }
+
+  if (!pickupTown || !dropoffTown || dropoffLat == null || dropoffLng == null) {
+    return {
+      status: StatusCodes.BAD_REQUEST,
+      message: "Valid pickup and destination coordinates are required.",
+    };
+  }
+
+  if (pickupTown.town === dropoffTown.town) {
+    return {
+      status: StatusCodes.BAD_REQUEST,
+      message: "Pickup and destination cannot be the same.",
+    };
+  }
 
   const existing = await Booking.findOne({
     passenger: passengerId,
@@ -251,8 +253,12 @@ export const matchRideService = async (
   ): Promise<ServiceResponse> => {
     const demand = await recordDemand(
       passengerId,
-      { lat: payload.pickupLat, lng: payload.pickupLng },
-      destination,
+      {
+        lat: payload.pickupLat,
+        lng: payload.pickupLng,
+        zoneId: pickupTown.zoneId,
+      },
+      dropoffTown,
       payload.seats,
     );
     await runClustering();
@@ -265,20 +271,17 @@ export const matchRideService = async (
 
   if (!candidates.length)
     return registerUnmetDemand(
-      `No trotro heading to ${destination.town} near you right now.`,
+      `No trotro heading to ${dropoffTown.town} near you right now.`,
     );
 
   const passenger: Coord = { lat: payload.pickupLat, lng: payload.pickupLng };
-  const passengerDest: Coord = {
-    lat: destination.latitude,
-    lng: destination.longitude,
-  };
+  const passengerDest: Coord = { lat: dropoffLat, lng: dropoffLng };
 
   const viable = await evaluateCandidates(
     candidates,
     passenger,
     passengerDest,
-    destination.zoneId,
+    dropoffTown.zoneId,
   );
 
   if (!viable.length)
@@ -288,32 +291,24 @@ export const matchRideService = async (
 
   const chosen = viable[0];
 
-  const pickupZone =
-    nearestTown(chosen.pickup.lat, chosen.pickup.lng)?.zoneId ??
-    destination.zoneId;
-  let distanceKm = haversineKm(
-    chosen.pickup.lat,
-    chosen.pickup.lng,
-    destination.latitude,
-    destination.longitude,
+  // 2. Exact same distance calculation directly from the payload request
+  const distanceKm = haversineKm(
+    payload.pickupLat,
+    payload.pickupLng,
+    dropoffLat,
+    dropoffLng,
   );
 
-  try {
-    const r = await mapsService.getRoadDistance(chosen.pickup, {
-      lat: destination.latitude,
-      lng: destination.longitude,
-    });
-    distanceKm = r.distanceKm;
-  } catch {}
-
   const fare = calculateRouteFare({
-    pickupZone,
-    dropoffZone: destination.zoneId,
+    pickupZone: pickupTown.zoneId,
+    dropoffZone: dropoffTown.zoneId,
     distanceInKm: distanceKm,
     zonesConfig,
+    seats: payload.seats,
   });
-  const total = parseFloat((fare.finalFare * payload.seats).toFixed(2));
-  const pickupName = await nameForPoint(chosen.pickup);
+
+  const total = fare.finalFare;
+  const pickupName = pickupTown.town;
 
   const booking = await Booking.create({
     passenger: passengerId,
@@ -322,24 +317,24 @@ export const matchRideService = async (
     vehicle: chosen.run.vehicle ?? null,
     pickup: {
       town: pickupName,
-      zoneId: pickupZone,
-      latitude: chosen.pickup.lat,
+      zoneId: pickupTown.zoneId,
+      latitude: chosen.pickup.lat, // Boarding point for the driver
       longitude: chosen.pickup.lng,
     },
     destination: {
-      town: destination.town,
-      zoneId: destination.zoneId,
-      latitude: destination.latitude,
-      longitude: destination.longitude,
+      town: dropoffTown.town,
+      zoneId: dropoffTown.zoneId,
+      latitude: dropoffLat,
+      longitude: dropoffLng,
     },
     pickupPoint: {
       name: pickupName,
-      latitude: chosen.pickup.lat,
+      latitude: chosen.pickup.lat, // Boarding point for the driver
       longitude: chosen.pickup.lng,
     },
-    distanceKm: fare.distanceInKm,
+    distanceKm: fare.distanceInKm, // Perfect match to estimate
     seatsRequested: payload.seats,
-    fareEstimate: total,
+    fareEstimate: total, // Perfect match to estimate
     etaMinutes: chosen.vanEta,
     walkMinutes: chosen.walkEta,
     waitMinutes: chosen.waitMin,
@@ -355,8 +350,6 @@ export const matchRideService = async (
   });
 
   const isLocked = payload.paymentMethod === "momo";
-
-  // FIX: Properly ensure driver, vehicle, and run properties are fully obscured in memory returned to client
   let responseBooking = booking.toObject();
   let responsePickupPoint = { name: pickupName, ...chosen.pickup };
 

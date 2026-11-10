@@ -6,7 +6,6 @@ import DriverRun from "../../models/DriverRun";
 import { ServiceResponse } from "../auth/local/auth.service";
 import { haversineKm, nearestTown } from "../../utils/locationLookup";
 import { calculateRouteFare } from "../fare/fare.service";
-import { mapsService } from "../maps/maps.service";
 import { paymentService } from "../payment/payment.service";
 import { completeBooking, returnSeatToRun } from "./lifecycle.service";
 import { publish, bookingChannel } from "../realtime/sse";
@@ -14,7 +13,6 @@ import zonesConfig from "../../data/zonesConfig";
 import type {
   BookingStatus,
   CancelledBy,
-  LocationPoint,
 } from "../../types/booking.types";
 
 const REQUEST_EXPIRY_MINUTES = 15;
@@ -123,7 +121,7 @@ export const estimateFareService = async (
     dropoffZone: dropoffTown.zoneId,
     distanceInKm,
     zonesConfig,
-    seats
+    seats,
   });
 
   return {
@@ -207,6 +205,7 @@ export const acceptBookingService = async (
   await booking.populate("passenger", "name phoneNumber profileImage");
   publish(bookingChannel(bookingId), "booking_accepted", {
     bookingId: booking._id,
+    paymentRequired: booking.paymentMethod === "momo",
   });
 
   return {

@@ -35,10 +35,10 @@ export const calculateRouteFare = ({
 
   // Platform fee on top
   const platformFee = 0.3;
-  let totalFare = (fare + platformFee) * seats;
+  let totalFare = fare + platformFee;
 
   // Round to nearest 0.5
-  totalFare = Math.round(totalFare * 2) / 2;
+  totalFare = (Math.round(totalFare * 2) / 2) * seats;
 
   // Commission split
   const commissionRate = 0.1;
@@ -56,8 +56,6 @@ export const calculateRouteFare = ({
   const paystackCharges = totalFare - (driverPay + troskiProfit);
 
   return {
-    pickupZone,
-    basePrice,
     distanceInKm: parseFloat(distanceInKm.toFixed(2)),
     finalFare: totalFare,
     driverPay: parseFloat(driverPay.toFixed(2)),
