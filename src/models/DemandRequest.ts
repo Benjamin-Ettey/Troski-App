@@ -16,7 +16,7 @@ const DemandRequestSchema = new mongoose.Schema(
 
     destination: {
       town: { type: String },
-      zoneId: { type: String, required: true },
+      zoneId: { type: String },
       latitude: { type: Number, required: true },
       longitude: { type: Number, required: true },
     },
@@ -42,6 +42,10 @@ const DemandRequestSchema = new mongoose.Schema(
   { timestamps: true },
 );
 
-DemandRequestSchema.index({ status: 1, "destination.zoneId": 1, createdAt: -1 });
+DemandRequestSchema.index({
+  status: 1,
+  "destination.zoneId": 1,
+  createdAt: -1,
+});
 
 export default mongoose.model("DemandRequest", DemandRequestSchema);

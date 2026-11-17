@@ -4,7 +4,7 @@ const DemandClusterSchema = new mongoose.Schema(
   {
     destination: {
       town: { type: String },
-      zoneId: { type: String, required: true },
+      zoneId: { type: String },
       latitude: { type: Number, required: true },
       longitude: { type: Number, required: true },
     },

@@ -4,16 +4,13 @@ import Booking from "../../models/Booking";
 import DriverProfile from "../../models/DriverProfile";
 import DriverRun from "../../models/DriverRun";
 import { ServiceResponse } from "../auth/local/auth.service";
-import { haversineKm, nearestTown } from "../../utils/locationLookup";
+import { haversineKm } from "../../utils/locationLookup";
 import { calculateRouteFare } from "../fare/fare.service";
 import { paymentService } from "../payment/payment.service";
 import { completeBooking, returnSeatToRun } from "./lifecycle.service";
 import { publish, bookingChannel } from "../realtime/sse";
 import zonesConfig from "../../data/zonesConfig";
-import type {
-  BookingStatus,
-  CancelledBy,
-} from "../../types/booking.types";
+import type { BookingStatus, CancelledBy } from "../../types/booking.types";
 
 const REQUEST_EXPIRY_MINUTES = 15;
 
@@ -84,31 +81,28 @@ export const estimateFareService = async (
   dropoffLongitude: number,
   seats: number,
 ): Promise<ServiceResponse> => {
-  const pickupTown = nearestTown(pickupLatitude, pickupLongitude);
-  const dropoffTown = nearestTown(dropoffLatitude, dropoffLongitude);
+  if (
+    pickupLatitude == null ||
+    pickupLongitude == null ||
+    dropoffLatitude == null ||
+    dropoffLongitude == null
+  ) {
+    return {
+      status: StatusCodes.BAD_REQUEST,
+      message: "Pickup and destination coordinates are required.",
+    };
+  }
 
-  if (!pickupTown) {
-    return {
-      status: StatusCodes.BAD_REQUEST,
-      message:
-        "Could not determine a supported pickup location from the provided coordinates.",
-    };
-  }
-  if (!dropoffTown) {
-    return {
-      status: StatusCodes.BAD_REQUEST,
-      message:
-        "Could not determine a supported destination location from the provided coordinates.",
-    };
-  }
-  if (pickupTown.town === dropoffTown.town) {
+  if (
+    pickupLatitude === dropoffLatitude &&
+    pickupLongitude === dropoffLongitude
+  ) {
     return {
       status: StatusCodes.BAD_REQUEST,
       message: "Pickup and destination cannot be the same.",
     };
   }
 
-  // Use straight-line distance matching the old calculateDistance implementation
   const distanceInKm = haversineKm(
     pickupLatitude,
     pickupLongitude,
@@ -117,8 +111,8 @@ export const estimateFareService = async (
   );
 
   const fare = calculateRouteFare({
-    pickupZone: pickupTown.zoneId,
-    dropoffZone: dropoffTown.zoneId,
+    pickupZone: "REGIONAL_RURAL",
+    dropoffZone: "REGIONAL_RURAL",
     distanceInKm,
     zonesConfig,
     seats,
@@ -128,8 +122,14 @@ export const estimateFareService = async (
     status: StatusCodes.OK,
     message: "Fare estimated successfully",
     data: {
-      pickupTown: pickupTown.town,
-      dropoffTown: dropoffTown.town,
+      pickup: {
+        latitude: pickupLatitude,
+        longitude: pickupLongitude,
+      },
+      dropoff: {
+        latitude: dropoffLatitude,
+        longitude: dropoffLongitude,
+      },
       seats,
       distanceKm: fare.distanceInKm,
       distanceSource: "straight-line",
@@ -181,7 +181,6 @@ export const acceptBookingService = async (
       await session.abortTransaction();
       session.endSession();
 
-      // Perform atomic update outside the transaction
       await Booking.updateOne(
         { _id: bookingId, status: "requested" },
         { $set: { status: "no_drivers", driver: null, run: null } },
@@ -198,7 +197,6 @@ export const acceptBookingService = async (
     await session.abortTransaction();
     return { status: StatusCodes.CONFLICT, message: error.message };
   } finally {
-    // FIX: Unconditionally close the session to avoid leaks after abort/commit
     session.endSession();
   }
 

@@ -4,7 +4,6 @@ import DriverProfile from "../../models/DriverProfile";
 import Vehicle from "../../models/Vehicle";
 import DriverRun from "../../models/DriverRun";
 import { ServiceResponse } from "../auth/local/auth.service";
-import { resolvePlace } from "../../utils/locationLookup";
 import { mapsService } from "../maps/maps.service";
 import { broadcastRunLocation } from "../booking/tracking.service";
 import { resolveRunBookings } from "../booking/lifecycle.service";
@@ -18,7 +17,7 @@ import {
 const clampSeats = (n: number, max: number): number =>
   Math.max(0, Math.min(max, Math.floor(n)));
 
-const STALE_RUN_MINUTES = 2;
+const STALE_RUN_MINUTES = 15;
 const staleRunCutoff = (): Date =>
   new Date(Date.now() - STALE_RUN_MINUTES * 60 * 1000);
 
@@ -66,36 +65,34 @@ export const startRunService = async (
       message: "Driver profile not found",
     };
 
-  // Silently resolve towns on the backend using the coordinates
-  const origin = resolvePlace({
-    lat: payload.fromLat,
-    lng: payload.fromLng,
-  });
-
-  const destination = resolvePlace({
-    lat: payload.toLat,
-    lng: payload.toLng,
-  });
-
-  if (!origin)
-    return {
-      status: StatusCodes.BAD_REQUEST,
-      message: "A valid start location (coordinates) is required",
-    };
-  if (!destination)
-    return {
-      status: StatusCodes.BAD_REQUEST,
-      message: "A valid destination (coordinates) is required",
-    };
   if (
-    origin.latitude === destination.latitude &&
-    origin.longitude === destination.longitude
+    payload.fromLat == null ||
+    payload.fromLng == null ||
+    payload.toLat == null ||
+    payload.toLng == null
   ) {
+    return {
+      status: StatusCodes.BAD_REQUEST,
+      message: "Start and destination coordinates are required",
+    };
+  }
+
+  if (payload.fromLat === payload.toLat && payload.fromLng === payload.toLng) {
     return {
       status: StatusCodes.BAD_REQUEST,
       message: "Start and destination cannot be the same",
     };
   }
+
+  const origin = {
+    latitude: payload.fromLat,
+    longitude: payload.fromLng,
+  };
+
+  const destination = {
+    latitude: payload.toLat,
+    longitude: payload.toLng,
+  };
 
   const existing = await DriverRun.findOne({
     driver: profile._id,
@@ -285,32 +282,32 @@ export const findNearbyRuns = async (opts: {
   radiusKm?: number;
   limit?: number;
 }) => {
+  // End runs that have stopped sending location updates.
   await endStaleRuns();
 
   const radiusKm = opts.radiusKm ?? 5;
   const limit = opts.limit ?? 20;
 
-  const baseFilter: Record<string, unknown> = {
+  const filter: Record<string, any> = {
     status: "active",
     availableSeats: { $gte: opts.minSeats ?? 1 },
     lastLocationAt: { $gte: staleRunCutoff() },
   };
-  if (opts.destinationZone)
-    baseFilter["destination.zoneId"] = opts.destinationZone;
 
-  if (isRedisEnabled()) {
-    const ids = await geoNearby(opts.lng, opts.lat, radiusKm);
-    if (ids) {
-      if (!ids.length) return [];
-      return DriverRun.find({ _id: { $in: ids }, ...baseFilter }).limit(limit);
-    }
+  // Optional destination-zone restriction.
+  if (opts.destinationZone) {
+    filter["destination.zoneId"] = opts.destinationZone;
   }
 
+  // MongoDB finds nearby runs and returns them nearest-first.
   return DriverRun.find({
-    ...baseFilter,
+    ...filter,
     currentLocation: {
       $near: {
-        $geometry: { type: "Point", coordinates: [opts.lng, opts.lat] },
+        $geometry: {
+          type: "Point",
+          coordinates: [opts.lng, opts.lat],
+        },
         $maxDistance: radiusKm * 1000,
       },
     },

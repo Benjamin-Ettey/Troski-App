@@ -39,20 +39,22 @@ const nearestPointOnSegment = (
   p: Point,
   a: Point,
   b: Point,
-): { point: Point; distanceKm: number } => {
-  const k = Math.cos((a.lat * Math.PI) / 180); // lng -> lat scale at this latitude
+): { point: Point; distanceKm: number; t: number } => {
+  const k = Math.cos((a.lat * Math.PI) / 180);
   const ax = a.lng * k;
   const ay = a.lat;
   const dx = b.lng * k - ax;
   const dy = b.lat - ay;
   const l2 = dx * dx + dy * dy;
 
-  // Degenerate segment (a === b): fall back to the endpoint.
   if (l2 === 0) {
-    return { point: a, distanceKm: haversineKm(p.lat, p.lng, a.lat, a.lng) };
+    return {
+      point: a,
+      distanceKm: haversineKm(p.lat, p.lng, a.lat, a.lng),
+      t: 0,
+    };
   }
 
-  // Project p onto the segment, clamped to stay between a and b.
   let t = ((p.lng * k - ax) * dx + (p.lat - ay) * dy) / l2;
   t = Math.max(0, Math.min(1, t));
 
@@ -60,10 +62,13 @@ const nearestPointOnSegment = (
     lat: a.lat + t * (b.lat - a.lat),
     lng: a.lng + t * (b.lng - a.lng),
   };
-  return { point, distanceKm: haversineKm(p.lat, p.lng, point.lat, point.lng) };
+  return {
+    point,
+    distanceKm: haversineKm(p.lat, p.lng, point.lat, point.lng),
+    t,
+  };
 };
 
-/** Encode points into a Google polyline string (inverse of decodePolyline). */
 export const encodePolyline = (points: Point[], precision = 5): string => {
   const factor = Math.pow(10, precision);
   let lastLat = 0;
@@ -96,23 +101,34 @@ export const nearestPointOnPath = (
   path: Point[],
   lat: number,
   lng: number,
-): { point: Point; distanceKm: number; index: number } | null => {
+): {
+  point: Point;
+  distanceKm: number;
+  index: number;
+  progress: number;
+} | null => {
   if (!path.length) return null;
   if (path.length === 1) {
     return {
       point: path[0],
       distanceKm: haversineKm(lat, lng, path[0].lat, path[0].lng),
       index: 0,
+      progress: 0,
     };
   }
 
   const passenger: Point = { lat, lng };
-  let best = { point: path[0], distanceKm: Infinity, index: 0 };
+  let best = { point: path[0], distanceKm: Infinity, index: 0, progress: 0 };
 
   for (let i = 0; i < path.length - 1; i++) {
     const result = nearestPointOnSegment(passenger, path[i], path[i + 1]);
     if (result.distanceKm < best.distanceKm) {
-      best = { point: result.point, distanceKm: result.distanceKm, index: i };
+      best = {
+        point: result.point,
+        distanceKm: result.distanceKm,
+        index: i,
+        progress: i + result.t,
+      };
     }
   }
 

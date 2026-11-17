@@ -20,12 +20,14 @@ export const splitEarnings = (
   pickupZone: string,
   dropoffZone: string,
   distanceInKm: number,
+  seats: number
 ): { driverShare: number; platformShare: number } => {
   const fare = calculateRouteFare({
     pickupZone,
     dropoffZone,
     distanceInKm,
     zonesConfig,
+    seats
   });
   const driverRatio =
     fare.finalFare > 0 ? fare.driverPay / fare.finalFare : 0.9;
@@ -333,6 +335,7 @@ export const createPaymentService = (deps: { paystack: PaymentPaystack }) => {
       booking.pickup?.zoneId as string,
       booking.destination?.zoneId as string,
       booking.distanceKm as number,
+      booking.seatsRequested as number
     );
     const walletKey = driverWalletKey(String(booking.driver));
 
@@ -488,6 +491,7 @@ export const createPaymentService = (deps: { paystack: PaymentPaystack }) => {
       booking.pickup?.zoneId as string,
       booking.destination?.zoneId as string,
       booking.distanceKm as number,
+      booking.seatsRequested as number
     );
     const walletKey = driverWalletKey(String(booking.driver));
 

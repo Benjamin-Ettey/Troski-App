@@ -24,13 +24,10 @@ export const recordDemand = async (
   return DemandRequest.create({
     passenger: passengerId,
     pickup: {
-      zoneId: pickup.zoneId,
       latitude: pickup.lat,
       longitude: pickup.lng,
     },
     destination: {
-      town: destination.town,
-      zoneId: destination.zoneId,
       latitude: destination.latitude,
       longitude: destination.longitude,
     },

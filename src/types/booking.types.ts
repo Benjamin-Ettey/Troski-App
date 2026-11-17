@@ -20,8 +20,6 @@ export type PaymentStatus =
 export type CancelledBy = "passenger" | "driver" | "system";
 
 export type LocationPoint = {
-  town: string;
-  zoneId: string;
   latitude: number;
   longitude: number;
 };

@@ -2,8 +2,8 @@ import mongoose from "mongoose";
 
 const EndpointSchema = new mongoose.Schema(
   {
-    town: { type: String, required: true, trim: true },
-    zoneId: { type: String, required: true },
+    town: { type: String, trim: true },
+    zoneId: { type: String },
     latitude: { type: Number, required: true },
     longitude: { type: Number, required: true },
   },

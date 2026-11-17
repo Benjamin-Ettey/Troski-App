@@ -24,19 +24,11 @@ export const matchRideSchema = z
     // Destination: coordinates (dropped pin) OR a town name.
     destLat: z.coerce.number().min(-90).max(90).optional(),
     destLng: z.coerce.number().min(-180).max(180).optional(),
-    destinationTown: z.string().trim().min(2).optional(),
     seats: z.coerce.number().int().min(1).max(6).default(1),
     paymentMethod: z.enum(["cash", "momo"], {
       error: "Payment method must be either 'cash' or 'momo'",
     }),
-  })
-  .refine(
-    (d) => (d.destLat != null && d.destLng != null) || !!d.destinationTown,
-    {
-      message:
-        "Provide destination coordinates (destLat/destLng) or destinationTown",
-    },
-  );
+  });
 
 export const updateBookingStatusSchema = z.object({
   status: z.enum(["arrived", "in_progress", "completed"]),

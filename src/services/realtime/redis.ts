@@ -34,7 +34,9 @@ export const backplanePublish = (payload: string): void => {
   pub?.publish(SSE_CHANNEL, payload);
 };
 
-export const backplaneSubscribe = (handler: (payload: string) => void): void => {
+export const backplaneSubscribe = (
+  handler: (payload: string) => void,
+): void => {
   if (!sub) return;
   sub.subscribe(SSE_CHANNEL);
   sub.on("message", (channel, message) => {
