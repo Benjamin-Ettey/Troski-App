@@ -292,7 +292,8 @@
     <MESSAGE value="Designed and added the apps images(i.e: splash-icon, app icon and the like...) into the assets/images folder and also changed the background color for the splash screen to the primary color &quot;#ffcc00&quot; for both dark mode and light mode. This changes was made for both the driver and passenger folders" />
     <MESSAGE value="Finished all sign up, login, and onboarding screens." />
     <MESSAGE value="Merge pull request #11 from Benjamin-Ettey/development&#10;&#10;Finished passenger app completely by adding dark modes and other erro…" />
-    <option name="LAST_COMMIT_MESSAGE" value="Merge pull request #11 from Benjamin-Ettey/development&#10;&#10;Finished passenger app completely by adding dark modes and other erro…" />
+    <MESSAGE value="Package.json and workspace.xlm files updates" />
+    <option name="LAST_COMMIT_MESSAGE" value="Package.json and workspace.xlm files updates" />
   </component>
   <component name="github-copilot-workspace">
     <instructionFileLocations>
