@@ -5,42 +5,7 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="564ac165-5879-4255-b187-31d269c93d35" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/Frontend/Troski-Web/AdminDashboard/public/fonts/BricolageGrotesque-Bold.ttf" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Frontend/Troski-Web/AdminDashboard/public/fonts/BricolageGrotesque-ExtraBold.ttf" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Frontend/Troski-Web/AdminDashboard/public/fonts/BricolageGrotesque-ExtraLight.ttf" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Frontend/Troski-Web/AdminDashboard/public/fonts/BricolageGrotesque-Light.ttf" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Frontend/Troski-Web/AdminDashboard/public/fonts/BricolageGrotesque-Medium.ttf" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Frontend/Troski-Web/AdminDashboard/public/fonts/BricolageGrotesque-Regular.ttf" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Frontend/Troski-Web/AdminDashboard/public/fonts/BricolageGrotesque-SemiBold.ttf" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Frontend/Troski-Web/AdminDashboard/public/fonts/Outfit-Black.ttf" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Frontend/Troski-Web/AdminDashboard/public/fonts/Outfit-Bold.ttf" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Frontend/Troski-Web/AdminDashboard/public/fonts/Outfit-ExtraBold.ttf" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Frontend/Troski-Web/AdminDashboard/public/fonts/Outfit-ExtraLight.ttf" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Frontend/Troski-Web/AdminDashboard/public/fonts/Outfit-Light.ttf" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Frontend/Troski-Web/AdminDashboard/public/fonts/Outfit-Medium.ttf" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Frontend/Troski-Web/AdminDashboard/public/fonts/Outfit-Regular.ttf" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Frontend/Troski-Web/AdminDashboard/public/fonts/Outfit-SemiBold.ttf" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Frontend/Troski-Web/AdminDashboard/public/fonts/Outfit-Thin.ttf" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Frontend/Troski-Web/AdminDashboard/src/assets/logo.svg" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Frontend/Troski-Web/AdminDashboard/src/context/AuthProvider.tsx" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Frontend/Troski-Web/AdminDashboard/src/context/auth-context.ts" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Frontend/Troski-Web/AdminDashboard/src/hooks/useAuth.ts" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Frontend/Troski-Web/AdminDashboard/src/pages/Login.tsx" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Frontend/Troski-Web/AdminDashboard/src/pages/NotFound.tsx" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Frontend/Troski-Web/AdminDashboard/src/pages/Overview.tsx" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Frontend/Troski-Web/AdminDashboard/src/routes/ProtectedRoute.tsx" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Frontend/Troski-Web/AdminDashboard/src/services/authService.ts" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Frontend/Troski-Web/AdminDashboard/src/types/auth.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Frontend/Troski-Web/AdminDashboard/index.html" beforeDir="false" afterPath="$PROJECT_DIR$/Frontend/Troski-Web/AdminDashboard/index.html" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Frontend/Troski-Web/AdminDashboard/package-lock.json" beforeDir="false" afterPath="$PROJECT_DIR$/Frontend/Troski-Web/AdminDashboard/package-lock.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Frontend/Troski-Web/AdminDashboard/package.json" beforeDir="false" afterPath="$PROJECT_DIR$/Frontend/Troski-Web/AdminDashboard/package.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Frontend/Troski-Web/AdminDashboard/public/favicon.svg" beforeDir="false" afterPath="$PROJECT_DIR$/Frontend/Troski-Web/AdminDashboard/public/favicon.svg" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Frontend/Troski-Web/AdminDashboard/src/App.css" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Frontend/Troski-Web/AdminDashboard/src/App.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/Frontend/Troski-Web/AdminDashboard/src/App.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Frontend/Troski-Web/AdminDashboard/src/index.css" beforeDir="false" afterPath="$PROJECT_DIR$/Frontend/Troski-Web/AdminDashboard/src/index.css" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Frontend/Troski-Web/AdminDashboard/src/main.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/Frontend/Troski-Web/AdminDashboard/src/main.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Frontend/Troski-Web/AdminDashboard/vite.config.ts" beforeDir="false" afterPath="$PROJECT_DIR$/Frontend/Troski-Web/AdminDashboard/vite.config.ts" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -93,7 +58,7 @@
     "RunOnceActivity.typescript.service.memoryLimit.init": "true",
     "codeWithMe.voiceChat.enabledByDefault": "false",
     "com.intellij.ml.llm.matterhorn.ej.ui.settings.DefaultModelSelectionForGA.v1": "true",
-    "git-widget-placeholder": "Merging development",
+    "git-widget-placeholder": "development",
     "javascript.preferred.runtime.type.id": "node",
     "junie.onboarding.icon.badge.shown": "true",
     "last_opened_file_path": "D:/Troski-App/Frontend/Troski-Web/Troski-Website/src/assets",
@@ -255,7 +220,7 @@
       <workItem from="1792222396520" duration="1814000" />
       <workItem from="1793044630461" duration="4865000" />
       <workItem from="1793097294051" duration="6855000" />
-      <workItem from="1794863106940" duration="15481000" />
+      <workItem from="1794863106940" duration="16375000" />
     </task>
     <task id="LOCAL-00001" summary="Added custom components in the components directory">
       <option name="closed" value="true" />
@@ -313,7 +278,15 @@
       <option name="project" value="LOCAL" />
       <updated>1789151582667</updated>
     </task>
-    <option name="localTasksCounter" value="8" />
+    <task id="LOCAL-00008">
+      <option name="closed" value="true" />
+      <created>1794937161876</created>
+      <option name="number" value="00008" />
+      <option name="presentableId" value="LOCAL-00008" />
+      <option name="project" value="LOCAL" />
+      <updated>1794937161877</updated>
+    </task>
+    <option name="localTasksCounter" value="9" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
