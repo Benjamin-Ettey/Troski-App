@@ -2,7 +2,7 @@ import useSEO from "../hooks/useSEO";
 
 const services = [
   {
-    title: "Verified Tro-tro Rides",
+    title: "Verified Tro-Tro Rides",
     description:
       "Every driver goes through a verification process, bringing trust and accountability to everyday transport.",
   },
@@ -33,20 +33,20 @@ const Services = () => {
     <div className="flex flex-col gap-12 md:gap-16 pb-24">
       <section className="max-w-3xl mx-auto px-6 md:px-8 pt-12 text-center flex flex-col gap-4 items-center">
         <h1 className="text-4xl md:text-5xl font-bold">Our Services</h1>
-        <p className="text-base md:text-lg text-gray-600">
+        <p className="text-base md:text-lg text-black/50">
           What Troski brings to everyday transport.
         </p>
       </section>
 
-      <section className="w-full flex justify-center">
+      <section className="w-full flex justify-center ">
         <div className="w-[90%] md:w-[70%] grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
           {services.map((service) => (
             <div
               key={service.title}
-              className="flex flex-col gap-2 p-5 md:p-6 rounded-2xl border border-gray-200"
+              className="flex flex-col h-[512px] bg-black/10  gap-2 p-5 md:p-6 rounded-2xl border border-gray-200"
             >
               <h3 className="text-lg md:text-xl font-semibold">{service.title}</h3>
-              <p className="text-sm md:text-base text-gray-600">
+              <p className="text-sm md:text-base text-balck">
                 {service.description}
               </p>
             </div>

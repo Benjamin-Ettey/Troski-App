@@ -7,7 +7,7 @@ const linkClass =
 const Footer = () => {
   return (
     <footer className="w-full bg-black text-white">
-      <div className="mx-auto flex w-[90%] flex-col justify-between gap-10 py-12 md:w-[70%] md:flex-row md:py-16">
+      <div className="mx-auto flex w-[90%] flex-col justify-between gap-10 py-12 md:w-[70%] md:flex-row md:py-32">
         <div className="flex flex-col gap-4">
           <Link to="/" className="w-24">
             <img src={logo} alt="Troski" width={96} height={64} />

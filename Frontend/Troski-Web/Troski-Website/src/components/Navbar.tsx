@@ -57,40 +57,33 @@ const Navbar = () => {
     <>
       {/* Navbar */}
       <nav
-        className={`fixed top-0 left-0 z-50 w-full px-6 py-5 transition-all duration-300 ${
+        className={`fixed top-0 left-0 z-50 w-full px-6 py-2 transition-all duration-300 ${
           showDark ? "bg-[#FAF9F6]" : "bg-transparent"
         } ${isScrolled && !isMenuOpen ? "shadow-sm" : ""}`}
       >
         <div className="mx-auto flex w-full max-w-[1536px] items-center justify-between md:px-10 lg:px-36">
           <Link to="/" onClick={closeMenu} className="relative z-50 shrink-0">
             <img
-              src={logo}
-              alt="Troski Logo"
-              width={96}
-              height={64}
-              className={`transition-all duration-300 ${
-                showDark ? "invert" : ""
-              }`}
+                src={logo}
+                alt="Troski Logo"
+                width={96}
+                height={48}
+                className="invert"
             />
           </Link>
-
           <div className="flex shrink-0 items-center gap-3">
            <Link
               to="/become-a-driver"
               onClick={closeMenu}
-                  className="hidden whitespace-nowrap rounded-full bg-ink px-5 py-2.5 text-sm font-semibold text-white transition duration-300 hover:-translate-y-0.5 hover:bg-ink-hover active:scale-95 md:flex"
+                  className="hidden whitespace-nowrap rounded-full bg-brand px-5 py-2 text-sm font-semibold text-black transition duration-300 hover:-translate-y-0.5 hover:bg-ink-hover active:scale-95 md:flex"
               >
                 Become a Driver
            </Link>
             <button
-              onClick={toggleMenu}
-              className={`relative z-50 flex h-10 w-10 shrink-0 cursor-pointer items-center justify-center rounded-full transition duration-300 active:scale-90 ${
-                showDark
-                  ? "bg-ink text-white hover:bg-ink-hover"
-                  : "bg-white text-ink hover:bg-neutral-200"
-              }`}
-              aria-label={isMenuOpen ? "Close menu" : "Open menu"}
-              aria-expanded={isMenuOpen}
+                onClick={toggleMenu}
+                className="relative z-50 flex h-8 w-8 shrink-0 cursor-pointer items-center justify-center text-black transition duration-300 hover:opacity-60 active:scale-90"
+                aria-label={isMenuOpen ? "Close menu" : "Open menu"}
+                aria-expanded={isMenuOpen}
             >
               <span className="relative block h-[22px] w-[22px]">
                 <Menu
@@ -116,7 +109,7 @@ const Navbar = () => {
       {/* Full-screen menu: slides down from the top, and back up when closed */}
       <div
         aria-hidden={!isMenuOpen}
-        className={`fixed inset-0 z-40 bg-white transition-all duration-700 ease-[cubic-bezier(0.76,0,0.24,1)] ${
+        className={`fixed inset-0 z-40 bg-[#FAF9F6] transition-all duration-700 ease-[cubic-bezier(0.76,0,0.24,1)] ${
           isMenuOpen ? "visible translate-y-0" : "invisible -translate-y-full"
         }`}
       >

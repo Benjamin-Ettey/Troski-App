@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { ArrowRight } from "lucide-react";
-import aerial from "../assets/aerialviewimage.png";
+import troskiHeroVideo from "../assets/Troski Website Motion Graphics.mp4";
 import useSEO from "../hooks/useSEO";
 
 const steps = [
@@ -15,9 +15,9 @@ const steps = [
       "A verified Troski driver on your route accepts and heads your way.",
   },
   {
-    title: "Ride and pay",
+    title: "Pay and ride",
     description:
-      "Hop in, travel safely, and pay digitally when you arrive.",
+      "Pay digitally, hop in, and travel safely.",
   },
 ];
 
@@ -31,70 +31,73 @@ const Home = () => {
   return (
     <>
       {/* Hero */}
-      <section
-        id="Hero"
-        className="relative flex min-h-[85svh] items-start overflow-hidden md:items-center"
-      >
-        <div
-          className="absolute inset-0 animate-hero-zoom bg-cover bg-center motion-reduce:animate-none"
-          style={{
-            backgroundImage: `linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.5)), url(${aerial})`,
-          }}
-        />
 
-        <div className="relative z-10 mx-auto flex w-full max-w-4xl flex-col items-center gap-5 px-6 pb-16 pt-32 text-center md:items-start md:gap-6 md:px-8 md:pt-28 md:text-left">
-          <h1 className="animate-fade-up text-5xl font-bold leading-[1.1] text-white motion-reduce:animate-none sm:text-6xl md:text-7xl">
-            Troski in Ghana
+      {/* Intro: bold text before the hero image */}
+      <section className=" bg-[#FAF9F6] px-6 pt-28 md:px-10 md:pt-40">
+        <div className="mx-auto flex w-full max-w-6xl flex-col items-center gap-5 text-center md:gap-6">
+          <h1 className="md:text-5xl text-4xl font-bold leading-[1.0] mb-2 tracking-tight text-black sm:text-5xl md:text-7xl">
+            Better rides. Better opportunities.
           </h1>
 
-          <p
-            className="max-w-md animate-fade-up text-base leading-relaxed text-white motion-reduce:animate-none md:max-w-lg md:text-lg lg:text-xl"
-            style={{ animationDelay: "150ms" }}
-          >
-            Wherever you are in Ghana, count on Troski for rides in minutes!
-            From Tech Junction to Ayeduase, from Kasoa to Madina, Troski is
-            only a tap of a button away.
+          <p className="max-w-md text-base leading-tight text-black/80 md:max-w-2xl lg:max-w-3xl md:text-lg lg:text-xl">
+            Get where you need to go with greater ease, or get on the road and earn. Troski creates better opportunities for passengers and drivers alike.
           </p>
 
-          <div
-            className="mt-2 w-full animate-fade-up motion-reduce:animate-none md:mt-4 md:w-auto"
-            style={{ animationDelay: "300ms" }}
-          >
-            <button className="flex w-full cursor-pointer items-center justify-center rounded-xl bg-brand px-5 py-2.5 text-base font-bold text-ink transition duration-300 hover:-translate-y-0.5 hover:bg-brand-dark active:scale-95 md:w-auto md:px-6 md:py-2.5 md:text-lg">
-              Get app
+          <div className="mt-2 flex w-full flex-col md:flex-row items-center justify-center gap-3 md:mt-4 md:w-auto md:gap-4">
+            <button className="flex-1 cursor-pointer w-full md:w-48 rounded-xl bg-brand px-5 py-2.5 md:py-2 text-sm font-medium text-black hover:bg-brand-dark md:flex-none md:px-6 md:text-lg">
+              Get Troski
+            </button>
+            <button className="flex-1 cursor-pointer w-full md:w-48 rounded-xl bg-black px-5 py-2.5 md:py-2 text-sm font-medium text-white  hover:bg-ink-hover md:flex-none md:px-6 md:text-lg">
+              Get Troski Driver
             </button>
           </div>
         </div>
       </section>
 
+      {/* Hero */}
+      {/* Hero video */}
+      <section
+          id="Hero"
+          className="bg-[#FAF9F6] px-4 pb-2 pt-10 sm:px-8 md:pb-20 md:pt-16 lg:px-12"
+      >
+        <div className="mx-auto w-full max-w-6xl overflow-hidden rounded-2xl bg-black/5 md:rounded-3xl">
+          <video
+              className="aspect-video w-full object-cover"
+              src={troskiHeroVideo}
+              autoPlay
+              loop
+              muted
+              playsInline
+              preload="metadata"
+              aria-hidden="true"
+          />
+        </div>
+      </section>
+
       {/* How it works */}
-      <section className="mx-auto w-[90%] py-16 md:w-[70%] md:py-24">
-        <div className="mb-10 flex flex-col gap-3 md:mb-14">
-          <h2 className="text-2xl font-bold tracking-tight md:text-4xl">
+      <section className="mx-auto w-full max-w-7xl px-5 py-12 sm:px-8 sm:py-16 lg:px-12 lg:py-24">
+        <div className="mb-8 flex flex-col gap-3 sm:mb-10 lg:mb-14">
+          <h2 className="text-2xl font-bold tracking-tight sm:text-3xl lg:text-4xl">
             Getting around, made simple
           </h2>
-          <p className="max-w-xl text-sm text-ink/70 md:text-base">
+          <p className="max-w-xl text-base text-black/50 lg:text-lg">
             Three steps from where you are to where you're going.
           </p>
         </div>
 
-        <div className="grid grid-cols-1 gap-10 md:grid-cols-3 md:gap-12">
-          {steps.map((step, index) => (
-            <div key={step.title} className="flex flex-col gap-3">
-              <span className="flex h-10 w-10 items-center justify-center rounded-full bg-brand text-base font-bold text-ink">
-                {index + 1}
-              </span>
-              <h3 className="text-lg font-semibold md:text-xl">{step.title}</h3>
-              <p className="text-sm text-ink/70 md:text-base">
-                {step.description}
-              </p>
-            </div>
+        <div className="grid grid-cols-1 gap-10 sm:grid-cols-2 sm:gap-8 lg:grid-cols-3 lg:gap-12">
+          {steps.map((step) => (
+              <div key={step.title} className="flex flex-col gap-3">
+                <div className="aspect-4/3 w-full rounded-xl bg-black/10" />
+                <h3 className="text-lg font-semibold lg:text-xl">{step.title}</h3>
+                <p className="text-base text-black/50">{step.description}</p>
+              </div>
           ))}
         </div>
 
         <Link
-          to="/how-it-works"
-          className="mt-10 inline-flex items-center gap-2 font-semibold transition-opacity hover:opacity-60"
+            to="/how-it-works"
+            className="mt-10 inline-flex items-center bg-brand gap-2 px-4 py-2 rounded-lg font-semibold transition-opacity hover:opacity-60"
         >
           See how it works
           <ArrowRight size={18} />
@@ -103,9 +106,9 @@ const Home = () => {
 
       {/* Drive with us: only on small screens, where the navbar button is hidden */}
       <section className="mx-auto w-[90%] pb-16 md:hidden">
-        <div className="flex flex-col items-start gap-5 rounded-3xl bg-ink px-6 py-12 text-white">
-          <h2 className="text-2xl font-bold tracking-tight">Drive with Troski</h2>
-          <p className="max-w-md text-sm text-white/70">
+        <div className="flex flex-col items-start rounded-md bg-ink px-6 py-4 text-white">
+          <h2 className="text-2xl font-bold tracking-tight mb-2">Drive with Troski</h2>
+          <p className="max-w-md text-sm text-white/70 mb-4">
             Join a verified network of drivers, earn on your own schedule, and
             help modernize transport in Ghana.
           </p>

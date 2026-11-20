@@ -1,5 +1,7 @@
 import { useState } from "react";
 import useSEO from "../hooks/useSEO";
+import goldBackground from "../assets/goldBackground.png";
+import {Link} from "react-router-dom";
 
 type FAQ = {
   question: string;
@@ -98,7 +100,7 @@ const FAQs = () => {
 
         {/* LEFT SIDEBAR */}
         <aside className="w-full md:w-[28%] lg:w-[30%] shrink-0">
-          <div className="md:sticky md:top-28 pt-10">
+          <div className="md:sticky md:top-28 md:pt-10 pt-2">
 
             <h2 className="text-2xl md:text-xl lg:max-w-[60%] leading-none tracking-tight text-black font-semibold mb-3">
               Frequently Asked Questions (FAQs)
@@ -129,7 +131,7 @@ const FAQs = () => {
                 onClick={() => handleTabChange("drivers")}
                 className={`w-full lg:w-[60%] flex items-center justify-between gap-4 px-5 py-2 rounded-xl text-left transition-all duration-200 ${
   activeTab === "drivers"
-      ? "bg-[#ffcc00] hover:bg-[#F0C000] text-black"
+      ? "bg-brand hover:bg-[#F0C000] text-black"
       : "bg-[#FAF9F6] text-gray-700 hover:bg-black/5"
 }`}
               >
@@ -198,7 +200,7 @@ const FAQs = () => {
           </div>
 
           {/* CONTACT SUPPORT */}
-          <div className="mt-10 p-6 md:px-6 md:py-4 rounded-2xl bg-black/3">
+          <div className="mt-10 p-6 md:px-6 md:py-4 rounded-2xl bg-brand">
             <h3 className="text-lg md:text-xl font-semibold text-black mb-2">
               Still have questions?
             </h3>
@@ -210,12 +212,44 @@ const FAQs = () => {
 
             <a
               href="/contact"
-              className="inline-flex items-center justify-center px-5 py-2 rounded-lg bg-[#ffcc00] text-black font-semibold hover:bg-[#f2c000] transition-colors"
+              className="inline text-brand flex items-center justify-center px-5 py-2 rounded-lg bg-black text-black font-semibold hover:bg-[#00000077] transition-colors"
             >
-              Contact Us <span className="ml-2">→</span>
+              Contact Us <span className="ml-2 text-brand">→</span>
             </a>
           </div>
+
+
+
         </section>
+
+
+      </div>
+
+      <div className="md:h-[420px] h-[320px]  relative bg-black mt-24 flex flex-col justify-start items-center overflow-hidden">
+        <img
+            className="absolute inset-0 w-full h-full object-cover "
+            src={goldBackground}
+            alt=""
+            aria-hidden="true"
+        />
+        <h1 className="relative z-10 leading-none text-white text-center text-[clamp(2rem,5vw,3.75rem)] font-medium tracking-tight mt-12 md:mt-24 mb-2 max-w-[80%] md:max-w-[60%]">
+          Ride safe. Earn more.
+        </h1>
+        <h3 className="relative z-10 mb-1 md:mb-4 leading-none text-white text-center text-[clamp(1rem,1.6vw,1.25rem)] font-normal tracking-tight max-w-[80%] lg:max-w-[40%] md:max-w-[60%]">
+          Troski connects passengers with verified drivers for safe, convenient
+          rides, and gives drivers a better way to earn.
+        </h3>
+
+        <div className="relative z-10 w-full md:mt-8 mt-4 flex md:flex-row flex-col md:gap-4 gap-2 justify-center items-center">
+          <Link
+              to="/"
+              className="px-6 py-2 rounded-md hover:bg-black/80 bg-black text-white font-medium">Ride with Troski</Link>
+          <Link
+              to="/"
+              className="px-6 py-2 rounded-md hover:bg-white/80 bg-white text-black font-medium">Drive with Troski</Link>
+
+        </div>
+
       </div>
     </main>
   );
