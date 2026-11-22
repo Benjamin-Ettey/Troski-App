@@ -93,7 +93,7 @@ const About = () => {
     return (
         <main className="w-full bg-[#FAF9F6]">
             {/* Hero statement */}
-            <section className="px-5 pt-28 sm:px-8 md:pt-24 lg:px-12">
+            <section className="px-5 md:pt-28 pt-8 sm:px-8 md:pt-24 lg:px-12">
                 <div className="mx-auto w-full max-w-7xl">
                     <p className="mb-4 text-base font-medium text-black/50 md:text-lg">
                         About us

@@ -128,20 +128,20 @@ const Contact = () => {
 
             <section className="w-full flex justify-center items-center mt-16">
 
-                <div className="w-[90%] h-[512px] flex flex-row bg-brand">
-                    <div className="w-full flex-1 ">
+                <div className="w-[90%] md:h-[512px] flex md:flex-row flex-col bg-brand">
+                    <div className="w-full h-56 sm:h-72 md:h-auto md:flex-1">
                         <img
                             src={telephone}
                             alt="Telephone"
-                            className="w-full h-full object-contain object-right"
+                            className="w-full h-full object-contain object-center md:object-right"
                         />
                     </div>
 
-                    <div className="w-full flex-1 flex flex-col justify-center gap-4 md:gap-5 p-8 md:p-12">
+                    <div className="w-full md:flex-1 flex flex-col justify-center gap-4 md:gap-5 p-6 sm:p-8 lg:p-12">
                         <h2 className="text-2xl md:text-3xl font-bold text-black">Prefer to talk?</h2>
 
                         <p className="text-sm md:text-base text-black">
-                            Give us a call and we'll help you straight away. <br/>We're available
+                            Give us a call and we'll help you straight away. <br className="hidden md:block" />We're available
                             Monday to Friday, 8am to 5pm.
                         </p>
 
@@ -149,7 +149,7 @@ const Contact = () => {
                             <a href="tel:+233000000000" className="font-medium text-black">
                                 +233 00 000 0000
                             </a>
-                            <a href="mailto:support@troski.com" className="text-black">
+                            <a href="mailto:support@troski.com" className="text-black break-all">
                                 support@troski.com
                             </a>
                         </div>

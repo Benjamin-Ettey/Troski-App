@@ -90,7 +90,7 @@ const HowItWorks = () => {
                   </div>
 
                   {/* Step Details */}
-                  <div className="flex shrink-0 flex-col gap-2">
+                  <div className="flex shrink-0 flex-col gap-2 mt-6">
                     <h3 className="text-lg font-semibold leading-tight md:text-xl lg:text-lg">
                       {step.title}
                     </h3>

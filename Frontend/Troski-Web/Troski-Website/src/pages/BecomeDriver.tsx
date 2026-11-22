@@ -70,7 +70,7 @@ const StoreButtons = () => {
             href={APP_STORE_URL}
             target="_blank"
             rel="noopener noreferrer"
-            className="flex flex-col justify-center items-center rounded-xl bg-[#ffcc00] px-6 py-3 text-left text-black transition hover:opacity-90"
+            className="flex flex-col justify-center items-center rounded-xl bg-[#ffcc00] px-4 py-2 text-left text-black transition hover:opacity-90"
         >
         <span className="text-base font-semibold text-center">
           Download Troski Driver
