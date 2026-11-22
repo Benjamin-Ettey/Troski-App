@@ -4,8 +4,16 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="564ac165-5879-4255-b187-31d269c93d35" name="Changes" comment="">
-      <change beforePath="$PROJECT_DIR$/Frontend/Troski-Web/AdminDashboard/package-lock.json" beforeDir="false" afterPath="$PROJECT_DIR$/Frontend/Troski-Web/AdminDashboard/package-lock.json" afterDir="false" />
+    <list default="true" id="564ac165-5879-4255-b187-31d269c93d35" name="Changes" comment="Package.json and workspace.xlm files updates">
+      <change afterPath="$PROJECT_DIR$/Frontend/Troski-Web/Troski-Website/src/assets/download.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Frontend/Troski-Web/Troski-Website/src/assets/homescreen.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Frontend/Troski-Web/Troski-Website/src/assets/matchscreen.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Frontend/Troski-Web/Troski-Website/src/assets/searchdriver.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Frontend/Troski-Web/Troski-Website/src/assets/selectride.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Frontend/Troski-Web/Troski-Website/src/pages/Contact.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/Frontend/Troski-Web/Troski-Website/src/pages/Contact.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Frontend/Troski-Web/Troski-Website/src/pages/Home.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/Frontend/Troski-Web/Troski-Website/src/pages/Home.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Frontend/Troski-Web/Troski-Website/src/pages/HowItWorks.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/Frontend/Troski-Web/Troski-Website/src/pages/HowItWorks.tsx" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -49,30 +57,30 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent"><![CDATA[{
-  "keyToString": {
-    "ModuleVcsDetector.initialDetectionPerformed": "true",
-    "RunOnceActivity.ShowReadmeOnStart": "true",
-    "RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252": "true",
-    "RunOnceActivity.git.unshallow": "true",
-    "RunOnceActivity.typescript.service.memoryLimit.init": "true",
-    "codeWithMe.voiceChat.enabledByDefault": "false",
-    "com.intellij.ml.llm.matterhorn.ej.ui.settings.DefaultModelSelectionForGA.v1": "true",
-    "git-widget-placeholder": "development",
-    "javascript.preferred.runtime.type.id": "node",
-    "junie.onboarding.icon.badge.shown": "true",
-    "last_opened_file_path": "D:/Troski-App/Frontend/Troski-Web/Troski-Website/src/assets",
-    "node.js.detected.package.eslint": "true",
-    "node.js.detected.package.tslint": "true",
-    "node.js.selected.package.eslint": "(autodetect)",
-    "node.js.selected.package.tslint": "(autodetect)",
-    "nodejs_package_manager_path": "npm",
-    "settings.editor.selected.configurable": "settings.typescriptcompiler",
-    "to.speed.mode.migration.done": "true",
-    "ts.external.directory.path": "D:\\Troski-App\\Frontend\\driver-app\\Troski-Driver\\node_modules\\typescript\\lib",
-    "vue.rearranger.settings.migration": "true"
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;ModuleVcsDetector.initialDetectionPerformed&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.typescript.service.memoryLimit.init&quot;: &quot;true&quot;,
+    &quot;codeWithMe.voiceChat.enabledByDefault&quot;: &quot;false&quot;,
+    &quot;com.intellij.ml.llm.matterhorn.ej.ui.settings.DefaultModelSelectionForGA.v1&quot;: &quot;true&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;development&quot;,
+    &quot;javascript.preferred.runtime.type.id&quot;: &quot;node&quot;,
+    &quot;junie.onboarding.icon.badge.shown&quot;: &quot;true&quot;,
+    &quot;last_opened_file_path&quot;: &quot;D:/Troski-App/Frontend/Troski-Web/Troski-Website/src/assets&quot;,
+    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
+    &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
+    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
+    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
+    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
+    &quot;settings.editor.selected.configurable&quot;: &quot;settings.typescriptcompiler&quot;,
+    &quot;to.speed.mode.migration.done&quot;: &quot;true&quot;,
+    &quot;ts.external.directory.path&quot;: &quot;D:\\Troski-App\\Frontend\\driver-app\\Troski-Driver\\node_modules\\typescript\\lib&quot;,
+    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
   }
-}]]></component>
+}</component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
       <recent name="D:\Troski-App\Frontend\Troski-Web\Troski-Website\src\assets" />
@@ -221,6 +229,7 @@
       <workItem from="1793044630461" duration="4865000" />
       <workItem from="1793097294051" duration="6855000" />
       <workItem from="1794863106940" duration="16375000" />
+      <workItem from="1795355562520" duration="427000" />
     </task>
     <task id="LOCAL-00001" summary="Added custom components in the components directory">
       <option name="closed" value="true" />
