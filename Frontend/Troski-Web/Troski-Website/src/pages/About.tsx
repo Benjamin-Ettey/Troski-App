@@ -1,7 +1,5 @@
 import { Link } from "react-router-dom";
 import { ArrowRight } from "lucide-react";
-import pattern from "../assets/ghanaSymbols.png";
-import goldBackground from "../assets/goldBackground.png";
 import trust from "../assets/trust.png";
 import accessibility from "../assets/accessibility.png";
 import growth from "../assets/growth.png";
