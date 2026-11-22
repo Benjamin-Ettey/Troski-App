@@ -69,7 +69,8 @@ const Contact = () => {
                                         placeholder="Franklin Smith"
                                         value={form.name}
                                         onChange={handleChange}
-                                        className="border border-gray-300 rounded-lg px-4 py-2 text-sm md:text-base"
+                                        className="border border-gray-300 rounded-lg px-4 py-2 text-sm md:text-base [&:-webkit-autofill]:[-webkit-box-shadow:0_0_0_1000px_#FFF2CC_inset]
+  [&:-webkit-autofill]:[-webkit-text-fill-color:#000000]"
                                     />
                                 </div>
 
@@ -85,7 +86,8 @@ const Contact = () => {
                                         placeholder="franksmith@gmail.com"
                                         value={form.email}
                                         onChange={handleChange}
-                                        className="border border-gray-300 rounded-lg px-4 py-2 text-sm md:text-base"
+                                        className="border border-gray-300 rounded-lg px-4 py-2 text-sm md:text-base [&:-webkit-autofill]:[-webkit-box-shadow:0_0_0_1000px_#FFF2CC_inset]
+  [&:-webkit-autofill]:[-webkit-text-fill-color:#000000]"
                                     />
                                 </div>
 
@@ -102,7 +104,7 @@ const Contact = () => {
                                         maxLength={MESSAGE_MAX_LENGTH}
                                         value={form.message}
                                         onChange={handleChange}
-                                        className="border border-gray-300 rounded-lg px-4 py-2 text-sm md:text-base"
+                                        className="border border-gray-300 rounded-lg px-4 py-2 text-sm md:text-base "
                                     />
                                     <p className="text-xs md:text-sm text-gray-500 text-right">
                                         {form.message.length} / {MESSAGE_MAX_LENGTH}
